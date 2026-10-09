@@ -1,4 +1,8 @@
-// --- 1. РОУТИНГ И РЕНДЕДИНГ СТРАНИЦ ---
+import { DATABASE, GLOSSARY } from './data.js';
+
+console.log("УСПЕШНЫЙ ИМПОРТ БАЗЫ ДАННЫХ:", DATABASE); // <--- Добавьте эту строчку
+
+// Рендеринг контента
 function router() {
   const hash = window.location.hash.replace('#', '') || DATABASE[0].id;
   const item = DATABASE.find(entry => entry.id === hash);
@@ -9,28 +13,21 @@ function router() {
     return;
   }
 
-  // Рендерим шаблон в зависимости от типа
   if (item.type === 'warcard') {
     container.innerHTML = renderWarCardTemplate(item);
   } else {
     container.innerHTML = renderArticleTemplate(item);
   }
 
-  // Запускаем подсветку терминов глоссария в новом контенте
   highlightTerms();
   updateActiveSidebarLink(hash);
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// Шаблон статьи
 function renderArticleTemplate(item) {
-  return `
-    <h1>${item.title}</h1>
-    <div class="article-body">${item.content}</div>
-  `;
+  return `<h1>${item.title}</h1><div class="article-body">${item.content}</div>`;
 }
 
-// Шаблон карточки бойца (AoS Style)
 function renderWarCardTemplate(item) {
   const abilitiesHTML = item.abilities.map(ab => `
     <div class="ability-item">
@@ -58,60 +55,58 @@ function renderWarCardTemplate(item) {
   `;
 }
 
-// --- 2. АВТОМАТИЧЕСКАЯ ГЕНЕРАЦИЯ МЕНЮ С САЙДБАРОМ И ПОДРАЗДЕЛАМИ ---
 function buildSidebar() {
   const sidebarMenu = document.getElementById('sidebar-menu');
+  if (!sidebarMenu) return;
   sidebarMenu.innerHTML = '';
 
-  // Группируем элементы из DATABASE по категориям и подкатегориям
   const categories = {};
   DATABASE.forEach(item => {
     if (!categories[item.category]) {
-      categories[item.category] = {
-        title: item.categoryTitle,
-        items: [],       // Для обычных элементов без подкатегорий
-        subCategories: {} // Для подразделов (например, в миссиях)
+      categories[item.category] = { 
+        title: item.categoryTitle, 
+        items: [], 
+        factions: {} // Для вложенных расовых групп во Фракциях
       };
     }
 
     const cat = categories[item.category];
 
-    if (item.subCategory) {
-      if (!cat.subCategories[item.subCategory]) {
-        cat.subCategories[item.subCategory] = [];
+    if (item.faction) {
+      if (!cat.factions[item.faction]) {
+        cat.factions[item.faction] = [];
       }
-      cat.subCategories[item.subCategory].push(item);
+      cat.factions[item.faction].push(item);
     } else {
       cat.items.push(item);
     }
   });
 
-  // Строим HTML меню
   Object.keys(categories).forEach(catKey => {
     const cat = categories[catKey];
     const li = document.createElement('li');
     li.className = 'nav-item';
 
-    // Рендерим обычные элементы категории
+    // Рендерим обычные элементы (если есть)
     let htmlContent = cat.items.map(it => `
       <li class="nav-item">
         <a href="#${it.id}" class="nav-link" data-id="${it.id}">${it.title}</a>
       </li>
     `).join('');
 
-    // Рендерим подразделы (если они есть, как у Миссий)
-    const subCatKeys = Object.keys(cat.subCategories);
-    if (subCatKeys.length > 0) {
-      subCatKeys.forEach(subKey => {
-        const subItems = cat.subCategories[subKey];
+    // Рендерим вложенные группы (Фракции -> Гномы / Гоблины)
+    const factionKeys = Object.keys(cat.factions);
+    if (factionKeys.length > 0) {
+      factionKeys.forEach(facName => {
+        const facItems = cat.factions[facName];
         htmlContent += `
-          <li class="nav-item" style="margin-top: 6px;">
-            <button class="accordion-btn sub-accordion" aria-expanded="false" style="font-size: 0.9rem; padding: 6px 0;">
-              <span>${subKey}</span>
+          <li class="nav-item" style="margin-top: 4px;">
+            <button class="accordion-btn sub-accordion" aria-expanded="false" style="font-size: 0.92rem; padding: 6px 4px; color: var(--text-muted);">
+              <span>${facName}</span>
               <span class="accordion-icon">+</span>
             </button>
-            <ul class="sub-nav-list">
-              ${subItems.map(it => `
+            <ul class="sub-nav-list" style="background: rgba(0,0,0,0.15);">
+              ${facItems.map(it => `
                 <li class="nav-item">
                   <a href="#${it.id}" class="nav-link" data-id="${it.id}">${it.title}</a>
                 </li>
@@ -131,7 +126,6 @@ function buildSidebar() {
         ${htmlContent}
       </ul>
     `;
-
     sidebarMenu.appendChild(li);
   });
 
@@ -150,8 +144,7 @@ function updateActiveSidebarLink(activeId) {
         const parentBtn = parentSubmenu.previousElementSibling;
         if (parentBtn) {
           parentBtn.setAttribute('aria-expanded', 'true');
-          const icon = parentBtn.querySelector('.accordion-icon');
-          if (icon) icon.textContent = '−';
+          parentBtn.querySelector('.accordion-icon').textContent = '−';
         }
       }
     }
@@ -161,50 +154,67 @@ function updateActiveSidebarLink(activeId) {
 function initAccordions() {
   document.querySelectorAll('.accordion-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
-      e.stopPropagation(); // Чтобы клик не срабатывал дважды при вложенности
+      e.stopPropagation();
       const submenu = btn.nextElementSibling;
-      if (!submenu || !submenu.classList.contains('sub-nav-list')) return;
-      
+      if (!submenu) return;
       const isOpen = submenu.classList.toggle('open');
       btn.setAttribute('aria-expanded', isOpen);
-      const icon = btn.querySelector('.accordion-icon');
-      if (icon) icon.textContent = isOpen ? '−' : '+';
+      btn.querySelector('.accordion-icon').textContent = isOpen ? '−' : '+';
     });
   });
 }
 
-// --- 3. ГЛОБАЛЬНЫЙ ПОИСК ПО ВСЕЙ БАЗЕ ---
+// --- ГЛОБАЛЬНЫЙ ПОИСК ПО ВСЕЙ БАЗЕ ---
+// --- ГЛОБАЛЬНЫЙ ПОИСК ПО ВСЕЙ БАЗЕ ---
+// --- ГЛОБАЛЬНЫЙ ПОИСК ПО ВСЕЙ БАЗЕ ---
 function initGlobalSearch() {
   const input = document.getElementById('search-input');
   const dropdown = document.getElementById('search-results');
 
+  if (!input || !dropdown) return;
+
   input.addEventListener('input', (e) => {
     const q = e.target.value.toLowerCase().trim();
+
     if (!q) {
       dropdown.classList.add('hidden');
+      dropdown.innerHTML = '';
       return;
     }
 
+    if (!DATABASE || DATABASE.length === 0) return;
+
     const matches = DATABASE.filter(item => 
-      item.title.toLowerCase().includes(q) || 
+      (item.title && item.title.toLowerCase().includes(q)) || 
       (item.content && item.content.toLowerCase().includes(q)) ||
-      (item.description && item.description.toLowerCase().includes(q))
+      (item.description && item.description.toLowerCase().includes(q)) ||
+      (item.faction && item.faction.toLowerCase().includes(q))
     );
 
     if (matches.length === 0) {
-      dropdown.innerHTML = '<div class="search-item">Ничего не найдено</div>';
+      dropdown.innerHTML = '<div class="search-item" style="padding: 10px 16px; color: var(--text-muted);">Ничего не найдено</div>';
     } else {
       dropdown.innerHTML = matches.map(m => `
-        <div class="search-item" onclick="location.hash='${m.id}'; document.getElementById('search-input').value=''; document.getElementById('search-results').classList.add('hidden');">
-          <span>${m.title}</span>
-          <small style="color:var(--text-muted);">${m.categoryTitle}</small>
+        <div class="search-item" data-id="${m.id}" style="padding: 10px 16px; cursor: pointer; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--bg-panel);">
+          <span style="font-weight: 600; color: #fff;">${m.title}</span>
+          <small style="color: var(--accent); background: rgba(108,92,231,0.1); padding: 2px 6px; border-radius: 4px;">${m.categoryTitle || m.faction || m.category}</small>
         </div>
       `).join('');
+
+      dropdown.querySelectorAll('.search-item').forEach(el => {
+        el.addEventListener('click', () => {
+          const targetId = el.getAttribute('data-id');
+          window.location.hash = targetId;
+          input.value = '';
+          dropdown.classList.add('hidden');
+        });
+      });
     }
 
     dropdown.classList.remove('hidden');
   });
 
+  // Закрытие выпадающего списка при клике мимо поиска
   document.addEventListener('click', (e) => {
     if (!e.target.closest('.search-box')) {
       dropdown.classList.add('hidden');
@@ -212,7 +222,8 @@ function initGlobalSearch() {
   });
 }
 
-// --- 4. ПОДСВЕТКА ГЛОССАРИЯ ---
+  // 
+
 function highlightTerms() {
   const content = document.getElementById('app-content');
   if (!content) return;
@@ -260,10 +271,8 @@ function highlightTerms() {
   });
 }
 
-// ИНИЦИАЛИЗАЦИЯ
-document.addEventListener('DOMContentLoaded', () => {
-  buildSidebar();
-  initGlobalSearch();
-  router(); // Запускаем первичный рендеринг
-  window.addEventListener('hashchange', router); // Отслеживаем смену URL
-});
+// Запуск модуля
+buildSidebar();
+initGlobalSearch();
+router();
+window.addEventListener('hashchange', router);
