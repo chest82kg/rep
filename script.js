@@ -58,21 +58,32 @@ function renderWarCardTemplate(item) {
   `;
 }
 
-// --- 2. АВТОМАТИЧЕСКАЯ ГЕНЕРАЦИЯ МЕНЮ САКДБАРА ---
+// --- 2. АВТОМАТИЧЕСКАЯ ГЕНЕРАЦИЯ МЕНЮ С САЙДБАРОМ И ПОДРАЗДЕЛАМИ ---
 function buildSidebar() {
   const sidebarMenu = document.getElementById('sidebar-menu');
   sidebarMenu.innerHTML = '';
 
-  // Группируем элементы из DATABASE по категориям
+  // Группируем элементы из DATABASE по категориям и подкатегориям
   const categories = {};
   DATABASE.forEach(item => {
     if (!categories[item.category]) {
       categories[item.category] = {
         title: item.categoryTitle,
-        items: []
+        items: [],       // Для обычных элементов без подкатегорий
+        subCategories: {} // Для подразделов (например, в миссиях)
       };
     }
-    categories[item.category].items.push(item);
+
+    const cat = categories[item.category];
+
+    if (item.subCategory) {
+      if (!cat.subCategories[item.subCategory]) {
+        cat.subCategories[item.subCategory] = [];
+      }
+      cat.subCategories[item.subCategory].push(item);
+    } else {
+      cat.items.push(item);
+    }
   });
 
   // Строим HTML меню
@@ -81,17 +92,43 @@ function buildSidebar() {
     const li = document.createElement('li');
     li.className = 'nav-item';
 
+    // Рендерим обычные элементы категории
+    let htmlContent = cat.items.map(it => `
+      <li class="nav-item">
+        <a href="#${it.id}" class="nav-link" data-id="${it.id}">${it.title}</a>
+      </li>
+    `).join('');
+
+    // Рендерим подразделы (если они есть, как у Миссий)
+    const subCatKeys = Object.keys(cat.subCategories);
+    if (subCatKeys.length > 0) {
+      subCatKeys.forEach(subKey => {
+        const subItems = cat.subCategories[subKey];
+        htmlContent += `
+          <li class="nav-item" style="margin-top: 6px;">
+            <button class="accordion-btn sub-accordion" aria-expanded="false" style="font-size: 0.9rem; padding: 6px 0;">
+              <span>${subKey}</span>
+              <span class="accordion-icon">+</span>
+            </button>
+            <ul class="sub-nav-list">
+              ${subItems.map(it => `
+                <li class="nav-item">
+                  <a href="#${it.id}" class="nav-link" data-id="${it.id}">${it.title}</a>
+                </li>
+              `).join('')}
+            </ul>
+          </li>
+        `;
+      });
+    }
+
     li.innerHTML = `
       <button class="accordion-btn" aria-expanded="false">
         <span>${cat.title}</span>
         <span class="accordion-icon">+</span>
       </button>
       <ul class="sub-nav-list" id="cat-${catKey}">
-        ${cat.items.map(it => `
-          <li class="nav-item">
-            <a href="#${it.id}" class="nav-link" data-id="${it.id}">${it.title}</a>
-          </li>
-        `).join('')}
+        ${htmlContent}
       </ul>
     `;
 
@@ -123,11 +160,15 @@ function updateActiveSidebarLink(activeId) {
 
 function initAccordions() {
   document.querySelectorAll('.accordion-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation(); // Чтобы клик не срабатывал дважды при вложенности
       const submenu = btn.nextElementSibling;
+      if (!submenu || !submenu.classList.contains('sub-nav-list')) return;
+      
       const isOpen = submenu.classList.toggle('open');
       btn.setAttribute('aria-expanded', isOpen);
-      btn.querySelector('.accordion-icon').textContent = isOpen ? '−' : '+';
+      const icon = btn.querySelector('.accordion-icon');
+      if (icon) icon.textContent = isOpen ? '−' : '+';
     });
   });
 }
