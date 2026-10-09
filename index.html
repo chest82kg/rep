@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>База знаний игры</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="layout">
+    <!-- ЛЕВЫЙ САЙДБАР (Заполняется автоматически из базы данных) -->
+    <aside class="sidebar">
+      <h2>Разделы</h2>
+      <ul class="nav-list" id="sidebar-menu"></ul>
+    </aside>
+
+    <!-- ОСНОВНАЯ ОБЛАСТЬ -->
+    <main class="main-area">
+      <div class="search-box">
+        <input type="text" id="search-input" class="search-input" placeholder="Поиск по всей базе знаний…">
+        <div id="search-results" class="search-dropdown hidden"></div>
+      </div>
+
+      <!-- Контейнер для динамической подгрузки статей и карточек -->
+      <article class="kb-content" id="app-content"></article>
+    </main>
+  </div>
+
+  <!-- Сначала подключаем данные, затем логику -->
+  <script src="data.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
