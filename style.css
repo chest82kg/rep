@@ -428,3 +428,34 @@ body {
     break-inside: avoid;
   }
 }
+
+/* АДАПТИВНОСТЬ ДЛЯ ТЕЛЕФОНОВ И СМАРТФОНОВ */
+@media (max-width: 768px) {
+  /* Переводим макет из строки в колонку */
+  .layout { 
+    flex-direction: column !important; 
+    height: auto !important; 
+    overflow: auto !important;
+  }
+
+  /* Сайдбар становится наверх, но ограничиваем его высоту, чтобы он не занимал 80% экрана */
+  .sidebar { 
+    width: 100% !important; 
+    max-height: 250px !important; /* Ограничиваем высоту меню на мобилках */
+    border-right: none !important; 
+    border-bottom: 1px solid var(--border); 
+  }
+
+  /* Основная область с текстом получает комфортные отступы */
+  .main-area { 
+    padding: 16px !important; 
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  /* Карточки и контент подстраиваются под ширину экрана */
+  .search-box, 
+  .kb-content {
+    max-width: 100% !important;
+  }
+}
