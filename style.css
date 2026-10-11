@@ -61,7 +61,7 @@ body {
 }
 
 .accordion-btn:hover { 
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.03); 
   color: var(--accent); 
 }
 
@@ -260,10 +260,11 @@ body {
 .role-elite { background: #eccc68; color: #0b0b0f; }
 .role-hero  { background: #ff4757; color: #ffffff; }
 .aos-badge-ap { background: #6c5ce7; color: #fff; font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 6px; }
+.aos-badge-pts { background: #d1b384; color: #0b0b0f; font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 6px; }
 
 .aos-stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 2px;
   background: #2a2a3a;
   border-bottom: 2px solid #3a3a52;
@@ -272,6 +273,41 @@ body {
 .aos-stat-box { background: #12121a; padding: 10px 6px; text-align: center; }
 .aos-stat-label { font-size: 0.7rem; text-transform: uppercase; color: #a0a0b0; font-weight: 600; display: block; margin-bottom: 2px; }
 .aos-stat-value { font-size: 1.15rem; font-weight: 800; color: #d1b384; }
+
+.aos-weapons-section {
+  padding: 12px 20px;
+  border-bottom: 1px solid #3a3a52;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.aos-section-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #a0a0b0;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.aos-weapon-item {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+}
+
+.aos-weapon-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.aos-weapon-name { font-weight: 700; color: #fff; font-size: 0.9rem; }
+.aos-weapon-type { font-size: 0.8rem; color: var(--accent); font-style: italic; }
+.aos-weapon-stats { display: flex; flex-wrap: wrap; gap: 12px; font-size: 0.82rem; color: var(--text-muted); }
+.aos-weapon-stats strong { color: #fff; }
+.aos-tag { color: #d1b384; font-weight: 600; }
 
 .aos-body { padding: 18px 20px; }
 .aos-ability { background: rgba(255, 255, 255, 0.02); border-left: 3px solid #d1b384; padding: 10px 14px; margin-top: 10px; border-radius: 0 6px 6px 0; }
@@ -314,6 +350,11 @@ body {
 .builder-action-btn:hover { background: rgba(108, 92, 231, 0.2); }
 .builder-action-btn.primary { background: var(--accent); color: #fff; }
 .builder-action-btn.primary:hover { background: var(--accent-hover); }
+.builder-action-btn.large {
+  padding: 14px 24px !important;
+  font-size: 1.05rem !important;
+  border-radius: 10px !important;
+}
 
 /* Модальное окно */
 .builder-modal {
@@ -338,7 +379,15 @@ body {
 }
 .builder-modal-close:hover { color: #ff4757; }
 
-/* СКРЫТЫЙ ДОКУМЕНТ ДЛЯ ПЕЧАТИ */
+/* АДАПТИВНОСТЬ ДЛЯ ТЕЛЕФОНОВ */
+@media (max-width: 768px) {
+  .layout { flex-direction: column !important; height: auto !important; overflow: auto !important; }
+  .sidebar { width: 100% !important; max-height: 250px !important; border-right: none !important; border-bottom: 1px solid var(--border); }
+  .main-area { padding: 16px !important; overflow: visible !important; height: auto !important; }
+  .search-box, .kb-content { max-width: 100% !important; }
+}
+
+/* ЕДИНЫЙ И СТАБИЛЬНЫЙ БЛОК ДЛЯ ПЕЧАТИ */
 .printable-full-document { display: none; }
 
 @media print {
@@ -348,114 +397,91 @@ body {
     height: auto !important;
     overflow: visible !important;
   }
+  
   .layout, .sidebar, .search-box, .builder-container > .builder-card, .builder-modal {
     display: none !important;
   }
+  
   .printable-full-document {
     display: block !important;
     background: #ffffff !important;
     color: #000000 !important;
     width: 100% !important;
   }
-  .printable-full-document .aos-card {
-    background: #f8f9fa !important;
-    border: 1px solid #000 !important;
-    color: #000 !important;
-    page-break-inside: avoid;
-    margin: 16px 0 !important;
+
+  /* Защита карточки от разрывов */
+  .printable-full-document .aos-card,
+  .aos-card {
+    border: 2px solid #000 !important;
+    border-radius: 8px !important;
+    margin: 20px 0 !important;
+    padding: 16px !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    display: block !important;
+    background: #fdfdfd !important;
   }
+
+  /* Стабильная табличная сетка для одинаковой ширины статов (ХП, Движ, Броня) */
+  .printable-full-document .aos-stats-grid,
+  .aos-stats-grid {
+    display: table !important;
+    width: 100% !important;
+    table-layout: fixed !important;
+    background: #000 !important;
+    margin: 10px 0 !important;
+  }
+
+  .printable-full-document .aos-stat-box,
+  .aos-stat-box {
+    display: table-cell !important;
+    width: 33.33% !important;
+    background: #fff !important;
+    border: 1px solid #999 !important;
+    padding: 8px 4px !important;
+    text-align: center !important;
+  }
+
+  .printable-full-document .aos-stat-label,
+  .aos-stat-label {
+    font-size: 10px !important;
+    font-weight: bold !important;
+    text-transform: uppercase !important;
+    color: #333 !important;
+    display: block !important;
+    margin-bottom: 2px !important;
+  }
+
+  .printable-full-document .aos-stat-value,
+  .aos-stat-value {
+    font-size: 15px !important;
+    font-weight: bold !important;
+    color: #000 !important;
+    display: block !important;
+  }
+
+  .printable-full-document .aos-header {
+    background: #e9ecef !important;
+    border-bottom: 1px solid #000 !important;
+  }
+
   .printable-full-document .aos-title, 
   .printable-full-document .aos-stat-value, 
   .printable-full-document .aos-ability-title {
     color: #000 !important;
   }
 
-  /* Крупные кнопки управления Билдером */
-.builder-action-btn.large {
-  padding: 14px 24px !important;
-  font-size: 1.05rem !important;
-  border-radius: 10px !important;
-} 
-}
-
-/* ЖЕСТКИЕ ПРАВИЛА ДЛЯ ПЕЧАТИ (Исправление разрывов и слипания статов) */
-@media print {
-  /* Запрещаем разрыв карточки пополам */
-  .printable-full-document .aos-card {
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-    -webkit-column-break-inside: avoid !important;
+  .printable-full-document img {
+    max-width: 85% !important;
+    height: auto !important;
     display: block !important;
-    background: #ffffff !important;
-    border: 2px solid #000 !important;
-    margin: 20px 0 !important;
-  }
-
-  /* Заменяем Grid на стабильный Flex для характеристик при печати, чтобы появился отступ */
-  .printable-full-document .aos-stats-grid {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    background: #000 !important;
-    gap: 1px !important;
-  }
-
-  .printable-full-document .aos-stat-box {
-    flex: 1 1 20% !important;
-    background: #fff !important;
-    border: 1px solid #ccc !important;
-    padding: 6px 4px !important;
-    text-align: center !important;
-  }
-
-  /* Гарантируем отступ между лейблом и значением стата */
-  .printable-full-document .aos-stat-label {
-    font-size: 9px !important;
-    color: #333 !important;
-    margin-bottom: 2px !important;
-    display: block !important;
-  }
-
-  .printable-full-document .aos-stat-value {
-    font-size: 14px !important;
-    font-weight: bold !important;
-    color: #000 !important;
-    display: block !important;
-  }
-
-  /* Защита остальных элементов от разрывов */
-  h1, h2, h3, img, ul, li {
+    margin: 12px auto !important;
     page-break-inside: avoid;
     break-inside: avoid;
   }
-}
 
-/* АДАПТИВНОСТЬ ДЛЯ ТЕЛЕФОНОВ И СМАРТФОНОВ */
-@media (max-width: 768px) {
-  /* Переводим макет из строки в колонку */
-  .layout { 
-    flex-direction: column !important; 
-    height: auto !important; 
-    overflow: auto !important;
-  }
-
-  /* Сайдбар становится наверх, но ограничиваем его высоту, чтобы он не занимал 80% экрана */
-  .sidebar { 
-    width: 100% !important; 
-    max-height: 250px !important; /* Ограничиваем высоту меню на мобилках */
-    border-right: none !important; 
-    border-bottom: 1px solid var(--border); 
-  }
-
-  /* Основная область с текстом получает комфортные отступы */
-  .main-area { 
-    padding: 16px !important; 
-    overflow: visible !important;
-    height: auto !important;
-  }
-
-  /* Карточки и контент подстраиваются под ширину экрана */
-  .search-box, 
-  .kb-content {
-    max-width: 100% !important;
+  h1, h2, h3, ul, li {
+    page-break-inside: avoid;
+    break-inside: avoid;
   }
 }

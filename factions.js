@@ -15,27 +15,76 @@ export const FACTIONS_DATA = [
       <p>Любая модель гномов получает <strong>+1 к стату Броня</strong>, если находится на тайле Горы (любого уровня). Это складывается с другими бонусами к Броне.</p>
 
       <h3>Фракционный ОД — «Закалка»</h3>
-      <p>Гномий фракционный пул состоит из 4 ОД «Закалка» (у некоторых кланов больше). ОД применяется к приказу в момент активации модели и усиливает его:</p>
-      <ul>
-        <li><strong>Марш:</strong> +2 к Движению (один раз за активацию)</li>
-        <li><strong>Удар:</strong> +1 кубик к Урону</li>
-        <li><strong>Защита:</strong> +1 кубик к Броне</li>
-        <li><strong>Стойка:</strong> Модель может войти в клановую стойку, даже если уже провела действие в другой стойке в эту активацию</li>
-        <li><strong>Спешка:</strong> +1 кубик к Урону вместо одного из удвоенных действий</li>
-      </ul>
+      <p>Гномий фракционный пул состоит из 4 ОД «Закалка». ОД применяется к приказу в момент активации модели и усиливает его:</p>
+      
+      <table style="width:100%; border-collapse: collapse; margin: 16px 0; background: var(--bg-panel);">
+        <thead>
+          <tr style="border-bottom: 2px solid var(--border); text-align: left;">
+            <th style="padding: 8px;">Приказ</th>
+            <th style="padding: 8px;">Эффект «Закалки»</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom: 1px solid var(--border);">
+            <td style="padding: 8px;"><strong>Марш</strong></td>
+            <td style="padding: 8px;">+2 к Движению (один раз за активацию)</td>
+          </tr>
+          <tr style="border-bottom: 1px solid var(--border);">
+            <td style="padding: 8px;"><strong>Удар</strong></td>
+            <td style="padding: 8px;">+1 к Урону</td>
+          </tr>
+          <tr style="border-bottom: 1px solid var(--border);">
+            <td style="padding: 8px;"><strong>Защита</strong></td>
+            <td style="padding: 8px;">+1 к Броне</td>
+          </tr>
+          <tr style="border-bottom: 1px solid var(--border);">
+            <td style="padding: 8px;"><strong>Стойка</strong></td>
+            <td style="padding: 8px;">Модель может войти в клановую стойку, даже если уже провела действие в другой стойке в эту активацию</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px;"><strong>Спешка</strong></td>
+            <td style="padding: 8px;">+1 к Атаке вместо одного из удвоенных действий</td>
+          </tr>
+        </tbody>
+      </table>
+
       <p><em>Один приказ может получить только один жетон «Закалка» за активацию. Жетоны из пула не восстанавливаются — потраченные уходят до конца игры.</em></p>
 
       <h3>Фракционные территории</h3>
-      <p>Перед расстановкой моделей игрок выбирает от 1 до 3 фракционных территорий:</p>
-      <ul>
-        <li><strong>Кузница:</strong> Сопряжен с тайлом Горы. Все гномьи модели в радиусе 2 клеток получают +1 к Урону в ближнем бою.</li>
-        <li><strong>Рудник:</strong> Сопряжен с тайлом Горы. +2 фракционных ОД в свой пул.</li>
-        <li><strong>Зал Предков:</strong> Сопряжен с любым тайлом. Гномьи модели в радиусе 1 клетки получают +1 к Защите (стат, не кубики) — то есть успешный бросок защиты срабатывает на худшем результате кубика.</li>
-      </ul>
+      <p>Перед расстановкой моделей игрок выбирает от 1 до 3 фракционных территорий (в зависимости от договоренности или формата игры). Каждая размещается по правилам расстановки.</p>
+      
+      <table style="width:100%; border-collapse: collapse; margin: 16px 0; background: var(--bg-panel);">
+        <thead>
+          <tr style="border-bottom: 2px solid var(--border); text-align: left;">
+            <th style="padding: 8px;">Территория</th>
+            <th style="padding: 8px;">Размещение</th>
+            <th style="padding: 8px;">Эффект</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom: 1px solid var(--border);">
+            <td style="padding: 8px;"><strong>Кузница</strong></td>
+            <td style="padding: 8px;">Сопряжен с тайлом Горы</td>
+            <td style="padding: 8px;">Все гномьи модели в радиусе 2 клеток получают +1 к Урону в ближнем бою</td>
+          </tr>
+          <tr style="border-bottom: 1px solid var(--border);">
+            <td style="padding: 8px;"><strong>Рудник</strong></td>
+            <td style="padding: 8px;">Сопряжен с тайлом Горы</td>
+            <td style="padding: 8px;">+2 фракционных ОД в свой пул</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px;"><strong>Зал Предков</strong></td>
+            <td style="padding: 8px;">Сопряжен с любым тайлом</td>
+            <td style="padding: 8px;">Гномьи модели в радиусе 1 клетки получают +1 к Броне</td>
+          </tr>
+        </tbody>
+      </table>
     `
-  },
+  }, 
 
-  // --- КЛАН 1: ЖЕЛЕЗНАЯ КУЗНЯ ---
+   // ==========================================
+  // КЛАН 1: КЛАН ЖЕЛЕЗНОЙ КУЗНИ
+  // ==========================================
   {
     id: 'faction-dwarves-clan1',
     category: 'factions',
@@ -48,13 +97,13 @@ export const FACTIONS_DATA = [
       <p><strong>Стиль:</strong> непробиваемый строй, медленное продвижение, контроль территории. Вы строите стену из щитов, переставляете горы и не даёте противнику подойти.</p>
       
       <h3>Клановая способность — «Горный щит»</h3>
-      <p>Потратив фракционный ОД, модель Клана Железной Кузни на тайле Горы создаёт заслон — все союзные модели в радиусе 2 от этой модели получают +1 к Броне до конца раунда.</p>
+      <p>Потратив фракционный ОД, модель Клана Железной Кузни на тайле Горы создаёт заслон — все союзные модели в радиусе 2 от этой модели получают +1 к Броне до конца раунда. <em>Один раз за раунд.</em></p>
 
       <h3>Клановая стойка — «Горный панцирь»</h3>
       <p>Модель не может совершать действия «Перемещение» и «Натиск». В обмен:</p>
       <ul>
-        <li><strong>+2 к стату Броня</strong> (складывается с «Корнями горы» и «Блоком»).</li>
-        <li><strong>Отражение:</strong> за успешный бросок защиты (хотя бы 1 успех) модель наносит атакующему 1 урон (без броска брони атакующего — урон проходит автоматически). Работает только против атак ближнего боя.</li>
+        <li><strong>+2 к Броне</strong> (складывается с «Корнями горы» и «Блоком»).</li>
+        <li><strong>Отражение:</strong> Если моделью получен минимальный урон, то она наносит в ответ 1 урон (не поглощается броней). Работает только против атак ближнего боя. <em>Один раз за атаку.</em></li>
         <li>Модель остаётся в этой стойке до тех пор, пока не сменит её жетоном «Стойка» или не будет выведена из неё эффектом.</li>
       </ul>
       <p>В стойке «Горный панцирь» доступны действия: «Атака» (только по смежной цели), «Блок», «Контратака», «Глухая оборона».</p>
@@ -64,29 +113,37 @@ export const FACTIONS_DATA = [
 
       <h2>Состав клана</h2>
 
-      <h3>Базовые отряды (2 ОД)</h3>
+      <h3>Базовые отряды (3 кубика)</h3>
 
       <!-- 1. Железнобород-Воин -->
       <div class="aos-card">
         <div class="aos-header">
           <div class="aos-title-group"><span class="aos-title">Железнобород-Воин</span></div>
           <div class="aos-badges">
-            <span class="aos-badge-role role-basic">Базовый</span>
-            <span class="aos-badge-ap">2 ОД</span>
+            <span class="aos-badge-role role-basic">Базовый (3 куб.)</span>
+            <span class="aos-badge-pts">115 очков</span>
           </div>
         </div>
         <div class="aos-stats-grid">
-          <div class="aos-stat-box"><span class="aos-stat-label">Движ</span><span class="aos-stat-value">3</span></div>
-          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">4</span></div>
-          <div class="aos-stat-box"><span class="aos-stat-label">Попад</span><span class="aos-stat-value">4+</span></div>
-          <div class="aos-stat-box"><span class="aos-stat-label">Урон</span><span class="aos-stat-value">4</span></div>
-          <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">6</span></div>
-          <div class="aos-stat-box"><span class="aos-stat-label">Защита</span><span class="aos-stat-value">3+</span></div>
-          <div class="aos-stat-box"><span class="aos-stat-label">Дальн</span><span class="aos-stat-value">—</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">6</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">Движение</span><span class="aos-stat-value">3</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">3</span></div>
+        </div>
+        <div class="aos-weapons-section">
+          <div class="aos-section-title">Вооружение (выберите один вариант)</div>
+          <div class="aos-weapon-item" data-weapon-option="1">
+            <div class="aos-weapon-header"><span class="aos-weapon-name">Железный топор</span><span class="aos-weapon-type">Ближний бой</span></div>
+            <div class="aos-weapon-stats"><span>Порог: <strong>3+</strong></span><span>Урон: <strong>3</strong></span><span>Теги: <em>нет</em></span></div>
+          </div>
+          <div style="text-align: center; font-weight: bold; color: var(--accent); margin: 6px 0; font-size: 0.9rem;">— ИЛИ —</div>
+          <div class="aos-weapon-item" data-weapon-option="2">
+            <div class="aos-weapon-header"><span class="aos-weapon-name">Чекан</span><span class="aos-weapon-type">Ближний бой</span></div>
+            <div class="aos-weapon-stats"><span>Порог: <strong>4+</strong></span><span>Урон: <strong>4</strong></span><span>Теги: <span class="aos-tag">[Пробой 1]</span></span></div>
+          </div>
         </div>
         <div class="aos-body">
           <div class="aos-ability">
-            <div class="aos-ability-title">Отражение стрел</div>
+            <div class="aos-ability-title">Особое</div>
             <div class="aos-ability-text">В стойке «Горный панцирь» отражение урона работает даже при стрелковой атаке — отражается 1 урон за успешный бросок защиты.</div>
           </div>
         </div>
@@ -97,51 +154,67 @@ export const FACTIONS_DATA = [
         <div class="aos-header">
           <div class="aos-title-group"><span class="aos-title">Железнобород-Арбалетчик</span></div>
           <div class="aos-badges">
-            <span class="aos-badge-role role-basic">Базовый</span>
-            <span class="aos-badge-ap">2 ОД</span>
+            <span class="aos-badge-role role-basic">Базовый (3 куб.)</span>
+            <span class="aos-badge-pts">95 очков</span>
           </div>
         </div>
         <div class="aos-stats-grid">
-          <div class="aos-stat-box"><span class="aos-stat-label">Движ</span><span class="aos-stat-value">3</span></div>
-          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">4</span></div>
-          <div class="aos-stat-box"><span class="aos-stat-label">Попад</span><span class="aos-stat-value">4+</span></div>
-          <div class="aos-stat-box"><span class="aos-stat-label">Урон</span><span class="aos-stat-value">3</span></div>
-          <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">5</span></div>
-          <div class="aos-stat-box"><span class="aos-stat-label">Защита</span><span class="aos-stat-value">3+</span></div>
-          <div class="aos-stat-box"><span class="aos-stat-label">Дальн</span><span class="aos-stat-value">4</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">5</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">Движение</span><span class="aos-stat-value">3</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">2</span></div>
+        </div>
+        <div class="aos-weapons-section">
+          <div class="aos-section-title">Вооружение (выберите один вариант)</div>
+          <div class="aos-weapon-item" data-weapon-option="1">
+            <div class="aos-weapon-header"><span class="aos-weapon-name">Горный арбалет</span><span class="aos-weapon-type">Дальний бой (Дальность 4)</span></div>
+            <div class="aos-weapon-stats"><span>Порог: <strong>3+</strong></span><span>Урон: <strong>3</strong></span><span>Теги: <em>нет</em></span></div>
+          </div>
+          <div style="text-align: center; font-weight: bold; color: var(--accent); margin: 6px 0; font-size: 0.9rem;">— ИЛИ —</div>
+          <div class="aos-weapon-item" data-weapon-option="2">
+            <div class="aos-weapon-header"><span class="aos-weapon-name">Шрапнельный самострел</span><span class="aos-weapon-type">Дальний бой (Дальность 3)</span></div>
+            <div class="aos-weapon-stats"><span>Порог: <strong>4+</strong></span><span>Урон: <strong>2</strong></span><span>Теги: <span class="aos-tag">[Залп]</span></span></div>
+          </div>
         </div>
         <div class="aos-body">
           <div class="aos-ability">
-            <div class="aos-ability-title">Зоркий глаз</div>
+            <div class="aos-ability-title">Особое: Зоркий глаз</div>
             <div class="aos-ability-text">Действие «Атака», совершённое с тайла Горы или фракционного террейна, даёт +1 к попаданию на дальнобойную атаку.</div>
           </div>
         </div>
       </div>
 
-      <h3>Элитные отряды (3 ОД)</h3>
+      <h3>Элитные отряды (4 кубика)</h3>
 
-      <!-- 3. Железнобород - Скакун (ближний) -->
+      <!-- 3. Железнобород-Скакун (Ближний бой) -->
       <div class="aos-card">
         <div class="aos-header">
-          <div class="aos-title-group"><span class="aos-title">Железнобород - Скакун (ближний)</span></div>
+          <div class="aos-title-group"><span class="aos-title">Железнобород-Скакун (Ближний бой)</span></div>
           <div class="aos-badges">
-            <span class="aos-badge-role role-elite">Элита</span>
-            <span class="aos-badge-ap">3 ОД</span>
+            <span class="aos-badge-role role-elite">Элита (4 куб.)</span>
+            <span class="aos-badge-pts">200 очков</span>
           </div>
         </div>
         <div class="aos-stats-grid">
-          <div class="aos-stat-box"><span class="aos-stat-label">Движ</span><span class="aos-stat-value">4</span></div>
-          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">5</span></div>
-          <div class="aos-stat-box"><span class="aos-stat-label">Попад</span><span class="aos-stat-value">3+</span></div>
-          <div class="aos-stat-box"><span class="aos-stat-label">Урон</span><span class="aos-stat-value">5</span></div>
-          <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">6</span></div>
-          <div class="aos-stat-box"><span class="aos-stat-label">Защита</span><span class="aos-stat-value">3+</span></div>
-          <div class="aos-stat-box"><span class="aos-stat-label">Дальн</span><span class="aos-stat-value">—</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">8</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">Движение</span><span class="aos-stat-value">4</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">3</span></div>
+        </div>
+        <div class="aos-weapons-section">
+          <div class="aos-section-title">Вооружение (выберите один вариант)</div>
+          <div class="aos-weapon-item" data-weapon-option="1">
+            <div class="aos-weapon-header"><span class="aos-weapon-name">Рунический клевец</span><span class="aos-weapon-type">Ближний бой</span></div>
+            <div class="aos-weapon-stats"><span>Порог: <strong>2+</strong></span><span>Урон: <strong>4</strong></span><span>Теги: <span class="aos-tag">[Пробой 2]</span></span></div>
+          </div>
+          <div style="text-align: center; font-weight: bold; color: var(--accent); margin: 6px 0; font-size: 0.9rem;">— ИЛИ —</div>
+          <div class="aos-weapon-item" data-weapon-option="2">
+            <div class="aos-weapon-header"><span class="aos-weapon-name">Двуручный молот</span><span class="aos-weapon-type">Ближний бой</span></div>
+            <div class="aos-weapon-stats"><span>Порог: <strong>4+</strong></span><span>Урон: <strong>6</strong></span><span>Теги: <span class="aos-tag">[Тяжелое]</span></span></div>
+          </div>
         </div>
         <div class="aos-body">
           <div class="aos-ability">
-            <div class="aos-ability-title">Пробой брони (1 ОД)</div>
-            <div class="aos-ability-text">Каждый бросок 6 на атаку игнорирует одну успешную защиту врага — то есть один поглощённый урон возвращается и проходит сквозь броню. Если враг не поглотил ничего — эффект не срабатывает. Доступно в любой стойке.</div>
+            <div class="aos-ability-title">Особое: Пробой брони (1 ОД)</div>
+            <div class="aos-ability-text">Каждый бросок 6 на атаку игнорирует 2 Брони. Доступно в любой стойке.</div>
           </div>
         </div>
       </div>
@@ -151,51 +224,69 @@ export const FACTIONS_DATA = [
         <div class="aos-header">
           <div class="aos-title-group"><span class="aos-title">Железнобород-Скакун (Дальний)</span></div>
           <div class="aos-badges">
-            <span class="aos-badge-role role-elite">Элита</span>
-            <span class="aos-badge-ap">3 ОД</span>
+            <span class="aos-badge-role role-elite">Элита (4 куб.)</span>
+            <span class="aos-badge-pts">185 очков</span>
           </div>
         </div>
         <div class="aos-stats-grid">
-          <div class="aos-stat-box"><span class="aos-stat-label">Движ</span><span class="aos-stat-value">4</span></div>
-          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">5</span></div>
-          <div class="aos-stat-box"><span class="aos-stat-label">Попад</span><span class="aos-stat-value">3+</span></div>
-          <div class="aos-stat-box"><span class="aos-stat-label">Урон</span><span class="aos-stat-value">5</span></div>
-          <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">6</span></div>
-          <div class="aos-stat-box"><span class="aos-stat-label">Защита</span><span class="aos-stat-value">3+</span></div>
-          <div class="aos-stat-box"><span class="aos-stat-label">Дальн</span><span class="aos-stat-value">3</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">8</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">Движение</span><span class="aos-stat-value">4</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">2</span></div>
+        </div>
+        <div class="aos-weapons-section">
+          <div class="aos-section-title">Вооружение</div>
+          <div class="aos-weapon-item">
+            <div class="aos-weapon-header">
+              <span class="aos-weapon-name">Тяжелый горный штуцер</span>
+              <span class="aos-weapon-type">Дальний бой (Дальность 3)</span>
+            </div>
+            <div class="aos-weapon-stats">
+              <span>Порог: <strong>3+</strong></span>
+              <span>Урон: <strong>4</strong></span>
+              <span>Теги: <span class="aos-tag">[Пробой 1]</span></span>
+            </div>
+          </div>
         </div>
         <div class="aos-body">
           <div class="aos-ability">
-            <div class="aos-ability-title">Горная Охота (2 ОД)</div>
+            <div class="aos-ability-title">Особое: Горная Охота (2 ОД)</div>
             <div class="aos-ability-text">Действие «Рывок», после него модель может провести одну бесплатную «Атаку» по ближайшей вражеской модели. Доступно только в стойке «Клановая».</div>
           </div>
         </div>
       </div>
 
-      <h3>Герои (4 ОД)</h3>
+      <h3>Герои (5 кубиков)</h3>
 
       <!-- 5. Гримир Железнорукий Молотобоец -->
       <div class="aos-card">
         <div class="aos-header">
           <div class="aos-title-group"><span class="aos-title">Гримир Железнорукий Молотобоец</span></div>
           <div class="aos-badges">
-            <span class="aos-badge-role role-hero">Герой</span>
-            <span class="aos-badge-ap">4 ОД</span>
+            <span class="aos-badge-role role-hero">Герой (5 куб.)</span>
+            <span class="aos-badge-pts">330 очков</span>
           </div>
         </div>
         <div class="aos-stats-grid">
-          <div class="aos-stat-box"><span class="aos-stat-label">Движ</span><span class="aos-stat-value">2</span></div>
-          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">6</span></div>
-          <div class="aos-stat-box"><span class="aos-stat-label">Попад</span><span class="aos-stat-value">2+</span></div>
-          <div class="aos-stat-box"><span class="aos-stat-label">Урон</span><span class="aos-stat-value">7</span></div>
-          <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">8</span></div>
-          <div class="aos-stat-box"><span class="aos-stat-label">Защита</span><span class="aos-stat-value">2+</span></div>
-          <div class="aos-stat-box"><span class="aos-stat-label">Дальн</span><span class="aos-stat-value">—</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">14</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">Движение</span><span class="aos-stat-value">3</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">4</span></div>
+        </div>
+        <div class="aos-weapons-section">
+          <div class="aos-section-title">Вооружение (выберите один вариант)</div>
+          <div class="aos-weapon-item" data-weapon-option="1">
+            <div class="aos-weapon-header"><span class="aos-weapon-name">Молот Предков</span><span class="aos-weapon-type">Ближний бой</span></div>
+            <div class="aos-weapon-stats"><span>Порог: <strong>2+</strong></span><span>Урон: <strong>5</strong></span><span>Теги: <span class="aos-tag">[Пробой 2]</span></span></div>
+          </div>
+          <div style="text-align: center; font-weight: bold; color: var(--accent); margin: 6px 0; font-size: 0.9rem;">— ИЛИ —</div>
+          <div class="aos-weapon-item" data-weapon-option="2">
+            <div class="aos-weapon-header"><span class="aos-weapon-name">Руническая булава</span><span class="aos-weapon-type">Ближний бой</span></div>
+            <div class="aos-weapon-stats"><span>Порог: <strong>3+</strong></span><span>Урон: <strong>6</strong></span><span>Теги: <span class="aos-tag">[Тяжелое]</span></span></div>
+          </div>
         </div>
         <div class="aos-body">
           <div class="aos-ability">
-            <div class="aos-ability-title">«Не отступим!» (Аура 3 клетки)</div>
-            <div class="aos-ability-text">Все гномьи модели в ауре не могут быть отброшены эффектами «Прорыв», «Таран» и подобными, а также получают +1 к стату Защита. Аура действует постоянно, пока Гримир на поле, и не требует траты ОД.</div>
+            <div class="aos-ability-title">Особое: «Не отступим!» (Аура 3 клетки)</div>
+            <div class="aos-ability-text">Все гномьи модели в ауре не могут быть отброшены эффектами «Прорыв», «Таран» и получают +1 к Броне. Аура действует постоянно, пока Гримир на поле.</div>
           </div>
         </div>
       </div>
@@ -205,28 +296,39 @@ export const FACTIONS_DATA = [
         <div class="aos-header">
           <div class="aos-title-group"><span class="aos-title">Вельга Рунный Чтец</span></div>
           <div class="aos-badges">
-            <span class="aos-badge-role role-hero">Герой</span>
-            <span class="aos-badge-ap">4 ОД</span>
+            <span class="aos-badge-role role-hero">Герой (5 куб.)</span>
+            <span class="aos-badge-pts">290 очков</span>
           </div>
         </div>
         <div class="aos-stats-grid">
-          <div class="aos-stat-box"><span class="aos-stat-label">Движ</span><span class="aos-stat-value">3</span></div>
-          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">5</span></div>
-          <div class="aos-stat-box"><span class="aos-stat-label">Попад</span><span class="aos-stat-value">4+</span></div>
-          <div class="aos-stat-box"><span class="aos-stat-label">Урон</span><span class="aos-stat-value">5</span></div>
-          <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">5</span></div>
-          <div class="aos-stat-box"><span class="aos-stat-label">Защита</span><span class="aos-stat-value">3+</span></div>
-          <div class="aos-stat-box"><span class="aos-stat-label">Дальн</span><span class="aos-stat-value">3</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">10</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">Движение</span><span class="aos-stat-value">3</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">3</span></div>
+        </div>
+        <div class="aos-weapons-section">
+          <div class="aos-section-title">Вооружение</div>
+          <div class="aos-weapon-item">
+            <div class="aos-weapon-header">
+              <span class="aos-weapon-name">Посох Рун</span>
+              <span class="aos-weapon-type">Дальний бой (Дальность 3)</span>
+            </div>
+            <div class="aos-weapon-stats">
+              <span>Порог: <strong>3+</strong></span>
+              <span>Урон: <strong>3</strong></span>
+              <span>Теги: <em>нет</em></span>
+            </div>
+          </div>
         </div>
         <div class="aos-body">
           <div class="aos-ability">
-            <div class="aos-ability-title">Каменный взгляд (2 ОД)</div>
+            <div class="aos-ability-title">Особое действие: «Каменный взгляд» (2 ОД)</div>
             <div class="aos-ability-text">Вельга выбирает одну вражескую модель в радиусе 4. Модель получает «Окаменение» до конца раунда: −2 к Движению, −1 к Попаданию, не может входить в стойки.</div>
           </div>
         </div>
       </div>
     `
   },
+
 
  // --- КЛАН 2: ГЛУБОКИЕ ТРОПЫ ---
   {

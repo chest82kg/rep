@@ -170,7 +170,7 @@ function initBuilderEvents() {
     });
   }
 
-  // Кнопка 2: Карточки армии (сводный подсчет + уникальные датакарты)
+  // Кнопка 2: Карточки армии
   const btnArmy = document.getElementById('btn-show-army');
   if (btnArmy) {
     btnArmy.addEventListener('click', () => {
@@ -187,12 +187,12 @@ function initBuilderEvents() {
 
       const counts = {};
       roster.units.forEach(u => {
-        counts[u.title] = (counts[u.title] || 0) + 1;
+        counts[u.uniqueKey] = (counts[u.uniqueKey] || 0) + 1;
       });
 
       const uniqueCardsMap = new Map();
       roster.units.forEach(u => {
-        if (!uniqueCardsMap.has(u.title)) uniqueCardsMap.set(u.title, u.html);
+        if (!uniqueCardsMap.has(u.uniqueKey)) uniqueCardsMap.set(u.uniqueKey, u.html);
       });
       const uniqueCardsHTML = Array.from(uniqueCardsMap.values());
 
@@ -211,7 +211,7 @@ function initBuilderEvents() {
         <h3 style="margin-top:24px; color:var(--accent);">Сводный состав армии (${roster.units.length} моделей):</h3>
         ${roster.units.length === 0 ? '<p style="color:var(--text-muted);">Юниты не добавлены.</p>' : `
           <ul style="padding-left:20px; margin-top:8px; margin-bottom:20px;">
-            ${Object.keys(counts).map(title => `<li><strong>${title}</strong> — ${counts[title]} шт.</li>`).join('')}
+            ${Object.keys(counts).map(key => `<li><strong>${key}</strong> — ${counts[key]} шт.</li>`).join('')}
           </ul>
         `}
 
@@ -226,7 +226,7 @@ function initBuilderEvents() {
     });
   }
 
-  // Кнопка 3: Скачать в PDF / Печать
+  // Кнопка 3: Печать (с красивым форматированием статов в строку без слипания)
   const btnPdf = document.getElementById('btn-export-pdf');
   if (btnPdf) {
     btnPdf.addEventListener('click', () => {
@@ -240,20 +240,11 @@ function initBuilderEvents() {
           .split(/Состав клана/i)[0];
       }
 
-      let formattedBattleplanHTML = '';
-      if (selectedBattleplan) {
-        formattedBattleplanHTML = selectedBattleplan.content
-          .replace(/<h3>Основное игровое поле<\/h3>/g, '<div class="map-page-break"></div><h3>Основное игровое поле</h3>')
-          .replace(/<h3>Расстановка Атакующего и Защищающегося<\/h3>/g, '<div class="map-page-break"></div><h3>Расстановка Атакующего и Защищающегося</h3>')
-          .replace(/<h3>Эвакуация<\/h3>/g, '<div class="map-page-break"></div><h3>Эвакуация</h3>')
-          .replace(/<h3>Тайлы и подсказки<\/h3>/g, '<div class="map-page-break"></div><h3>Тайлы и подсказки</h3>');
-      }
-
       const counts = {};
-      roster.units.forEach(u => { counts[u.title] = (counts[u.title] || 0) + 1; });
+      roster.units.forEach(u => { counts[u.uniqueKey] = (counts[u.uniqueKey] || 0) + 1; });
 
       const uniqueCardsMap = new Map();
-      roster.units.forEach(u => { if (!uniqueCardsMap.has(u.title)) uniqueCardsMap.set(u.title, u.html); });
+      roster.units.forEach(u => { if (!uniqueCardsMap.has(u.uniqueKey)) uniqueCardsMap.set(u.uniqueKey, u.html); });
       const uniqueCardsHTML = Array.from(uniqueCardsMap.values());
 
       const printHTML = `
@@ -263,105 +254,27 @@ function initBuilderEvents() {
           <meta charset="UTF-8">
           <title>${roster.name || 'Боевой Ростер'}</title>
           <style>
-            body { 
-              font-family: Arial, sans-serif; 
-              color: #000; 
-              background: #fff; 
-              padding: 24px; 
-              line-height: 1.6; 
-            }
-            h1 { 
-              font-size: 26px; 
-              text-align: center; 
-              border-bottom: 2px solid #000; 
-              padding-bottom: 8px; 
-              margin-bottom: 20px; 
-            }
-            h2 { 
-              font-size: 20px; 
-              margin-top: 10px; 
-              border-bottom: 1px solid #000; 
-              padding-bottom: 6px; 
-              page-break-after: avoid;
-              break-after: avoid;
-            }
-            h3 { 
-              font-size: 16px;
-              margin-top: 16px;
-              page-break-after: avoid;
-              break-after: avoid;
-            }
-            p { margin-bottom: 10px; }
-            ul, ol { padding-left: 24px; margin-bottom: 12px; }
-            li { margin-bottom: 6px; }
-
-            .page-break {
-              page-break-before: always;
-              break-before: page;
-              padding-top: 10px;
-            }
-
-            .map-page-break {
-              page-break-before: always;
-              break-before: page;
-            }
-
-            /* Защита датакарт от разрывов пополам */
-            .aos-card { 
-              border: 1px solid #000; 
-              border-radius: 8px; 
-              margin: 16px 0; 
-              padding: 16px; 
-              page-break-inside: avoid !important; 
-              break-inside: avoid !important;
-              -webkit-column-break-inside: avoid;
-              display: block;
-              background: #f9f9f9; 
-            }
-            .aos-header { 
-              display: flex; 
-              justify-content: space-between; 
-              font-weight: bold; 
-              font-size: 16px; 
-              border-bottom: 1px solid #000; 
-              padding-bottom: 8px; 
-              margin-bottom: 8px; 
-            }
-            .aos-stats-grid { 
-              display: flex; 
-              gap: 10px; 
-              margin: 8px 0; 
-              font-size: 14px; 
-            }
-            .aos-stat-box { 
-              border: 1px solid #ccc; 
-              padding: 4px 8px; 
-              text-align: center; 
-              background: #fff; 
-            }
-            .aos-ability { 
-              margin-top: 8px; 
-              font-size: 13px; 
-            }
-
-            img { 
-              max-width: 85%; 
-              max-height: 70vh;
-              height: auto; 
-              display: block;
-              margin: 12px auto;
-              border: 1px solid #333;
-              border-radius: 6px;
-              page-break-inside: avoid; 
-              break-inside: avoid;
-            }
+            body { font-family: Arial, sans-serif; color: #000; background: #fff; padding: 24px; line-height: 1.5; }
+            h1 { font-size: 26px; text-align: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 20px; }
+            h2 { font-size: 18px; margin-top: 24px; border-bottom: 1px solid #000; padding-bottom: 4px; page-break-after: avoid; }
+            ul { padding-left: 20px; } li { margin-bottom: 6px; }
+            .page-break { page-break-before: always; break-before: page; padding-top: 10px; }
+            
+            /* Печатные датакарты с исправленными отступами для статов */
+            .aos-card { border: 1px solid #000; border-radius: 8px; margin: 16px 0; padding: 16px; page-break-inside: avoid !important; background: #fdfdfd; }
+            .aos-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 16px; border-bottom: 1px solid #000; padding-bottom: 8px; margin-bottom: 8px; }
+            .aos-stats-grid { display: flex !important; gap: 15px !important; margin: 10px 0 !important; font-size: 14px !important; }
+            .aos-stat-box { border: 1px solid #999 !important; padding: 6px 12px !important; text-align: center !important; background: #fff !important; }
+            .aos-stat-label { font-size: 10px !important; font-weight: bold; text-transform: uppercase; display: block; }
+            .aos-stat-value { font-size: 15px !important; font-weight: bold; display: block; margin-top: 2px; }
+            .aos-weapon-item { border: 1px solid #ccc; padding: 6px 10px; margin-bottom: 4px; border-radius: 4px; background: #fff; }
+            .aos-ability { margin-top: 8px; font-size: 13px; }
+            img { max-width: 85%; height: auto; display: block; margin: 12px auto; page-break-inside: avoid; }
           </style>
         </head>
         <body>
-          <!-- СТРАНИЦА 1: Шапка, Ставки и Сводка армии -->
           <h1>${roster.name || 'Боевой Ростер'}</h1>
           <p><strong>Клан армии:</strong> ${roster.clan || 'Не выбран'}</p>
-
           <h2>Выбранные Ставки:</h2>
           <ul>
             ${roster.selectedStakes.map(id => {
@@ -369,39 +282,21 @@ function initBuilderEvents() {
               return st ? `<li><strong>${st.name} [${st.cost} МИ]:</strong> ${st.desc}</li>` : '';
             }).join('')}
           </ul>
-
-          <h2 style="margin-top: 24px;">Сводный состав армии (${roster.units.length} моделей):</h2>
+          <h2>Сводный состав армии (${roster.units.length} моделей):</h2>
           <ul>
-            ${Object.keys(counts).map(name => `<li><strong>${name}</strong> — ${counts[name]} шт.</li>`).join('')}
+            ${Object.keys(counts).map(key => `<li><strong>${key}</strong> — ${counts[key]} шт.</li>`).join('')}
           </ul>
 
-          <!-- СТРАНИЦА 2: Правила клана -->
-          ${cleanClanContent ? `
-            <div class="page-break"></div>
-            <h2>Правила и способности клана</h2>
-            <div>${cleanClanContent}</div>
-          ` : ''}
+          ${cleanClanContent ? `<div class="page-break"></div><h2>Правила и способности клана</h2><div>${cleanClanContent}</div>` : ''}
+          ${selectedBattleplan ? `<div class="page-break"></div><h2>Сценарий: ${selectedBattleplan.title}</h2><div>${selectedBattleplan.content}</div>` : ''}
 
-          <!-- СТРАНИЦА 3: Сценарий и карты -->
-          ${selectedBattleplan ? `
-            <div class="page-break"></div>
-            <h2>Сценарий: ${selectedBattleplan.title}</h2>
-            <div>${formattedBattleplanHTML}</div>
-          ` : ''}
-
-          <!-- СТРАНИЦА 4: Уникальные датакарты отрядов -->
           <div class="page-break"></div>
           <h2>Датакарты отрядов армии:</h2>
           <div style="display:flex; flex-direction:column; gap:16px; margin-top:12px;">
             ${uniqueCardsHTML.join('')}
           </div>
 
-          <script>
-            window.onload = function() {
-              window.print();
-              window.close();
-            };
-          </script>
+          <script>window.onload = function() { window.print(); window.close(); };</script>
         </body>
         </html>
       `;
@@ -486,17 +381,37 @@ function updateAvailableUnits() {
   cards.forEach((card, index) => {
     const title = card.querySelector('.aos-title')?.textContent || 'Отряд';
     const role = card.querySelector('.aos-badge-role')?.textContent || 'Базовый';
-    const ap = card.querySelector('.aos-badge-ap')?.textContent || '2 ОД';
-
-    unitsHTML += `
-      <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); border: 1px solid var(--border); padding: 10px 14px; border-radius: 8px;">
-        <div>
-          <strong style="color:#fff;">${title}</strong> 
-          <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 8px;">[${role} • ${ap}]</span>
+    const pts = card.querySelector('.aos-badge-pts')?.textContent || '';
+    
+    const weaponItems = card.querySelectorAll('.aos-weapon-item');
+    
+    if (weaponItems.length > 1) {
+      unitsHTML += `
+        <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border); padding: 12px 14px; border-radius: 8px; display: flex; flex-direction: column; gap: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <strong style="color:#fff;">${title}</strong> 
+            <span style="font-size: 0.8rem; color: var(--accent);">[${role} • ${pts}]</span>
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <select id="weapon-select-${index}" class="search-input" style="padding: 6px 10px; font-size: 0.85rem;">
+              <option value="1">${weaponItems[0].querySelector('.aos-weapon-name').textContent}</option>
+              <option value="2">${weaponItems[1].querySelector('.aos-weapon-name').textContent}</option>
+            </select>
+            <button class="accordion-btn" onclick="window.addChoiceUnitToRoster(${index})" style="background: var(--accent); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; width: auto; white-space: nowrap;">+ В армию</button>
+          </div>
         </div>
-        <button class="accordion-btn" onclick="window.addUnitToRoster('${index}')" style="background: var(--accent); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; width: auto;">+ В армию</button>
-      </div>
-    `;
+      `;
+    } else {
+      unitsHTML += `
+        <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); border: 1px solid var(--border); padding: 10px 14px; border-radius: 8px;">
+          <div>
+            <strong style="color:#fff;">${title}</strong> 
+            <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 8px;">[${role} • ${pts}]</span>
+          </div>
+          <button class="accordion-btn" onclick="window.addUnitToRoster('${index}')" style="background: var(--accent); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; width: auto;">+ В армию</button>
+        </div>
+      `;
+    }
   });
   unitsHTML += '</div>';
 
@@ -508,10 +423,52 @@ function updateAvailableUnits() {
   }));
 }
 
+window.addChoiceUnitToRoster = function(cardIndex) {
+  const cardData = window.currentClanCards[cardIndex];
+  const selectElem = document.getElementById(`weapon-select-${cardIndex}`);
+  if (!cardData || !selectElem) return;
+
+  const chosenOption = selectElem.value; // "1" или "2"
+  const tempContainer = document.createElement('div');
+  tempContainer.innerHTML = cardData.html;
+  
+  const weapons = tempContainer.querySelectorAll('.aos-weapon-item');
+  if (weapons.length >= 2) {
+    if (chosenOption === "1") {
+      weapons[1].remove();
+    } else {
+      weapons[0].remove();
+    }
+    const divider = tempContainer.querySelector('div[style*="--accent"]');
+    if (divider) divider.remove();
+  }
+
+  // Убираем фразу "(выберите один вариант)" из шапки секции вооружения, если она там осталась
+  const sectionTitle = tempContainer.querySelector('.aos-section-title');
+  if (sectionTitle) {
+    sectionTitle.textContent = 'Вооружение';
+  }
+
+  // Уникальный ключ для карточки с учетом выбранного оружия
+  const weaponName = tempContainer.querySelector('.aos-weapon-name')?.textContent || '';
+  const uniqueKey = `${cardData.title} (${weaponName})`;
+
+  roster.units.push({
+    title: cardData.title,
+    uniqueKey: uniqueKey,
+    html: tempContainer.innerHTML
+  });
+  renderRosterSummary();
+};
+
 window.addUnitToRoster = function(cardIndex) {
   const cardData = window.currentClanCards[cardIndex];
   if (cardData) {
-    roster.units.push(cardData);
+    roster.units.push({
+      title: cardData.title,
+      uniqueKey: cardData.title,
+      html: cardData.html
+    });
     renderRosterSummary();
   }
 };
