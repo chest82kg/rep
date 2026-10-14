@@ -1,0 +1,145 @@
+/* ДАТАКАРТЫ ВАРГЕЙМА (AoS) */
+.aos-card {
+  background: radial-gradient(circle at top, #1a1a26, #0e0e14);
+  border: 2px solid #3a3a52;
+  border-radius: 12px;
+  max-width: 100%;
+  margin: 24px 0;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+  overflow: visible;
+  position: relative;
+}
+
+/* Чтобы border-radius не «слетал» с дочерних блоков — вернём скругление вручную */
+.aos-card > .aos-header:first-child {
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+}
+.aos-card > .aos-body:last-child {
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+}
+.aos-card > .aos-weapons-section:last-child {
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+}
+
+.aos-header {
+  background: linear-gradient(135deg, #252538, #151522);
+  padding: 14px 20px;
+  border-bottom: 2px solid #3a3a52;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.aos-title { font-size: 1.3rem; font-weight: 700; color: #f1f2f6; }
+.aos-badges { display: flex; gap: 8px; }
+.aos-badge-role { font-size: 0.75rem; text-transform: uppercase; font-weight: 700; padding: 4px 10px; border-radius: 6px; }
+.role-basic { background: #2ed573; color: #0b0b0f; }
+.role-elite { background: #eccc68; color: #0b0b0f; }
+.role-hero  { background: #ff4757; color: #ffffff; }
+.aos-badge-ap { background: #6c5ce7; color: #fff; font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 6px; }
+.aos-badge-pts { background: #d1b384; color: #0b0b0f; font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 6px; }
+
+.aos-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  background: #2a2a3a;
+  border-bottom: 2px solid #3a3a52;
+}
+
+.aos-stat-box { background: #12121a; padding: 10px 6px; text-align: center; }
+.aos-stat-label { font-size: 0.7rem; text-transform: uppercase; color: #a0a0b0; font-weight: 600; display: block; margin-bottom: 2px; }
+.aos-stat-value { font-size: 1.15rem; font-weight: 800; color: #d1b384; }
+
+.aos-weapons-section {
+  padding: 12px 20px;
+  border-bottom: 1px solid #3a3a52;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.aos-section-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #a0a0b0;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.aos-weapon-item {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+}
+
+.aos-weapon-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.aos-weapon-name { font-weight: 700; color: #fff; font-size: 0.9rem; }
+.aos-weapon-type { font-size: 0.8rem; color: var(--accent); font-style: italic; }
+.aos-weapon-stats { display: flex; flex-wrap: wrap; gap: 12px; font-size: 0.82rem; color: var(--text-muted); }
+.aos-weapon-stats strong { color: #fff; }
+.aos-tag { color: #d1b384; font-weight: 600; }
+
+.aos-body { padding: 18px 20px; }
+.aos-ability { background: rgba(255, 255, 255, 0.02); border-left: 3px solid #d1b384; padding: 10px 14px; margin-top: 10px; border-radius: 0 6px 6px 0; }
+.aos-ability-title { font-weight: 700; color: #a29bfe; font-size: 0.95rem; margin-bottom: 4px; }
+.aos-ability-text { font-size: 0.9rem; color: #dfe6e9; line-height: 1.5; }
+
+/* WAR CARD (bestiary) */
+.war-card {
+  background: var(--bg-panel);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin: 20px 0;
+}
+
+.war-card .card-header {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 10px;
+  margin-bottom: 12px;
+}
+
+.war-card .card-title { font-weight: 700; color: #fff; font-size: 1.2rem; }
+.war-card .card-role { color: var(--accent); font-size: 0.9rem; }
+
+.war-card .card-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.war-card .stat-box {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px;
+  text-align: center;
+}
+
+.war-card .stat-label { color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; display: block; }
+.war-card .stat-value { color: var(--gold); font-weight: 700; font-size: 1.05rem; }
+
+.aos-badge-class {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.3px;
+}
+
+.role-mage { background: #6c5ce7; color: #fff; }
+.role-priest { background: #f0d3a8; color: #4a3a1a; }

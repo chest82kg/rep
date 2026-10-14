@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Личный кабинет — Wargame MFT</title>
+ <link rel="stylesheet" href="styles/main.css?v=3">
+<link rel="stylesheet" href="styles/account.css?v=3">
+</head>
+<body class="account-page">
+
+  <div class="nav-header">
+    <h1>👤 Личный кабинет</h1>
+    <a href="index.html" class="builder-action-btn" style="text-decoration:none;">🏠 На главную / Билдер</a>
+  </div>
+
+  <div id="auth-section" class="card">
+    <div id="login-form" style="display: flex; flex-direction: column; gap: 12px; max-width: 400px;">
+      <h2>Вход / Регистрация</h2>
+      <p style="color: var(--text-muted); margin-bottom: 8px;">Для доступа к личному кабинету и сохранения статистики воспользуйтесь аккаунтом.</p>
+
+      <input type="email" id="email" class="search-input" placeholder="Email" autocomplete="email">
+      <input type="password" id="password" class="search-input" placeholder="Пароль" autocomplete="current-password">
+      <div id="auth-message"></div>
+      <div style="display: flex; gap: 10px; margin-top: 8px;">
+        <button id="btn-login" class="builder-action-btn primary" style="flex: 1;">Войти</button>
+        <button id="btn-register" class="builder-action-btn" style="flex: 1;">Регистрация</button>
+      </div>
+    </div>
+
+    <div id="verify-notice" class="hidden" style="padding: 20px; background: rgba(255,165,2,0.1); border: 1px solid #ffa502; border-radius: 8px; text-align: center; margin-top: 16px;">
+      <h3 style="color: #ffa502; margin-bottom: 8px;">✉️ Требуется подтверждение почты</h3>
+      <p style="color: var(--text); margin-bottom: 16px;">Мы отправили письмо со ссылкой для активации на ваш Email. Пожалуйста, проверьте почту и перейдите по ссылке.</p>
+      <div id="verify-message"></div>
+      <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 12px;">
+        <button id="btn-resend-verify" class="builder-action-btn primary" style="padding: 8px 16px;">Отправить письмо повторно</button>
+        <button id="btn-verify-logout" class="builder-action-btn" style="background: #ff4757; color:#fff; border:none; padding: 8px 16px;">Войти в другой аккаунт</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="profile-section" class="card hidden">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+      <div>
+        <h2 id="user-email-title" style="color: var(--accent);"></h2>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">Статус: <span style="color: #2ed573;">Email подтвержден ✅</span></p>
+      </div>
+      <button id="btn-logout" class="builder-action-btn" style="background: #ff4757; color:#fff; border:none;">Выйти из аккаунта</button>
+    </div>
+
+    <h3 style="color: var(--gold);">📈 Игровая статистика</h3>
+    <div class="stat-grid">
+      <div class="stat-box">
+        <span class="stat-label">Всего партий</span>
+        <span class="stat-value" id="stat-total-games">0</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-label">Побед</span>
+        <span class="stat-value win" id="stat-wins">0</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-label">Поражений</span>
+        <span class="stat-value loss" id="stat-losses">0</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-label">Ничьих</span>
+        <span class="stat-value draw" id="stat-draws">0</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-label">Winrate</span>
+        <span class="stat-value" id="stat-winrate">—</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-label">Любимый клан</span>
+        <span class="stat-value small" id="stat-fav-clan" style="display:block; margin-top:8px;">—</span>
+      </div>
+    </div>
+
+    <div id="local-matches-block" class="hidden" style="margin-top: 24px; padding: 16px; background: rgba(108,92,231,0.08); border: 1px solid rgba(108,92,231,0.4); border-radius: 8px;">
+      <h3 style="color: #a29bfe; margin-bottom: 8px;">📦 Локальные матчи (не в облаке)</h3>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 12px;">
+        Вы играли как гость. Эти матчи сохранены только в этом браузере. Можно перенести их в облако.
+      </p>
+      <div id="local-matches-list" style="margin-bottom: 12px;"></div>
+      <button id="btn-migrate-local" class="builder-action-btn primary">☁️ Перенести все в облако</button>
+      <button id="btn-clear-local" class="builder-action-btn" style="background: rgba(255,71,87,0.15); border-color:#ff4757; color:#ff4757;">🗑 Очистить локальные</button>
+      <div id="migrate-message"></div>
+    </div>
+
+    <h3 style="color: var(--gold); margin-top: 32px; margin-bottom: 12px;">➕ Добавить сыгранный матч вручную</h3>
+    <div class="form-grid" style="background: rgba(0,0,0,0.2); padding: 16px; border-radius: 8px; border: 1px solid var(--border);">
+      <div class="form-group">
+        <label>Имя оппонента:</label>
+        <input type="text" id="match-opponent" class="search-input" placeholder="Например: Алексей">
+      </div>
+      <div class="form-group">
+        <label>Ранг оппонента:</label>
+        <input type="text" id="match-rank" class="search-input" placeholder="Например: Ветеран / 2 ранг">
+      </div>
+      <div class="form-group">
+        <label>Клан, за который вы играли:</label>
+        <select id="match-faction" class="search-input">
+          <option value="Кхад‑Дарум: Клан Железной Кузни">Кхад‑Дарум: Клан Железной Кузни</option>
+          <option value="Кхад‑Дарум: Клан Глубоких Троп">Кхад‑Дарум: Клан Глубоких Троп</option>
+          <option value="Кхад‑Дарум: Клан Рунных Кузнецов">Кхад‑Дарум: Клан Рунных Кузнецов</option>
+          <option value="Арафия: Клан Скорпионов">Арафия: Клан Скорпионов</option>
+          <option value="Арафия: Клан Барханов">Арафия: Клан Барханов</option>
+          <option value="Арафия: Клан Костяных Шаманов">Арафия: Клан Костяных Шаманов</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Результат:</label>
+        <select id="match-result" class="search-input">
+          <option value="win">🏆 Победа</option>
+          <option value="loss">💀 Поражение</option>
+          <option value="draw">🤝 Ничья</option>
+        </select>
+      </div>
+      <div class="form-group" style="justify-content: flex-end; display: flex;">
+        <button id="btn-save-match" class="builder-action-btn primary" style="align-self: flex-end;">Сохранить матч</button>
+      </div>
+    </div>
+    <div id="match-message"></div>
+
+    <h3 style="color: var(--gold); margin-top: 32px; margin-bottom: 12px;">📜 История игр</h3>
+    <div id="match-history-list">
+      <p style="color: var(--text-muted);">История матчей пока пуста.</p>
+    </div>
+
+    <h3 style="color: var(--gold); margin-top: 32px; margin-bottom: 12px;">💾 Ваши сохраненные ростера</h3>
+    <div id="cloud-rosters-list">
+      <p style="color: var(--text-muted);">Загрузка ростеров...</p>
+    </div>
+
+    <h3 style="color: var(--gold); margin-top: 32px; margin-bottom: 12px;">🧹 Очистка комнат</h3>
+    <div style="background: rgba(0,0,0,0.2); padding: 16px; border-radius: 8px; border: 1px solid var(--border);">
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 12px;">
+        Комнаты для игры с оппонентом. Здесь можно удалить свои старые комнаты (старше 6 часов),
+        чтобы не копились в базе. Комнаты, где вы гость, будут только отписаны — их удалит хост.
+      </p>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button id="btn-rooms-scan" class="builder-action-btn">🔍 Найти старые комнаты</button>
+        <button id="btn-rooms-delete-old" class="builder-action-btn primary">🧹 Удалить старые</button>
+        <button id="btn-rooms-delete-all" class="builder-action-btn" style="background: rgba(255,71,87,0.15); border-color:#ff4757; color:#ff4757;">🗑 Удалить все мои</button>
+      </div>
+      <div id="rooms-cleanup-stats" style="margin-top: 12px;"></div>
+      <div id="rooms-cleanup-message" style="margin-top: 12px;"></div>
+    </div>
+  </div>
+
+<script type="module" src="src/account/index.js?v=3"></script>
+
+  <footer class="site-footer">
+    <div class="site-footer-content">
+      <div class="site-footer-links">
+        <a href="about.html">ℹ️ О вселенной МТ</a>
+        <a href="privacy.html">📜 Политика конфиденциальности</a>
+        <a href="terms.html">📋 Пользовательское соглашение</a>
+      </div>
+      <div class="site-footer-copy">
+        © 2026 Мультиверс Тактикс. Все права защищены.
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

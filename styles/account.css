@@ -1,0 +1,49 @@
+/* ЛИЧНЫЙ КАБИНЕТ */
+body.account-page { padding: 32px; max-width: 900px; margin: 0 auto; }
+
+.card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 24px; }
+.nav-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border); padding-bottom: 16px; margin-bottom: 24px; }
+
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-top: 16px; }
+.stat-box { background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 8px; padding: 16px; text-align: center; }
+.stat-box .stat-label { color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; display: block; margin-bottom: 6px; }
+.stat-value { font-size: 1.8rem; font-weight: bold; color: var(--gold); }
+.stat-value.small { font-size: 1.1rem; }
+.stat-value.win { color: #2ed573; }
+.stat-value.loss { color: #ff4757; }
+.stat-value.draw { color: #ffa502; }
+
+.form-error { background: rgba(255,71,87,0.12); border: 1px solid #ff4757; color: #ff4757; padding: 8px 12px; border-radius: 6px; font-size: 0.9rem; margin-top: 8px; }
+.form-info { background: rgba(46,213,115,0.12); border: 1px solid #2ed573; color: #2ed573; padding: 8px 12px; border-radius: 6px; font-size: 0.9rem; margin-top: 8px; }
+
+.list-item-row {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.list-item-row .item-main { flex: 1; min-width: 200px; }
+.list-item-row .item-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.list-item-row button.danger {
+  background: none;
+  border: none;
+  color: #ff4757;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 0.85rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+.list-item-row button.danger:hover { background: rgba(255,71,87,0.15); }
+
+.match-badge { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 700; margin-right: 6px; }
+.badge-win  { background: rgba(46,213,115,0.2); color: #2ed573; }
+.badge-loss { background: rgba(255,71,87,0.2); color: #ff4757; }
+.badge-draw { background: rgba(255,165,2,0.2); color: #ffa502; }
+.badge-local { background: rgba(108,92,231,0.2); color: #a29bfe; margin-left: 6px; }

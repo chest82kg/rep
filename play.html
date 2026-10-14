@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Игровой стол — Дашборд армии</title>
+  <link rel="stylesheet" href="styles/main.css?v=9">
+  <link rel="stylesheet" href="styles/cards.css?v=9">
+  <link rel="stylesheet" href="styles/builder.css?v=9">
+  <link rel="stylesheet" href="styles/play.css?v=9">
+</head>
+<body class="play-page">
+
+  <!-- СТАРТОВЫЙ ЭКРАН -->
+  <div id="setup-screen">
+    <div class="setup-card">
+      <h2 style="color: var(--gold); margin-bottom: 12px;">⚔️ Игровой Стол</h2>
+      <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 0.9rem;">
+        Введите ваше имя или название игрока для сохранения прогресса боя:
+      </p>
+
+      <label for="player-name-input" style="display:block; text-align:left; margin-bottom:6px; color: var(--text-muted); font-size:0.85rem; font-weight:600;">
+        Имя игрока
+      </label>
+      <input
+        type="text"
+        id="player-name-input"
+        class="search-input"
+        placeholder="Например: Артем"
+        autocomplete="off"
+        style="margin-bottom: 16px; text-align: center; font-size: 1.1rem;">
+
+      <button class="builder-action-btn primary large" style="width: 100%;" onclick="startBattleSession()">
+        Войти на поле боя
+      </button>
+
+      <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 16px;">
+        <a href="index.html"
+           onclick="window.location.href='index.html'; return false;"
+           style="color: var(--accent); cursor:pointer; text-decoration:underline;">
+          ← Вернуться в базу знаний
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <!-- ОСНОВНОЙ ДАШБОРД -->
+  <div id="battle-dashboard" class="hidden">
+    <div class="dash-header">
+      <div>
+        <h1 id="dash-roster-name">Армия</h1>
+        <p id="dash-player-info" style="color: var(--accent); font-weight: 600; margin-top: 2px;"></p>
+        <p id="dash-roster-clan" style="color: var(--text-muted); font-size: 0.9rem;"></p>
+        <p id="dash-auth-status" style="color: var(--text-muted); font-size: 0.8rem; margin-top: 2px;"></p>
+      </div>
+      <div class="dash-header-actions">
+        <button class="builder-action-btn" id="btn-rooms" style="background: rgba(162,155,254,0.15); border-color: #a29bfe; color: #a29bfe;">👥 Комнаты</button>
+        <button class="builder-action-btn" id="btn-my-stakes" style="background: rgba(209,179,132,0.18); border-color: var(--gold); color: var(--gold);">📌 Мои клятвы</button>
+        <button class="builder-action-btn" id="btn-battle-log" style="background: rgba(162,155,254,0.15); border-color: #a29bfe; color: #a29bfe;">📜 Лог боя</button>
+        <button class="builder-action-btn" id="btn-phase-helper" style="background: rgba(108,92,231,0.15); border-color: var(--accent);">⚙️ Фаза раунда</button>
+        <button class="builder-action-btn" id="btn-reset-battle" style="background: rgba(255,71,87,0.15); border-color:#ff4757; color:#ff4757;">🔄 Сбросить бой</button>
+        <button class="builder-action-btn primary" id="btn-finish-match" style="background:#2ed573; border-color:#2ed573; color:#0b0b0f; font-weight:800;">🏁 Завершить матч</button>
+        <button class="builder-action-btn" id="btn-tutorial" style="background: rgba(255,165,2,0.15); border-color: #ffa502; color: #ffa502;">❓ Как играть</button>
+        <button class="builder-action-btn" data-action="open-bug-report" style="background: rgba(255,165,2,0.15); border-color: #ffa502; color: #ffa502;">🐞 Баг</button>
+        <button class="builder-action-btn" onclick="window.close()">Закрыть стол</button>
+      </div>
+    </div>
+
+    <!-- Панель ресурсов: Мана / Вера -->
+    <div class="dash-meta" id="resources-panel" style="margin-bottom: 12px;">
+      <span><strong style="color:#6c5ce7;">Мана:</strong> 0 / 6</span>
+      <span><strong style="color:#d1b384;">Вера:</strong> 0 / 6</span>
+    </div>
+
+    <div class="dash-meta" id="dash-meta"></div>
+
+    <div class="tracker-row" id="battle-tracker">
+      <div class="tracker-item">
+        <label>Раунд:</label>
+        <button class="tracker-btn" data-track="round-down" aria-label="Уменьшить раунд">−</button>
+        <span class="tracker-value" id="track-round">1</span>
+        <button class="tracker-btn" data-track="round-up" aria-label="Увеличить раунд">+</button>
+      </div>
+      <div class="tracker-item">
+        <label>Мои ОП:</label>
+        <button class="tracker-btn" data-track="vp-own-down" aria-label="Уменьшить мои ОП">−</button>
+        <span class="tracker-value" id="track-vp-own">0</span>
+        <button class="tracker-btn" data-track="vp-own-up" aria-label="Увеличить мои ОП">+</button>
+      </div>
+      <div class="tracker-item">
+        <label>ОП оппонента:</label>
+        <button class="tracker-btn" data-track="vp-opp-down" aria-label="Уменьшить ОП оппонента">−</button>
+        <span class="tracker-value" id="track-vp-opp">0</span>
+        <button class="tracker-btn" data-track="vp-opp-up" aria-label="Увеличить ОП оппонента">+</button>
+      </div>
+    </div>
+
+    <div class="action-row">
+      <button class="builder-action-btn" onclick="openRulesModal('faction')">🛡️ Общие правила фракции</button>
+      <button class="builder-action-btn" onclick="openRulesModal('clan')">📜 Правила клана</button>
+    </div>
+
+    <h2>⚔️ Боевой состав армии</h2>
+    <div id="dash-units-container"></div>
+  </div>
+
+  <!-- МОДАЛКА: Правила -->
+  <div id="rules-modal" class="builder-modal hidden">
+    <div class="builder-modal-content">
+      <button class="builder-modal-close" onclick="closeRulesModal()">&times;</button>
+      <div id="rules-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- МОДАЛКА: Завершить матч -->
+  <div id="finish-modal" class="builder-modal hidden">
+    <div class="builder-modal-content">
+      <button class="builder-modal-close" onclick="closeFinishModal()">&times;</button>
+      <div id="finish-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- МОДАЛКА: Фаза раунда -->
+  <div id="phase-modal" class="builder-modal hidden">
+    <div class="builder-modal-content">
+      <button class="builder-modal-close" onclick="closePhaseModal()">&times;</button>
+      <div id="phase-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- МОДАЛКА: Комнаты -->
+  <div id="rooms-modal" class="builder-modal hidden">
+    <div class="builder-modal-content">
+      <button class="builder-modal-close" onclick="closeRoomsModal()">&times;</button>
+      <div id="rooms-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- МОДАЛКА: Лог боя -->
+  <div id="log-modal" class="builder-modal hidden">
+    <div class="builder-modal-content">
+      <button class="builder-modal-close" onclick="closeLogModal()">&times;</button>
+      <div id="log-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- МОДАЛКА: Заметка -->
+  <div id="note-modal" class="builder-modal hidden">
+    <div class="builder-modal-content">
+      <button class="builder-modal-close" onclick="closeNoteModal()">&times;</button>
+      <div id="note-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- МОДАЛКА: Справка по юниту -->
+  <div id="unit-card-modal" class="builder-modal hidden">
+    <div class="builder-modal-content">
+      <button class="builder-modal-close" onclick="closeUnitCardModal()">&times;</button>
+      <div id="unit-card-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- МОДАЛКА: Мои клятвы -->
+  <div id="stakes-modal" class="builder-modal hidden">
+    <div class="builder-modal-content">
+      <button class="builder-modal-close" onclick="closeStakesModal()">&times;</button>
+      <div id="stakes-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- МОДАЛКА: Магия / Молитвы -->
+  <div id="magic-modal" class="builder-modal hidden">
+    <div class="builder-modal-content">
+      <button class="builder-modal-close" onclick="closeMagicModal()">&times;</button>
+      <div id="magic-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- МОДАЛКА: Баг-репорт -->
+  <div id="bug-modal" class="builder-modal hidden">
+    <div class="builder-modal-content">
+      <button class="builder-modal-close" onclick="closeBugReportModal()">&times;</button>
+      <div id="bug-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- ФУТЕР -->
+  <footer class="site-footer">
+    <div class="site-footer-content">
+      <div class="site-footer-links">
+        <a href="about.html">ℹ️ О вселенной МТ</a>
+        <a href="privacy.html">📜 Политика конфиденциальности</a>
+        <a href="terms.html">📋 Пользовательское соглашение</a>
+      </div>
+      <div class="site-footer-copy">
+        © 2026 Мультиверс Тактикс. Все права защищены.
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="src/battle/index.js?v=9"></script>
+</body>
+</html>

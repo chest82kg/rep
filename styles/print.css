@@ -1,0 +1,99 @@
+/* ЕДИНЫЙ И СТАБИЛЬНЫЙ БЛОК ДЛЯ ПЕЧАТИ */
+
+@media print {
+  body, html {
+    background: #ffffff !important;
+    color: #000000 !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .layout, .sidebar, .search-box, .builder-container > .builder-card, .builder-modal {
+    display: none !important;
+  }
+
+  .aos-card {
+    border: 2px solid #000 !important;
+    border-radius: 8px !important;
+    margin: 20px 0 30px 0 !important;
+    padding: 16px !important;
+    page-break-before: auto !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    -webkit-column-break-inside: avoid !important;
+    display: block !important;
+    background: #ffffff !important;
+  }
+
+  .aos-stats-grid {
+    display: table !important;
+    width: 100% !important;
+    table-layout: fixed !important;
+    background: #000 !important;
+    margin: 10px 0 !important;
+    border-collapse: collapse !important;
+  }
+
+  .aos-stat-box {
+    display: table-cell !important;
+    width: 33.333% !important;
+    background: #fff !important;
+    border: 1px solid #000 !important;
+    padding: 8px 4px !important;
+    text-align: center !important;
+  }
+
+  .aos-stat-label {
+    font-size: 10px !important;
+    font-weight: bold !important;
+    text-transform: uppercase !important;
+    color: #000 !important;
+    display: block !important;
+    margin-bottom: 2px !important;
+  }
+
+  .aos-stat-value {
+    font-size: 15px !important;
+    font-weight: bold !important;
+    color: #000 !important;
+    display: block !important;
+  }
+
+  .aos-header {
+    background: #e9ecef !important;
+    border-bottom: 1px solid #000 !important;
+  }
+
+  .aos-title,
+  .aos-stat-value,
+  .aos-ability-title {
+    color: #000 !important;
+  }
+
+  .aos-weapon-stats {
+    display: flex !important;
+    gap: 20px !important;
+    font-size: 13px !important;
+    margin-top: 4px !important;
+  }
+
+  .aos-weapon-stats span {
+    margin-right: 15px !important;
+  }
+
+  img {
+    max-width: 85% !important;
+    height: auto !important;
+    display: block !important;
+    margin: 12px auto !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  h1, h2, h3, ul, li, .aos-header, .aos-weapons-section, .aos-body {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+}

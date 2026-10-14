@@ -3,27 +3,82 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>База знаний игры</title>
-  <link rel="stylesheet" href="style.css?v=27">
+  <meta name="description" content="Игровой портал Wargame MFT: база знаний, конструктор ростера и игровой стол.">
+  <title>База знаний игры — Wargame MFT</title>
+  <link rel="stylesheet" href="styles/main.css?v=7">
+  <link rel="stylesheet" href="styles/tooltip.css?v=7">
+  <link rel="stylesheet" href="styles/cards.css?v=7">
+  <link rel="stylesheet" href="styles/builder.css?v=7">
+  <link rel="stylesheet" href="styles/print.css?v=7">
 </head>
 <body>
   <div class="layout">
+    <!-- ЛЕВЫЙ САЙДБАР -->
     <aside class="sidebar">
       <h2>Разделы</h2>
       <ul class="nav-list" id="sidebar-menu"></ul>
+
+      <div class="sidebar-builder-container">
+        <a href="account.html" class="builder-sidebar-button" style="margin-bottom: 8px; background: rgba(209,179,132,0.2); border-color: var(--gold);">
+          👤 Личный кабинет
+        </a>
+        <a href="play.html" id="sidebar-play-link" target="_blank" rel="noopener" class="builder-sidebar-button" style="margin-bottom: 8px; background: rgba(46,213,115,0.15); border-color: #2ed573;">
+          ⚔️ Игровой стол
+        </a>
+        <a href="#builder" class="builder-sidebar-button" style="margin-bottom: 8px;">
+          🛠️ Конструктор Ростера
+        </a>
+        <a href="workshop.html" class="builder-sidebar-button" style="margin-bottom: 8px; background: rgba(255,71,87,0.12); border-color: #ff4757; color: #ff4757;">
+          🛠️ Мастерская (dev)
+        </a>
+        <a href="#" data-action="open-bug-report" class="builder-sidebar-button" style="background: rgba(255,165,2,0.12); border-color: #ffa502; color: #ffa502;">
+          🐞 Сообщить о баге
+        </a>
+      </div>
     </aside>
 
+    <!-- ПРАВАЯ ЧАСТЬ (КОНТЕНТ) -->
     <main class="main-area">
-      <div class="search-box">
-  <input type="text" id="search-input" class="search-input" placeholder="Поиск по всей базе знаний…">
-  <div id="search-results" class="search-dropdown hidden"></div>
-</div>
+      <div id="user-greeting" style="width: 100%; display: flex; justify-content: flex-end; margin-bottom: 8px; font-size: 0.9rem; color: var(--text-muted);">
+        Привет, Гость!
+      </div>
 
-      <article class="kb-content" id="app-content"></article>
+      <div class="search-box">
+        <input type="text" id="search-input" class="search-input" placeholder="Поиск по всей базе знаний…" autocomplete="off" aria-label="Поиск по базе знаний">
+        <div id="search-results" class="search-dropdown hidden"></div>
+      </div>
+
+      <article class="kb-content" id="app-content">
+        <noscript>
+          <h1>Требуется JavaScript</h1>
+          <p>Для работы портала включите JavaScript в браузере.</p>
+        </noscript>
+      </article>
     </main>
   </div>
 
-  <!-- Подключаем главный скрипт как модуль -->
-  <script type="module" src="script.js?v=27"></script>
+  <!-- ФУТЕР -->
+  <footer class="site-footer">
+    <div class="site-footer-content">
+      <div class="site-footer-links">
+        <a href="about.html">ℹ️ О вселенной МТ</a>
+        <a href="privacy.html">📜 Политика конфиденциальности</a>
+        <a href="terms.html">📋 Пользовательское соглашение</a>
+      </div>
+      <div class="site-footer-copy">
+        © 2026 Мультиверс Тактикс. Все права защищены.
+      </div>
+    </div>
+  </footer>
+
+  <!-- МОДАЛКА: Баг-репорт -->
+  <div id="bug-modal" class="builder-modal hidden">
+    <div class="builder-modal-content">
+      <button class="builder-modal-close" onclick="closeBugReportModal()">&times;</button>
+      <div id="bug-modal-body"></div>
+    </div>
+  </div>
+
+  <script type="module" src="src/app.js?v=7"></script>
 </body>
 </html>

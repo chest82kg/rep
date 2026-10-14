@@ -1,0 +1,457 @@
+/* КОНСТРУКТОР РОСТЕРА */
+.builder-container { display: flex; flex-direction: column; gap: 20px; margin-top: 20px; width: 100%; }
+.builder-card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+.builder-form-group { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+.builder-header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.builder-budget-badge { background: var(--accent); color: #fff; padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 0.9rem; }
+.builder-stakes-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; }
+
+.stake-checkbox-item {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  gap: 10px;
+  cursor: pointer;
+}
+.stake-checkbox-item.active { border-color: #d1b384; background: rgba(209, 179, 132, 0.05); }
+.stake-checkbox-item.disabled { opacity: 0.4; cursor: not-allowed; }
+.stake-title { font-weight: 700; color: #fff; font-size: 0.95rem; }
+.stake-cost { color: #d1b384; font-size: 0.85rem; margin-left: 6px; }
+.stake-desc { font-size: 0.82rem; color: var(--text-muted); margin-top: 2px; }
+
+/* Модальное окно */
+.builder-modal {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 20000;
+  display: flex; justify-content: center; align-items: center;
+  padding: 20px;
+}
+.builder-modal.hidden { display: none; }
+.builder-modal-content {
+  background: var(--bg-panel);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  max-width: 800px; width: 100%; max-height: 85vh;
+  overflow-y: auto; padding: 24px; position: relative;
+}
+.builder-modal-close {
+  position: absolute; top: 12px; right: 16px;
+  background: none; border: none; color: var(--text-muted);
+  font-size: 1.8rem; cursor: pointer;
+}
+.builder-modal-close:hover { color: #ff4757; }
+/* --- Прогресс-бар бюджета --- */
+#builder-budget-bar-wrapper {
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+.budget-bar-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+#budget-bar-current-label {
+  font-weight: 700;
+  transition: color 0.2s ease;
+}
+
+.budget-bar-track {
+  position: relative;
+  height: 14px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.budget-bar-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 0%;
+  background: var(--accent);
+  transition: width 0.25s ease, background 0.2s ease;
+  border-radius: 8px 0 0 8px;
+}
+
+.budget-bar-min-marker {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 2px;
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+
+/* --- Обёртки для details --- */
+.builder-card > summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 16px 20px;
+  margin: -20px -20px 20px -20px;
+  border-bottom: 1px solid var(--border);
+  border-radius: 10px 10px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  user-select: none;
+  transition: background 0.15s ease;
+}
+
+.builder-card > summary::-webkit-details-marker { display: none; }
+.builder-card > summary::marker { display: none; }
+
+.builder-card > summary:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.builder-card:not([open]) > summary {
+  margin-bottom: -20px;
+  border-bottom: none;
+  border-radius: 10px;
+}
+
+.summary-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.builder-card > summary::after {
+  content: '▾';
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-left: 10px;
+  transition: transform 0.2s ease;
+}
+
+.builder-card[open] > summary::after {
+  transform: rotate(180deg);
+}
+
+.builder-card-body {
+  margin-top: 4px;
+}
+
+/* --- Ряд кнопок сохранения/загрузки --- */
+.builder-btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* --- Сетка кнопок действий --- */
+.builder-actions-grid {
+  margin-top: 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+/* --- Липкая панель бюджета --- */
+.builder-sticky-budget {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 4000;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: rgba(18, 18, 26, 0.98);
+  border-top: 1px solid var(--border);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.builder-sticky-budget.hidden { display: none !important; }
+
+.builder-sticky-budget .sticky-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.builder-sticky-budget .sticky-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+.builder-sticky-budget .sticky-value {
+  font-size: 0.95rem;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.builder-sticky-budget .sticky-sep {
+  width: 1px;
+  height: 28px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+.builder-sticky-budget .sticky-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.builder-sticky-budget .sticky-btn:hover { background: var(--accent-hover); }
+
+/* --- Мобильные правила --- */
+@media (max-width: 768px) {
+  .builder-container { padding-bottom: 80px; /* под липкую панель */ }
+
+  .builder-btn-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .builder-btn-row > button {
+    width: 100%;
+    padding: 10px 8px !important;
+    font-size: 0.85rem !important;
+  }
+
+  .builder-actions-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .builder-actions-grid > button {
+    padding: 12px 8px !important;
+    font-size: 0.9rem !important;
+  }
+
+  .builder-budget-badge { font-size: 0.8rem; padding: 4px 8px; }
+
+  .budget-bar-labels { font-size: 0.75rem; }
+  .budget-bar-track { height: 12px; }
+}
+
+/* --- Ставки: семейства и опции --- */
+.stake-family {
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+
+.stake-family-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.stake-selected-badge {
+  font-size: 0.75rem;
+  background: var(--gold);
+  color: #0b0b0f;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-weight: 700;
+}
+
+.stake-family-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.stake-option {
+  background: rgba(255, 255, 255, 0.02);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.stake-option:hover:not(.disabled) {
+  border-color: var(--gold);
+  background: rgba(209, 179, 132, 0.05);
+}
+
+.stake-option.active {
+  border-color: var(--gold);
+  background: rgba(209, 179, 132, 0.1);
+  box-shadow: 0 0 0 1px var(--gold);
+}
+
+.stake-option.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.stake-option input[type="radio"] {
+  margin-top: 4px;
+  flex-shrink: 0;
+  accent-color: var(--gold);
+}
+
+.stake-option-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.stake-option-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.stake-option-class {
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.class-basic { background: #2ed573; color: #0b0b0f; }
+.class-elite { background: #eccc68; color: #0b0b0f; }
+.class-hero  { background: #ff4757; color: #fff; }
+.class-army  { background: #6c5ce7; color: #fff; }
+
+.stake-option-cost {
+  font-weight: 700;
+  color: var(--gold);
+  font-size: 0.9rem;
+}
+
+.stake-option-desc {
+  font-size: 0.85rem;
+  color: var(--text);
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+.stake-option-meta {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 0.78rem;
+  margin-bottom: 6px;
+}
+
+.stake-reward {
+  color: #2ed573;
+  font-weight: 700;
+}
+
+.stake-penalty {
+  color: #ff4757;
+  font-weight: 700;
+}
+
+.stake-penalty.none {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.stake-min-rules {
+  list-style: none;
+  padding: 0;
+  margin: 4px 0 0 0;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.stake-min-rules li {
+  padding-left: 14px;
+  position: relative;
+  margin-bottom: 2px;
+}
+
+.stake-min-rules li::before {
+  content: '·';
+  position: absolute;
+  left: 4px;
+  color: var(--gold);
+  font-weight: 800;
+}
+
+.stake-family-army {
+  border-left: 3px solid var(--accent);
+  padding-left: 12px;
+}
+
+.stake-family-army .stake-family-title {
+  color: var(--accent);
+}
+
+/* --- Сравнение оружия --- */
+.weapon-info {
+  transition: opacity 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.weapon-info.selected {
+  border-color: var(--accent) !important;
+  background: rgba(108,92,231,0.08) !important;
+  opacity: 1 !important;
+}
+
+.weapon-select {
+  cursor: pointer;
+}
+
+.weapon-add-btn {
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .weapon-compare {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+.weapon-pick-btn:hover {
+  border-color: var(--accent) !important;
+  background: rgba(108,92,231,0.08) !important;
+  transform: translateY(-1px);
+}
+
+.weapon-pick-btn:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 600px) {
+  .weapon-pick-btn {
+    font-size: 0.85rem;
+  }
+}

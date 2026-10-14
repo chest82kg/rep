@@ -1,0 +1,603 @@
+/* styles/play.css */
+
+/* ==========================================
+   ИГРОВОЙ СТОЛ
+   ========================================== */
+
+body.play-page {
+  padding: 24px;
+  max-width: 900px;
+  margin: 0 auto;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* --- Экран входа --- */
+#setup-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 80vh;
+  gap: 16px;
+}
+
+.setup-card {
+  background: var(--bg-panel);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 32px;
+  width: 100%;
+  max-width: 450px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+}
+
+/* --- Шапка дашборда --- */
+.dash-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.dash-header-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.action-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+/* --- Мета-панель --- */
+.dash-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+}
+
+.dash-meta span strong {
+  color: var(--gold);
+}
+
+/* --- Трекер раунда и ОП --- */
+.tracker-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  align-items: center;
+}
+
+.tracker-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tracker-item label {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.tracker-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.tracker-btn:hover {
+  background: var(--accent-hover);
+}
+
+.tracker-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.tracker-value {
+  font-weight: 800;
+  color: var(--gold);
+  font-size: 1.15rem;
+  min-width: 32px;
+  text-align: center;
+}
+
+/* --- Карточка юнита в бою --- */
+.battle-unit-wrapper {
+  background: var(--bg-panel);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+}
+
+.battle-unit-wrapper.dead {
+  opacity: 0.5;
+  filter: grayscale(0.6);
+  border-color: #ff4757;
+}
+
+.battle-unit-wrapper.activated {
+  opacity: 0.55;
+  filter: grayscale(0.4);
+}
+
+.battle-unit-wrapper.activated .unit-meta-row {
+  color: #2ed573;
+}
+
+.unit-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed var(--border);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.unit-card-clickable {
+  cursor: pointer;
+  border-radius: 8px;
+  transition: box-shadow 0.15s ease;
+}
+
+.unit-card-clickable:hover {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.unit-control-panel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.unit-bottom-bar {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+/* --- ХП --- */
+.hp-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0,0,0,0.3);
+  padding: 6px 12px;
+  border-radius: 8px;
+  flex-wrap: wrap;
+}
+
+.hp-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 1.1rem;
+}
+
+.hp-btn:hover {
+  background: var(--accent-hover);
+}
+
+.hp-btn.big {
+  width: auto;
+  padding: 0 10px;
+  font-size: 0.9rem;
+}
+
+/* --- Статусы --- */
+.status-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.status-tag {
+  background: #ff4757;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-tag.poison { background: #2ed573; color: #0b0b0f; }
+.status-tag.fire   { background: #ffa502; color: #0b0b0f; }
+.status-tag.stone  { background: #7f8c8d; color: #fff; }
+.status-tag.custom { background: #6c5ce7; color: #fff; }
+
+.status-tag button {
+  background: rgba(0,0,0,0.3);
+  border: none;
+  color: inherit;
+  border-radius: 4px;
+  padding: 0 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.status-add-bar {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.status-select {
+  background: #181824;
+  border: 1px solid var(--border);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+/* --- Кнопки «Активирован» и «Заметка» --- */
+.activate-btn,
+.notes-btn {
+  flex: 1;
+  min-width: 140px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-panel);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+.activate-btn:hover,
+.notes-btn:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.activate-btn.active {
+  background: rgba(46,213,115,0.15);
+  border-color: #2ed573;
+  color: #2ed573;
+}
+
+/* --- Формы --- */
+.form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.form-row label {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.form-row input,
+.form-row select,
+.form-row textarea {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: var(--text);
+  font-size: 0.95rem;
+  font-family: inherit;
+}
+
+.form-row textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.result-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.result-buttons button {
+  flex: 1;
+  min-width: 100px;
+  padding: 8px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.result-buttons button.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.form-error {
+  background: rgba(255,71,87,0.12);
+  border: 1px solid #ff4757;
+  color: #ff4757;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  margin-top: 8px;
+}
+
+.form-info {
+  background: rgba(46,213,115,0.12);
+  border: 1px solid #2ed573;
+  color: #2ed573;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  margin-top: 8px;
+}
+
+/* ==========================================
+   ТУТОРИАЛ
+   ========================================== */
+
+/* Подсветка целевого элемента — золотая рамка */
+.tutorial-highlight {
+  position: relative;
+  z-index: 9998;
+  box-shadow:
+    0 0 0 4px var(--gold),
+    0 0 0 8px rgba(209, 179, 132, 0.35),
+    0 0 40px rgba(209, 179, 132, 0.5);
+  border-radius: 10px;
+  transition: box-shadow 0.2s ease;
+}
+
+/* Затемнение фона — мягкое, почти без размытия */
+.tutorial-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 9999;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 30px;
+  pointer-events: none;
+  backdrop-filter: blur(0.3px);
+  -webkit-backdrop-filter: blur(0.3px);
+}
+
+/* Карточка туториала — приподнята над оверлеем, с золотой рамкой */
+.tutorial-box {
+  position: relative;
+  z-index: 10000;
+  background: linear-gradient(180deg, #1a1a26, #12121a);
+  border: 2px solid var(--gold);
+  border-radius: 14px;
+  padding: 22px 26px;
+  max-width: 520px;
+  width: 100%;
+  pointer-events: auto;
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.85),
+    0 0 0 1px rgba(209, 179, 132, 0.35),
+    0 0 40px rgba(209, 179, 132, 0.2);
+}
+
+.tutorial-step-counter {
+  display: inline-block;
+  font-size: 0.75rem;
+  color: #0b0b0f;
+  background: var(--gold);
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 20px;
+  margin-bottom: 10px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.tutorial-box h3 {
+  color: var(--gold);
+  margin-bottom: 8px;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.tutorial-box p {
+  color: var(--text);
+  margin-bottom: 18px;
+  line-height: 1.55;
+  font-size: 0.95rem;
+}
+
+.tutorial-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.tutorial-actions button {
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 700;
+  font-family: inherit;
+  font-size: 0.9rem;
+  transition: all 0.15s ease;
+}
+
+.tutorial-actions button:hover {
+  background: rgba(209, 179, 132, 0.12);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+#tut-next {
+  background: linear-gradient(135deg, #d1b384, #b8935e);
+  border-color: #f0d3a8;
+  color: #0b0b0f;
+  font-weight: 800;
+  box-shadow: 0 4px 14px rgba(209, 179, 132, 0.4);
+}
+
+#tut-next:hover {
+  background: linear-gradient(135deg, #e8c896, #d1b384);
+  color: #0b0b0f;
+  box-shadow: 0 6px 20px rgba(209, 179, 132, 0.55);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+  .tutorial-overlay {
+    padding: 16px;
+  }
+  .tutorial-box {
+    padding: 16px 18px;
+  }
+  .tutorial-box h3 {
+    font-size: 1.1rem;
+  }
+  .tutorial-actions button {
+    padding: 8px 14px;
+    font-size: 0.85rem;
+  }
+}
+
+/* --- Кнопки в шапке игрового стола — крупнее --- */
+.dash-header-actions .builder-action-btn {
+  padding: 10px 18px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dash-header-actions .builder-action-btn.primary {
+  font-weight: 800;
+  padding: 11px 20px;
+}
+
+/* --- Модалка «Мои ставки» --- */
+.stake-tracker-row {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  transition: border-color 0.15s ease;
+}
+
+.stake-tracker-row.stake-done {
+  border-left-color: #2ed573;
+  background: rgba(46, 213, 115, 0.04);
+}
+
+.stake-tracker-row.stake-failed {
+  border-left-color: #ff4757;
+  background: rgba(255, 71, 87, 0.04);
+}
+
+.stake-tracker-row.stake-in-progress {
+  border-left-color: var(--gold);
+  background: rgba(209, 179, 132, 0.04);
+}
+
+/* --- Панель ресурсов --- */
+#resources-panel {
+  background: rgba(0,0,0,0.35);
+  border-color: rgba(108,92,231,0.3);
+}
+
+#resources-panel span {
+  min-width: 120px;
+}
+
+/* --- Кнопки магии --- */
+.magic-btn {
+  flex: 1;
+  min-width: 140px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-panel);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+.spell-btn {
+  border-color: rgba(108,92,231,0.5);
+  color: #a29bfe;
+}
+
+.spell-btn:hover {
+  background: rgba(108,92,231,0.15);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.prayer-btn {
+  border-color: rgba(209,179,132,0.5);
+  color: var(--gold);
+}
+
+.prayer-btn:hover {
+  background: rgba(209,179,132,0.15);
+  border-color: var(--gold);
+  color: #fff;
+}
+
