@@ -14,6 +14,8 @@ import {
   hasUnitOfClass
 } from './state.js';
 import { renderRosterSummary } from './render.js';
+import { escapeHtml } from '../utils/escape.js';
+import { showToast } from '../ui/toast.js';
 
 export function renderStakesList() {
   const container = document.getElementById('builder-stakes-list');
@@ -48,10 +50,10 @@ export function renderStakesList() {
       <div class="stake-family ${isArmyFamily ? 'stake-family-army' : ''}">
         <div class="stake-family-title">
           <span>
-            ${isArmyFamily ? '🌍 ' : '⚔️ '}${familyName}
+            ${isArmyFamily ? '🌍 ' : '⚔️ '}${escapeHtml(familyName)}
             ${isArmyFamily ? '<span style="font-size:0.75rem; color:var(--text-muted); font-weight:400; margin-left:6px;">(не требует моделей класса)</span>' : ''}
           </span>
-          ${selectedInFamily ? `<span class="stake-selected-badge">дана: ${selectedInFamily.classLabel}</span>` : ''}
+          ${selectedInFamily ? `<span class="stake-selected-badge">дана: ${escapeHtml(selectedInFamily.classLabel)}</span>` : ''}
         </div>
         <div class="stake-family-options">
           ${familyStakes.map(st => renderStakeOption(st, selectedInFamily, remainingMI)).join('')}
@@ -68,6 +70,8 @@ export function renderStakesList() {
       if (isAlreadySelected) {
         e.preventDefault();
         roster.selectedStakes = roster.selectedStakes.filter(id => id !== stakeId);
+        const stake = STAKES_LIST.find(s => s.id === stakeId);
+        if (stake) showToast(`Клятва снята: ${stake.name}`, 'info');
         renderStakesList();
         renderRosterSummary();
         return;
@@ -98,7 +102,7 @@ function renderStakeOption(st, selectedInFamily, remainingMI) {
 
   return `
     <label class="stake-option ${isSelected ? 'active' : ''} ${isDisabled ? 'disabled' : ''}"
-           title="${escapeAttr(reason)}">
+           title="${escapeHtml(reason)}">
       <input type="radio"
              name="stake-family-${st.family}"
              value="${st.id}"
@@ -106,7 +110,7 @@ function renderStakeOption(st, selectedInFamily, remainingMI) {
              ${isDisabled && !isSelected ? 'disabled' : ''}>
       <div class="stake-option-body">
         <div class="stake-option-header">
-          <span class="stake-option-class class-${st.class}">${st.classLabel}</span>
+          <span class="stake-option-class class-${st.class}">${escapeHtml(st.classLabel)}</span>
           <span class="stake-option-cost">${st.cost} МИ</span>
         </div>
         <div class="stake-option-desc">${escapeHtml(st.description)}</div>
@@ -135,20 +139,8 @@ function selectStake(stakeId) {
 
   if (!roster.selectedStakes.includes(stakeId)) {
     roster.selectedStakes.push(stakeId);
+    showToast(`Клятва дана: ${stake.name} (${stake.classLabel})`, 'ok');
   }
 
   renderStakesList();
-}
-
-function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-function escapeAttr(str) {
-  return escapeHtml(str);
 }

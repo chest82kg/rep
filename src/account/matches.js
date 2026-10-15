@@ -1,5 +1,5 @@
 // src/account/matches.js
-import { db, auth } from '../core/firebase.js';
+import { db } from '../core/firebase.js';
 import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getCurrentUser, loadUserData, nextGeneration } from './profile.js';
 import { showMessage } from './auth.js';
@@ -100,6 +100,7 @@ export function initMatchesUI() {
     const opponent = document.getElementById('match-opponent').value.trim();
     const rank = document.getElementById('match-rank').value.trim();
     const faction = document.getElementById('match-faction').value;
+    const opponentClan = document.getElementById('match-opponent-clan')?.value || '';
     const result = document.getElementById('match-result').value;
 
     if (!opponent) {
@@ -116,14 +117,18 @@ export function initMatchesUI() {
       await addDoc(collection(db, "users", user.uid, "matches"), {
         opponent,
         rank: rank || 'Новичок',
-        faction,
+        faction,                          // для совместимости со старым форматом
+        opponentClan,                     // новый: клан оппонента
         result,
-        myClan: faction,
+        myClan: faction,                  // мой клан
         date: new Date().toISOString()
       });
       showMessage(matchMessage, 'Матч успешно сохранен!', 'info');
       document.getElementById('match-opponent').value = '';
       document.getElementById('match-rank').value = '';
+      if (document.getElementById('match-opponent-clan')) {
+        document.getElementById('match-opponent-clan').value = '';
+      }
       await loadUserData(user.uid, nextGeneration());
     } catch (err) {
       showMessage(matchMessage, 'Ошибка сохранения матча: ' + humanizeFirestoreError(err));

@@ -110,7 +110,9 @@ export function buildRosterPayload() {
         id: a.id,
         targetIdx: a.targetIdx,
         name: art ? art.name : '—',
-        cost: art ? art.cost : 0
+        cost: art ? art.cost : 0,
+        description: art ? art.description : '',
+        effect: art ? art.effect : ''
       };
     }) : [],
     units: roster.units.map(u => ({

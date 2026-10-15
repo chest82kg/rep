@@ -4,8 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Личный кабинет — Wargame MFT</title>
- <link rel="stylesheet" href="styles/main.css?v=3">
-<link rel="stylesheet" href="styles/account.css?v=3">
+  <link rel="stylesheet" href="styles/main.css?v=4">
+  <link rel="stylesheet" href="styles/account.css?v=4">
+  <link rel="stylesheet" href="styles/builder.css?v=4">
 </head>
 <body class="account-page">
 
@@ -109,6 +110,18 @@
         </select>
       </div>
       <div class="form-group">
+        <label>Клан оппонента:</label>
+        <select id="match-opponent-clan" class="search-input">
+          <option value="">-- Не указан --</option>
+          <option value="Кхад‑Дарум: Клан Железной Кузни">Кхад‑Дарум: Клан Железной Кузни</option>
+          <option value="Кхад‑Дарум: Клан Глубоких Троп">Кхад‑Дарум: Клан Глубоких Троп</option>
+          <option value="Кхад‑Дарум: Клан Рунных Кузнецов">Кхад‑Дарум: Клан Рунных Кузнецов</option>
+          <option value="Арафия: Клан Скорпионов">Арафия: Клан Скорпионов</option>
+          <option value="Арафия: Клан Барханов">Арафия: Клан Барханов</option>
+          <option value="Арафия: Клан Костяных Шаманов">Арафия: Клан Костяных Шаманов</option>
+        </select>
+      </div>
+      <div class="form-group">
         <label>Результат:</label>
         <select id="match-result" class="search-input">
           <option value="win">🏆 Победа</option>
@@ -116,8 +129,8 @@
           <option value="draw">🤝 Ничья</option>
         </select>
       </div>
-      <div class="form-group" style="justify-content: flex-end; display: flex;">
-        <button id="btn-save-match" class="builder-action-btn primary" style="align-self: flex-end;">Сохранить матч</button>
+      <div class="form-group" style="grid-column: 1 / -1; display: flex; justify-content: flex-end; margin-top: 8px;">
+        <button id="btn-save-match" class="builder-action-btn primary">Сохранить матч</button>
       </div>
     </div>
     <div id="match-message"></div>
@@ -148,7 +161,15 @@
     </div>
   </div>
 
-<script type="module" src="src/account/index.js?v=3"></script>
+  <!-- МОДАЛКА: Просмотр ростера -->
+  <div id="roster-preview-modal" class="builder-modal hidden">
+    <div class="builder-modal-content">
+      <button class="builder-modal-close" onclick="closeRosterPreview()">&times;</button>
+      <div id="roster-preview-body"></div>
+    </div>
+  </div>
+
+  <script type="module" src="src/account/index.js?v=4"></script>
 
   <footer class="site-footer">
     <div class="site-footer-content">

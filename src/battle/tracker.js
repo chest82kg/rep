@@ -6,7 +6,7 @@ import { renderTracker } from './render.js';
 // Карта действий: ключ — значение data-track, значение — функция,
 // которая изменяет gameState. Проще расширять, чем цепочка if.
 const TRACK_ACTIONS = {
-  'round-up':    (gs) => { gs.round += 1; },
+  'round-up':    (gs) => { gs.round = Math.min(5, gs.round + 1); },
   'round-down':  (gs) => { gs.round = Math.max(1, gs.round - 1); },
   'vp-own-up':   (gs) => { gs.vpOwn += 1; },
   'vp-own-down': (gs) => { gs.vpOwn = Math.max(0, gs.vpOwn - 1); },

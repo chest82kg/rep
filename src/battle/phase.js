@@ -148,8 +148,8 @@ export function endRound() {
 
   gameState.units.forEach(u => { u.activated = false; });
 
-  gameState.round += 1;
-  saveGameStateNow();
+gameState.round = Math.min(5, gameState.round + 1);
+saveGameStateNow();
 
   // Приток Маны и Веры в начале нового раунда
   tickResourcesAtRoundStart();

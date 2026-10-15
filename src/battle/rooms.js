@@ -104,7 +104,6 @@ function buildQRImageURL(data) {
 function packRosterForRoom(roster) {
   const units = (roster.units || []).map((u, idx) => {
     const parsed = parseUnitCard(u.html || '');
-    // Ищем артефакт, привязанный к этому юниту
     const artifact = (roster.artifacts || []).find(a => a.targetIdx === idx);
     return {
       title: u.title || '',
@@ -113,7 +112,11 @@ function packRosterForRoom(roster) {
       cost: u.cost || parsed.cost || 0,
       html: u.html || '',
       maxHp: parsed.hp || 6,
-      artifactId: artifact ? artifact.id : null
+      artifactId: artifact ? artifact.id : null,
+      artifactName: artifact ? (artifact.name || artifact.id) : null,
+      artifactCost: artifact ? (artifact.cost || 0) : 0,
+      artifactDescription: artifact ? (artifact.description || '') : '',
+      artifactEffect: artifact ? (artifact.effect || '') : ''
     };
   });
 
@@ -451,7 +454,14 @@ function maybeInitBattleFromRoom() {
       currentHp: maxHp,
       maxHp: maxHp,
       statuses: [],
-      activated: false
+      activated: false,
+     artifact: u.artifactId ? {
+  id: u.artifactId,
+  name: u.artifactName || u.artifactId,
+  cost: u.artifactCost || 0,
+  description: u.artifactDescription || '',
+  effect: u.artifactEffect || ''
+} : null
     };
   });
 
@@ -633,7 +643,7 @@ function renderRosterPanel(container, roster, kind) {
           <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.02); padding:6px 10px; border-radius:6px; font-size:0.85rem;">
             <span>
               #${idx + 1} • <strong>${escapeHtml(u.uniqueKey || u.title || '—')}</strong>
-              ${u.artifactId ? `<span style="background: rgba(209,179,132,0.15); color: var(--gold); font-size:0.72rem; padding:2px 6px; border-radius:6px; font-weight:700; margin-left:6px;">🎁</span>` : ''}
+              ${u.artifactId ? `<span style="background: rgba(209,179,132,0.15); color: var(--gold); font-size:0.72rem; padding:2px 6px; border-radius:6px; font-weight:700; margin-left:6px;">🎁 ${escapeHtml(u.artifactName || 'Артефакт')}</span>` : ''}
             </span>
             <span style="color:var(--text-muted);">${escapeHtml(u.role || '')} • ${u.cost || 0} очков</span>
           </div>

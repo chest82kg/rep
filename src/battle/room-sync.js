@@ -56,6 +56,19 @@ function applyRemoteState(roomData, role) {
     u.maxHp = typeof remote.maxHp === 'number' ? remote.maxHp : u.maxHp;
     u.statuses = Array.isArray(remote.statuses) ? remote.statuses.map(st => ({ ...st })) : [];
     if (typeof remote.activated === 'boolean') u.activated = remote.activated;
+
+    // Артефакт для своих юнитов — берём из моего же ростера (это локальные данные)
+    const rosterUnit = myRoster?.units?.[idx];
+   if (rosterUnit?.artifactId) {
+  u.artifact = {
+    id: rosterUnit.artifactId,
+    name: rosterUnit.artifactName || rosterUnit.artifactId,
+    cost: rosterUnit.artifactCost || 0,
+    description: rosterUnit.artifactDescription || '',
+    effect: rosterUnit.artifactEffect || ''
+  };
+}
+
   });
 
   const oppUnits = [];
@@ -72,7 +85,14 @@ function applyRemoteState(roomData, role) {
       maxHp: state.maxHp ?? meta.maxHp ?? 6,
       currentHp: typeof state.currentHp === 'number' ? state.currentHp : (meta.maxHp || 6),
       statuses: Array.isArray(state.statuses) ? state.statuses : [],
-      artifactId: meta.artifactId || null
+      artifactId: meta.artifactId || null,
+     artifact: meta.artifactId ? {
+  id: meta.artifactId,
+  name: meta.artifactName || meta.artifactId,
+  cost: meta.artifactCost || 0,
+  description: meta.artifactDescription || '',
+  effect: meta.artifactEffect || ''
+} : null
     });
   }
 

@@ -1,7 +1,7 @@
 import { auth } from '../core/firebase.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { initAuthUI, showAuthSection, showVerifyNotice, showProfile, showMessage } from './auth.js';
-import { setCurrentUser, loadUserData, nextGeneration } from './profile.js';
+import { setCurrentUser, loadUserData, nextGeneration, closeRosterPreview } from './profile.js';
 import { initMatchesUI, renderLocalMatches } from './matches.js';
 import { initRoomsCleanupUI } from './rooms-cleanup.js';
 
@@ -30,3 +30,6 @@ onAuthStateChanged(auth, async (user) => {
     showMessage(document.getElementById('verify-message'), '');
   }
 });
+
+// Экспорт для onclick в HTML
+window.closeRosterPreview = closeRosterPreview;

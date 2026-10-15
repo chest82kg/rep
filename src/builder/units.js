@@ -3,6 +3,31 @@ import { roster } from './state.js';
 import { DATABASE } from '../core/data.js';
 import { parseCost } from '../utils/unit-parser.js';
 import { renderRosterSummary } from './render.js';
+import { escapeHtml } from '../utils/escape.js';
+import { showToast } from '../ui/toast.js';
+
+/**
+ * Возвращает CSS-класс для бейджа роли, основываясь на тексте роли.
+ */
+function roleClass(role) {
+  const r = String(role || '').toLowerCase();
+  if (r.includes('герой')) return 'role-hero';
+  if (r.includes('элит'))  return 'role-elite';
+  if (r.includes('базов')) return 'role-basic';
+  return '';
+}
+
+/**
+ * Рендерит блок роль + стоимость для шапки карточки юнита.
+ */
+function renderRoleAndCost(role, pts) {
+  return `
+    <span style="display:inline-flex; gap:6px; align-items:center; flex-wrap:wrap;">
+      <span class="aos-badge-role ${roleClass(role)}" style="font-size:0.72rem; padding:3px 8px;">${escapeHtml(role)}</span>
+      <span style="font-size:0.8rem; color: var(--gold); font-weight:700;">${escapeHtml(pts)}</span>
+    </span>
+  `;
+}
 
 export function updateAvailableUnits() {
   const container = document.getElementById('builder-units-available');
@@ -43,8 +68,8 @@ export function updateAvailableUnits() {
       unitsHTML += `
         <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border); padding: 12px 14px; border-radius: 8px;">
           <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">
-            <strong style="color:#fff;">${escapeHtml(title)}</strong>
-            <span style="font-size: 0.8rem; color: var(--accent);">[${escapeHtml(role)} • ${escapeHtml(pts)}]</span>
+            <strong style="color:#fff; font-size:1.05rem;">${escapeHtml(title)}</strong>
+            ${renderRoleAndCost(role, pts)}
           </div>
 
           <div style="font-size:0.8rem; color: var(--text-muted); margin-bottom: 8px;">Нажмите на вариант оружия, чтобы добавить отряд с ним:</div>
@@ -87,8 +112,10 @@ export function updateAvailableUnits() {
       unitsHTML += `
         <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); border: 1px solid var(--border); padding: 10px 14px; border-radius: 8px; gap: 10px; flex-wrap: wrap;">
           <div style="flex: 1; min-width: 200px;">
-            <strong style="color:#fff;">${escapeHtml(title)}</strong>
-            <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 8px;">[${escapeHtml(role)} • ${escapeHtml(pts)}]</span>
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+              <strong style="color:#fff;">${escapeHtml(title)}</strong>
+              ${renderRoleAndCost(role, pts)}
+            </div>
             ${w ? `
               <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">
                 ${escapeHtml(w.name)} (${escapeHtml(w.type)}): Порог ${escapeHtml(w.hit)}, Урон ${escapeHtml(w.damage)}${w.tags ? ', ' + escapeHtml(w.tags) : ''}
@@ -187,33 +214,49 @@ function addChoiceUnitToRoster(cardIndex, weaponOption) {
     role: cardData.role,
     cost: cardData.cost
   });
+  showToast(`Добавлено: ${uniqueKey}`, 'ok');
   renderRosterSummary();
 }
 
 function addUnitToRoster(cardIndex) {
   const cardData = window.currentClanCards[cardIndex];
-  if (cardData) {
-    roster.units.push({
-      title: cardData.title,
-      uniqueKey: cardData.title,
-      html: cardData.html,
-      role: cardData.role,
-      cost: cardData.cost
-    });
-    renderRosterSummary();
-  }
-}
-
-export function removeUnitFromRoster(index) {
-  roster.units.splice(index, 1);
+  if (!cardData) return;
+  roster.units.push({
+    title: cardData.title,
+    uniqueKey: cardData.title,
+    html: cardData.html,
+    role: cardData.role,
+    cost: cardData.cost
+  });
+  showToast(`Добавлено: ${cardData.title}`, 'ok');
   renderRosterSummary();
 }
 
-function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+export function removeUnitFromRoster(index) {
+  const removed = roster.units[index];
+  roster.units.splice(index, 1);
+
+  // 1. Удаляем артефакты, привязанные к удалённому юниту.
+  // 2. Переиндексируем targetIdx у оставшихся.
+  roster.artifacts = roster.artifacts
+    .filter(a => a.targetIdx !== index)
+    .map(a => ({
+      ...a,
+      targetIdx: a.targetIdx > index ? a.targetIdx - 1 : a.targetIdx
+    }));
+
+  // 3. Если артефактов больше, чем Героев — удаляем «лишние» (последние по списку).
+  const heroCount = roster.units.filter(u => (u.role || '').toLowerCase().includes('герой')).length;
+  if (roster.artifacts.length > heroCount) {
+    const excess = roster.artifacts.length - heroCount;
+    roster.artifacts = roster.artifacts.slice(0, heroCount);
+    if (excess > 0) {
+      showToast(`Удалено артефактов сверх лимита: ${excess}`, 'err');
+    }
+  }
+
+  if (removed) {
+    showToast(`Удалено: ${removed.uniqueKey || removed.title}`, 'err');
+  }
+  renderRosterSummary();
 }

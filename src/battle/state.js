@@ -56,7 +56,7 @@ export function getStorageKey() {
 }
 
 export function initGameState() {
-  const baseRoster = JSON.parse(localStorage.getItem('activeRoster')) || { name: 'Армия', clan: '', units: [] };
+  const baseRoster = JSON.parse(localStorage.getItem('activeRoster')) || { name: 'Армия', clan: '', units: [], artifacts: [] };
   const saved = localStorage.getItem(getStorageKey());
 
   if (saved) {
@@ -76,6 +76,9 @@ export function initGameState() {
         if (typeof gameState.faith !== 'number') gameState.faith = 0;
         if (typeof gameState.mageCap !== 'number') gameState.mageCap = 6;
         if (typeof gameState.faithCap !== 'number') gameState.faithCap = 6;
+
+        // Восстанавливаем артефакты на юнитах (если потерялись).
+        applyArtifactsToUnits(baseRoster.artifacts || []);
         return;
       }
     } catch (e) { /* ignore */ }
@@ -106,10 +109,16 @@ export function initGameState() {
         statuses: [],
         activated: false,
         role: u.role || parsed.role || '',
-        cost: u.cost || parsed.cost || 0
+        cost: u.cost || parsed.cost || 0,
+        artifact: null,
+        // Базовые характеристики (без артефактов)
+        baseStats: parsed.stats || null
       };
     })
   };
+
+  // Переносим артефакты из ростера в состояние боя + применяем бонусы ХП.
+  applyArtifactsToUnits(baseRoster.artifacts || []);
 
   // Стартовые ресурсы по числу Магов/Жрецов
   const mages = gameState.units.filter(u => (u.html || '').includes('role-mage')).length;
@@ -118,6 +127,48 @@ export function initGameState() {
   gameState.faith = Math.min(6, priests * 2);
 
   saveGameStateNow();
+}
+
+/**
+ * Переносит артефакты из ростера в gameState.units[idx].artifact.
+ * Дополнительно: применяет бонусы ХП к maxHp и currentHp.
+ *
+ * Структура ростера: [{ id, targetIdx, name, cost, description, effect }, ...]
+ */
+function applyArtifactsToUnits(artifacts) {
+  if (!gameState || !Array.isArray(gameState.units)) return;
+
+  // Сбрасываем все артефакты и откатываем применённые бонусы ХП
+  gameState.units.forEach(u => {
+    if (u.artifact && u.artifact._hpBonus) {
+      u.maxHp -= u.artifact._hpBonus;
+      u.currentHp = Math.max(1, Math.min(u.currentHp, u.maxHp));
+    }
+    u.artifact = null;
+  });
+
+  // Расставляем артефакты
+  artifacts.forEach(a => {
+    const idx = a.targetIdx;
+    if (typeof idx !== 'number' || idx < 0 || idx >= gameState.units.length) return;
+
+    const art = {
+      id: a.id,
+      name: a.name || a.id,
+      cost: a.cost || 0,
+      description: a.description || '',
+      effect: a.effect || ''
+    };
+
+    // Амулет выживания: +2 к ХП. Применяем сразу.
+    if (art.effect === 'give_hp_2_and_last_stand') {
+      art._hpBonus = 2;
+      gameState.units[idx].maxHp += 2;
+      gameState.units[idx].currentHp += 2;
+    }
+
+    gameState.units[idx].artifact = art;
+  });
 }
 
 export function saveGameState() {

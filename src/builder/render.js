@@ -26,7 +26,9 @@ import {
 import { renderStakesList } from './stakes.js';
 import { updateAvailableUnits, removeUnitFromRoster } from './units.js';
 import { initAuthWatcher, saveRoster, openLoadModal, exportPdf, exportRosterJson, importRosterJson } from './storage.js';
+import { PRESET_ROSTERS } from './presets.js';
 import { escapeHtml } from '../utils/escape.js';
+import { showToast } from '../ui/toast.js';
 
 const MOBILE_BREAKPOINT = 768;
 
@@ -322,11 +324,15 @@ function renderArtifactsList() {
   const used = getUsedArtifacts();
 
   if (badge) {
-    badge.textContent = `Доступно: ${available - used} / ${available}`;
+    const left = available - used;
+    badge.textContent = `Доступно: ${left} / ${available}`;
     if (available === 0) {
       badge.style.background = '#2a2a3a';
       badge.style.color = 'var(--text-muted)';
-    } else if (available - used === 0) {
+    } else if (left < 0) {
+      badge.style.background = '#ff4757';
+      badge.style.color = '#fff';
+    } else if (left === 0) {
       badge.style.background = '#ffa502';
       badge.style.color = '#0b0b0f';
     } else {
@@ -380,6 +386,7 @@ function renderArtifactsList() {
     btn.addEventListener('click', () => {
       const i = parseInt(btn.dataset.removeArtifact, 10);
       removeArtifact(i);
+      showToast('Артефакт удалён', 'err');
       renderRosterSummary();
     });
   });
@@ -450,6 +457,8 @@ function openArtifactPicker() {
         }
         return;
       }
+      const art = ARTIFACTS_LIST.find(x => x.id === artId);
+      showToast(`Куплено: ${art ? art.name : 'артефакт'}`, 'ok');
       modal.classList.add('hidden');
       renderRosterSummary();
     });
@@ -469,7 +478,6 @@ function initBuilderEvents() {
       roster.artifacts = [];
       updateAvailableUnits();
       renderRosterSummary();
-      // renderStakesList() не вызываем — она уже вызывается внутри renderRosterSummary()
     });
   }
 
@@ -499,6 +507,9 @@ function initBuilderEvents() {
 
   const btnLoad = document.getElementById('btn-load-roster');
   if (btnLoad) btnLoad.addEventListener('click', openLoadModal);
+
+  const btnLoadPreset = document.getElementById('btn-load-preset');
+  if (btnLoadPreset) btnLoadPreset.addEventListener('click', openPresetsModal);
 
   const btnExportJson = document.getElementById('btn-export-json');
   if (btnExportJson) btnExportJson.addEventListener('click', exportRosterJson);
@@ -684,8 +695,6 @@ function initBuilderEvents() {
       window.open('play.html', '_blank');
     });
   }
-
-  // renderStakesList() вызывается внутри renderRosterSummary(), дублировать не нужно.
 }
 
 function resetRoster() {
@@ -770,8 +779,6 @@ export function showSaveMessage(text, type = 'info') {
 }
 
 // --- Готовые ростеры ---
-
-import { PRESET_ROSTERS } from './presets.js';
 
 function openPresetsModal() {
   const modal = document.getElementById('builder-display-modal');

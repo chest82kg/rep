@@ -40,6 +40,7 @@ body {
   display: flex;
   min-height: 100vh;
   overflow: visible;
+  align-items: flex-start;
 }
 
 /* --- 4. Сайдбар --- */
@@ -51,6 +52,10 @@ body {
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  align-self: flex-start;
 }
 
 .sidebar h2 {
@@ -581,11 +586,13 @@ a.breadcrumb-item:hover {
     overflow: auto !important;
   }
   .sidebar {
-    width: 100% !important;
-    max-height: 250px !important;
-    border-right: none !important;
-    border-bottom: 1px solid var(--border);
-  }
+  width: 100% !important;
+  max-height: 250px !important;
+  border-right: none !important;
+  border-bottom: 1px solid var(--border);
+  position: static !important;
+  height: auto !important;
+}
   .main-area {
     padding: 16px !important;
     overflow: visible !important;

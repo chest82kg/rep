@@ -75,6 +75,84 @@ export function renderTracker() {
   }
 }
 
+/**
+ * Считает бонусы артефакта к характеристикам.
+ * Возвращает: { hp: +N, move: +N, armor: +N, weaponTag: '[Пробой 1]' | null }
+ */
+function getArtifactBonuses(artifact) {
+  const bonuses = { hp: 0, move: 0, armor: 0, weaponTag: null };
+  if (!artifact || !artifact.effect) return bonuses;
+
+  switch (artifact.effect) {
+    case 'give_armor_1':                 bonuses.armor += 1; break;
+    case 'give_move_1':                  bonuses.move += 1;  break;
+    case 'give_hp_2_and_last_stand':     bonuses.hp += 2;    break;
+    case 'give_tag_melee_rend1':         bonuses.weaponTag = '[Пробой 1]'; break;
+  }
+  return bonuses;
+}
+
+/**
+ * Формирует бейдж с бонусом артефакта к стату.
+ * Возвращает HTML для вставки в карточку.
+ */
+function statBonusBadge(value, bonus, suffix = '') {
+  if (!bonus) return '';
+  return `
+    <span style="color: var(--gold); font-weight: 700; margin-left: 4px; font-size: 0.9em;">(${value}${suffix} <span style="color:#2ed573;">+${bonus}</span>)</span>
+  `;
+}
+
+/**
+ * Модифицирует HTML карточки юнита, добавляя бонусы артефакта.
+ * Работает на DOM, не изменяет исходник.
+ */
+function applyArtifactBonusesToCardHtml(html, artifact) {
+  if (!artifact) return html;
+  const bonuses = getArtifactBonuses(artifact);
+  if (!bonuses.armor && !bonuses.move && !bonuses.hp && !bonuses.weaponTag) return html;
+
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+
+  // Находим статы в aos-stat-box
+  const statBoxes = tmp.querySelectorAll('.aos-stat-box');
+  statBoxes.forEach(box => {
+    const label = (box.querySelector('.aos-stat-label')?.textContent || '').trim().toUpperCase();
+    const valueEl = box.querySelector('.aos-stat-value');
+    if (!valueEl) return;
+
+    const baseValue = parseInt(valueEl.textContent.trim().replace(/[^\d-]/g, ''));
+
+    if ((label === 'БРОНЯ' || label === 'ARMOR') && bonuses.armor) {
+      valueEl.innerHTML = `${baseValue + bonuses.armor} <span style="color:#2ed573; font-size:0.75em;">(+${bonuses.armor})</span>`;
+    }
+    if ((label === 'ДВИЖЕНИЕ' || label === 'MOVE') && bonuses.move) {
+      valueEl.innerHTML = `${baseValue + bonuses.move} <span style="color:#2ed573; font-size:0.75em;">(+${bonuses.move})</span>`;
+    }
+    if ((label === 'ХП' || label === 'HP' || label === 'WOUNDS') && bonuses.hp) {
+      valueEl.innerHTML = `${baseValue + bonuses.hp} <span style="color:#2ed573; font-size:0.75em;">(+${bonuses.hp})</span>`;
+    }
+  });
+
+  // Добавляем тег к оружию (Пробой 1)
+  if (bonuses.weaponTag) {
+    const weapons = tmp.querySelectorAll('.aos-weapon-item');
+    weapons.forEach((weaponEl, i) => {
+      if (i > 0) return; // только первое оружие
+      const statsEl = weaponEl.querySelector('.aos-weapon-stats');
+      if (!statsEl) return;
+      // Проверяем, нет ли уже этого тега
+      if (statsEl.textContent.includes('Пробой 1') || statsEl.textContent.includes('Пробой 2')) return;
+      const tagSpan = document.createElement('span');
+      tagSpan.innerHTML = `Теги: <span style="color:#2ed573; font-weight:700;">${bonuses.weaponTag}</span>`;
+      statsEl.appendChild(tagSpan);
+    });
+  }
+
+  return tmp.innerHTML;
+}
+
 export function renderUnits() {
   const container = document.getElementById('dash-units-container');
   if (!container) return;
@@ -93,23 +171,31 @@ export function renderUnits() {
       <span class="status-tag ${st.type}">
         ${escapeHtml(st.name)}: ${st.value}
         <button data-action="mod-status" data-idx="${idx}" data-sidx="${sIdx}" data-delta="1" title="+1">+</button>
-        <button data-action="mod-status" data-idx="${idx}" data-sidx="${sIdx}" data-delta="-1" title="-1">−</button>
+        <button data-action="mod-status" data-idx="${idx}" data-sidx="${sIdx}" data-delta="-1" title="−">−</button>
         <button data-action="rm-status" data-idx="${idx}" data-sidx="${sIdx}" title="Удалить">&times;</button>
       </span>
     `).join('');
 
+    // Бейдж артефакта над карточкой — крупный
+    const artifactBadge = u.artifact
+      ? `<span style="background: rgba(209,179,132,0.20); color: var(--gold); font-size:1rem; padding:6px 14px; border-radius:8px; font-weight:800; margin-left:10px; border: 2px solid var(--gold); box-shadow: 0 0 12px rgba(209,179,132,0.25);" title="${escapeHtml(u.artifact.description || u.artifact.name)}">🎁 ${escapeHtml(u.artifact.name)}</span>`
+      : '';
+
+    // Карточка с применёнными бонусами артефакта
+    const cardHtmlWithBonuses = applyArtifactBonusesToCardHtml(u.html, u.artifact);
+
     return `
       <div class="battle-unit-wrapper ${isDead ? 'dead' : ''} ${isActivated ? 'activated' : ''}" data-idx="${idx}">
         <div class="unit-meta-row">
-          <span>
+          <span style="display:flex; align-items:center; flex-wrap:wrap; gap:6px;">
             ${isActivated ? '<span style="color:#2ed573; margin-right:6px;">✓</span>' : ''}
-            <strong>#${idx + 1}</strong> • ${escapeHtml(u.role || 'Отряд')}
+            <strong>#${idx + 1}</strong> • ${escapeHtml(u.role || 'Отряд')}${artifactBadge}
           </span>
           <span>${u.cost || 0} очков</span>
         </div>
 
         <div class="unit-card-clickable" data-action="open-card" data-idx="${idx}" title="Нажмите, чтобы открыть справку">
-          ${u.html}
+          ${cardHtmlWithBonuses}
         </div>
 
         <div class="unit-control-panel">
@@ -135,8 +221,8 @@ export function renderUnits() {
             <div style="display: flex; gap: 4px; flex-wrap: wrap;">
               <button class="hp-btn big" data-action="hp" data-idx="${idx}" data-delta="5" title="+5 ХП">+5</button>
               <button class="hp-btn" data-action="hp" data-idx="${idx}" data-delta="1" title="+1 ХП">+</button>
-              <button class="hp-btn" data-action="hp" data-idx="${idx}" data-delta="-1" title="-1 ХП">−</button>
-              <button class="hp-btn big" data-action="hp" data-idx="${idx}" data-delta="-5" title="-5 ХП">−5</button>
+              <button class="hp-btn" data-action="hp" data-idx="${idx}" data-delta="-1" title="−1 ХП">−</button>
+              <button class="hp-btn big" data-action="hp" data-idx="${idx}" data-delta="-5" title="−5 ХП">−5</button>
             </div>
           </div>
         </div>
@@ -263,17 +349,19 @@ function renderOpponentUnits() {
         <span class="status-tag ${st.type}" style="opacity:0.9;">${escapeHtml(st.name)}: ${st.value}</span>
       `).join('');
 
-      const artifactBadge = u.artifactId
-        ? `<span style="background: rgba(209,179,132,0.15); color: var(--gold); font-size:0.72rem; padding:2px 8px; border-radius:6px; font-weight:700; margin-left:6px;">🎁 Артефакт</span>`
+      const artifactBadge = u.artifact
+        ? `<span style="background: rgba(209,179,132,0.20); color: var(--gold); font-size:1rem; padding:6px 14px; border-radius:8px; font-weight:800; margin-left:10px; border: 2px solid var(--gold);">🎁 ${escapeHtml(u.artifact.name || 'Артефакт')}</span>`
         : '';
+
+      const cardHtmlWithBonuses = applyArtifactBonusesToCardHtml(u.html || '', u.artifact);
 
       return `
         <div class="battle-unit-wrapper ${isDead ? 'dead' : ''}" style="opacity:0.92;">
           <div class="unit-meta-row">
-            <span><strong>#${idx + 1}</strong> • ${role}${artifactBadge}</span>
+            <span style="display:flex; align-items:center; flex-wrap:wrap; gap:6px;"><strong>#${idx + 1}</strong> • ${role}${artifactBadge}</span>
             <span>${u.cost || 0} очков</span>
           </div>
-          ${u.html || `<div style="padding:10px; background:rgba(0,0,0,0.2); border-radius:8px; font-size:0.9rem; color:var(--text-muted);">${escapeHtml(u.title || 'Отряд')}</div>`}
+          ${cardHtmlWithBonuses || `<div style="padding:10px; background:rgba(0,0,0,0.2); border-radius:8px; font-size:0.9rem; color:var(--text-muted);">${escapeHtml(u.title || 'Отряд')}</div>`}
           <div class="unit-control-panel" style="justify-content:space-between;">
             <div style="flex:1; min-width:220px;">
               <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:4px;">Статусы:</div>
@@ -334,6 +422,20 @@ export function openUnitCardModal(idx) {
   const details = extractUnitDetails(u.html || '');
   const clanTitle = gameState.clan;
 
+  const artifactBlock = u.artifact ? `
+    <h3 style="color:var(--gold); font-size:1.2rem; margin-bottom:10px; margin-top:20px;">🎁 Артефакт</h3>
+    <div style="background:rgba(209,179,132,0.10); border:2px solid var(--gold); border-radius:10px; padding:16px 18px; margin-bottom:16px;">
+      <div style="display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:10px;">
+        <strong style="color:#fff; font-size:1.15rem;">${escapeHtml(u.artifact.name)}</strong>
+        <span style="color:var(--gold); font-weight:700; font-size:1rem;">${u.artifact.cost || 0} очков</span>
+      </div>
+      ${u.artifact.description
+        ? `<div style="font-size:1rem; color:var(--text); line-height:1.55;">${escapeHtml(u.artifact.description)}</div>`
+        : '<div style="font-size:0.9rem; color:#ffa502; font-style:italic;">⚠️ Описание артефакта отсутствует. Откройте билдер и обновите ростер — данные подтянутся из справочника.</div>'
+      }
+    </div>
+  ` : '';
+
   body.innerHTML = `
     <h2 style="color:var(--gold); margin-bottom:4px;">${escapeHtml(u.uniqueKey || u.title)}</h2>
     <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:16px;">
@@ -350,6 +452,8 @@ export function openUnitCardModal(idx) {
         `).join('')}
       </div>
     ` : ''}
+
+    ${artifactBlock}
 
     ${details.weapons.length > 0 ? `
       <h3 style="color:var(--accent); font-size:1rem; margin-bottom:8px;">Вооружение</h3>
@@ -402,13 +506,6 @@ export function openUnitCardModal(idx) {
   modal.classList.remove('hidden');
 }
 
-/**
- * Извлекает из HTML-строки карточки её статистику, оружие и способности.
- * Используется в openUnitCardModal.
- *
- * @param {string} html
- * @returns {{ stats: Object, weapons: Array, abilities: Array }}
- */
 function extractUnitDetails(html) {
   const tmp = document.createElement('div');
   tmp.innerHTML = html;
