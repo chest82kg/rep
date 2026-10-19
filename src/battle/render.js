@@ -7,6 +7,9 @@ import { openNoteModal } from './notes.js';
 import { getUnitCastClass } from './resources.js';
 import { openSpellbookModal, openPrayerModal } from './magic.js';
 
+let compactMode = localStorage.getItem('battleCompactMode') === '1';
+let viewTab = 'my'; // 'my' | 'opp' | 'both'
+
 export function renderDashboard() {
   if (!gameState) return;
 
@@ -75,82 +78,139 @@ export function renderTracker() {
   }
 }
 
-/**
- * Считает бонусы артефакта к характеристикам.
- * Возвращает: { hp: +N, move: +N, armor: +N, weaponTag: '[Пробой 1]' | null }
- */
-function getArtifactBonuses(artifact) {
-  const bonuses = { hp: 0, move: 0, armor: 0, weaponTag: null };
-  if (!artifact || !artifact.effect) return bonuses;
+// --- Фильтры и стойки ---
 
-  switch (artifact.effect) {
-    case 'give_armor_1':                 bonuses.armor += 1; break;
-    case 'give_move_1':                  bonuses.move += 1;  break;
-    case 'give_hp_2_and_last_stand':     bonuses.hp += 2;    break;
-    case 'give_tag_melee_rend1':         bonuses.weaponTag = '[Пробой 1]'; break;
-  }
-  return bonuses;
+let activeBattleFilter = 'all';
+
+export function filterBattleUnits(filter) {
+  activeBattleFilter = filter;
+  renderUnits();
 }
 
-/**
- * Формирует бейдж с бонусом артефакта к стату.
- * Возвращает HTML для вставки в карточку.
- */
-function statBonusBadge(value, bonus, suffix = '') {
-  if (!bonus) return '';
+export function changeUnitStance(idx, newStance) {
+  const u = gameState?.units?.[idx];
+  if (!u) return;
+  u.stance = newStance;
+  saveGameState();
+  pushMyState();
+  renderUnits();
+}
+
+export function toggleCompactMode() {
+  compactMode = !compactMode;
+  localStorage.setItem('battleCompactMode', compactMode ? '1' : '0');
+  renderUnits();
+  renderOpponentUnits();
+}
+
+export function setViewTab(tab) {
+  viewTab = tab;
+  renderUnits();
+  renderOpponentUnits();
+}
+
+function getStanceBadge(stance) {
+  const labels = {
+    neutral: { text: 'Нейтрал', color: '#a0a0b0', icon: '⚪' },
+    attack:  { text: 'Атака', color: '#ff4757', icon: '⚔️' },
+    defense: { text: 'Защита', color: '#2ed573', icon: '🛡️' },
+    clan:    { text: 'Клан', color: '#d1b384', icon: '🏰' }
+  };
+  const s = labels[stance] || labels.neutral;
+  return `<span style="background: rgba(255,255,255,0.05); color: ${s.color}; font-size:0.75rem; padding:2px 8px; border-radius:6px; font-weight:700; margin-left:6px; border: 1px solid ${s.color}40;">${s.icon} ${s.text}</span>`;
+}
+
+function getStanceButtons(idx, currentStance) {
+  const buttons = [
+    { id: 'neutral', label: '⚪ Нейтрал' },
+    { id: 'attack', label: '⚔️ Атака' },
+    { id: 'defense', label: '🛡️ Защита' },
+    { id: 'clan', label: '🏰 Клан' }
+  ];
+
   return `
-    <span style="color: var(--gold); font-weight: 700; margin-left: 4px; font-size: 0.9em;">(${value}${suffix} <span style="color:#2ed573;">+${bonus}</span>)</span>
+    <div style="display:flex; gap:4px; flex-wrap:wrap; margin-top:4px;">
+      ${buttons.map(b => `
+        <button class="builder-action-btn ${currentStance === b.id ? 'primary' : ''}" 
+                data-action="change-stance" data-idx="${idx}" data-stance="${b.id}"
+                style="padding: 4px 8px; font-size: 0.75rem; ${currentStance === b.id ? '' : 'background: rgba(255,255,255,0.02); border-color: var(--border); color: var(--text-muted);'}">
+          ${b.label}
+        </button>
+      `).join('')}
+    </div>
   `;
 }
 
-/**
- * Модифицирует HTML карточки юнита, добавляя бонусы артефакта.
- * Работает на DOM, не изменяет исходник.
- */
-function applyArtifactBonusesToCardHtml(html, artifact) {
-  if (!artifact) return html;
-  const bonuses = getArtifactBonuses(artifact);
-  if (!bonuses.armor && !bonuses.move && !bonuses.hp && !bonuses.weaponTag) return html;
+function renderCompactUnitCard(u, idx, isOpponent = false) {
+  const isDead = u.currentHp <= 0;
+  const isActivated = u.activated === true;
+  const cast = isOpponent ? { isMage: false, isPriest: false } : getUnitCastClass(idx);
 
-  const tmp = document.createElement('div');
-  tmp.innerHTML = html;
+  const hpPercent = Math.max(0, Math.min(100, (u.currentHp / u.maxHp) * 100));
+  const hpColor = hpPercent > 50 ? '#2ed573' : (hpPercent > 20 ? '#ffa502' : '#ff4757');
 
-  // Находим статы в aos-stat-box
-  const statBoxes = tmp.querySelectorAll('.aos-stat-box');
-  statBoxes.forEach(box => {
-    const label = (box.querySelector('.aos-stat-label')?.textContent || '').trim().toUpperCase();
-    const valueEl = box.querySelector('.aos-stat-value');
-    if (!valueEl) return;
+  const statusesHTML = (u.statuses || []).map((st, sIdx) => `
+    <span class="status-tag ${st.type}" style="font-size: 0.7rem; padding: 2px 6px;">
+      ${escapeHtml(st.name)}: ${st.value}
+      ${!isOpponent ? `
+        <button data-action="mod-status" data-idx="${idx}" data-sidx="${sIdx}" data-delta="1" style="padding:0 2px;">+</button>
+        <button data-action="mod-status" data-idx="${idx}" data-sidx="${sIdx}" data-delta="-1" style="padding:0 2px;">−</button>
+        <button data-action="rm-status" data-idx="${idx}" data-sidx="${sIdx}" style="padding:0 2px;">&times;</button>
+      ` : ''}
+    </span>
+  `).join('');
 
-    const baseValue = parseInt(valueEl.textContent.trim().replace(/[^\d-]/g, ''));
+  const artifactBadge = u.artifact
+    ? `<span style="background: rgba(209,179,132,0.20); color: var(--gold); font-size:0.75rem; padding:2px 8px; border-radius:6px; font-weight:700; border: 1px solid var(--gold);" title="${escapeHtml(u.artifact.description || u.artifact.name)}">🎁 ${escapeHtml(u.artifact.name)}</span>`
+    : '';
 
-    if ((label === 'БРОНЯ' || label === 'ARMOR') && bonuses.armor) {
-      valueEl.innerHTML = `${baseValue + bonuses.armor} <span style="color:#2ed573; font-size:0.75em;">(+${bonuses.armor})</span>`;
-    }
-    if ((label === 'ДВИЖЕНИЕ' || label === 'MOVE') && bonuses.move) {
-      valueEl.innerHTML = `${baseValue + bonuses.move} <span style="color:#2ed573; font-size:0.75em;">(+${bonuses.move})</span>`;
-    }
-    if ((label === 'ХП' || label === 'HP' || label === 'WOUNDS') && bonuses.hp) {
-      valueEl.innerHTML = `${baseValue + bonuses.hp} <span style="color:#2ed573; font-size:0.75em;">(+${bonuses.hp})</span>`;
-    }
-  });
+  const stanceBadge = getStanceBadge(u.stance || 'neutral');
 
-  // Добавляем тег к оружию (Пробой 1)
-  if (bonuses.weaponTag) {
-    const weapons = tmp.querySelectorAll('.aos-weapon-item');
-    weapons.forEach((weaponEl, i) => {
-      if (i > 0) return; // только первое оружие
-      const statsEl = weaponEl.querySelector('.aos-weapon-stats');
-      if (!statsEl) return;
-      // Проверяем, нет ли уже этого тега
-      if (statsEl.textContent.includes('Пробой 1') || statsEl.textContent.includes('Пробой 2')) return;
-      const tagSpan = document.createElement('span');
-      tagSpan.innerHTML = `Теги: <span style="color:#2ed573; font-weight:700;">${bonuses.weaponTag}</span>`;
-      statsEl.appendChild(tagSpan);
-    });
-  }
+  return `
+    <div class="battle-unit-wrapper compact ${isDead ? 'dead' : ''} ${isActivated ? 'activated' : ''}" data-idx="${idx}" style="padding: 10px 14px; margin-bottom: 8px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <strong style="font-size: 1rem; color: #fff;">#${idx + 1} ${escapeHtml(u.uniqueKey || u.title)}</strong>
+          <span class="aos-badge-role ${(u.role || '').toLowerCase().includes('герой') ? 'role-hero' : (u.role || '').toLowerCase().includes('элит') ? 'role-elite' : 'role-basic'}" style="font-size:0.7rem; padding:2px 6px;">${escapeHtml(u.role || 'Отряд')}</span>
+          ${stanceBadge}
+          ${artifactBadge}
+        </div>
+        <div style="display: flex; gap: 4px; align-items: center;">
+          ${!isOpponent ? `
+            <button class="builder-action-btn" data-action="hp" data-idx="${idx}" data-delta="1" style="padding: 2px 8px; font-size: 0.75rem; border-color: #2ed573; color: #2ed573;">+</button>
+            <button class="builder-action-btn" data-action="hp" data-idx="${idx}" data-delta="-1" style="padding: 2px 8px; font-size: 0.75rem; border-color: #ff4757; color: #ff4757;">−</button>
+          ` : ''}
+          <button class="builder-action-btn" data-action="open-card" data-idx="${idx}" style="padding: 2px 8px; font-size: 0.75rem;">👁</button>
+        </div>
+      </div>
+      
+      <div style="display: flex; align-items: center; gap: 12px; margin-top: 8px; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 120px;">
+          <div style="height: 6px; background: rgba(0,0,0,0.4); border-radius: 3px; overflow: hidden;">
+            <div style="height: 100%; width: ${hpPercent}%; background: ${hpColor}; transition: width 0.2s;"></div>
+          </div>
+        </div>
+        <span style="font-size: 0.85rem; font-weight: 700; color: ${hpColor};">${u.currentHp} / ${u.maxHp} ХП</span>
+        <span style="font-size: 0.8rem; color: var(--text-muted);">🛡️ ${u.armor || '3'}</span>
+        ${statusesHTML ? `<div style="display:flex; gap:4px; flex-wrap:wrap;">${statusesHTML}</div>` : ''}
+      </div>
 
-  return tmp.innerHTML;
+      ${!isOpponent ? `
+      <div style="margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+        <button class="builder-action-btn ${isActivated ? 'primary' : ''}" data-action="toggle-activated" data-idx="${idx}" style="padding: 4px 10px; font-size: 0.75rem;">
+          ${isActivated ? '✓ Активирован' : '○ Активировать'}
+        </button>
+        ${cast.isMage ? `<button class="builder-action-btn" data-action="open-spellbook" data-idx="${idx}" style="padding: 4px 10px; font-size: 0.75rem; border-color: #6c5ce7; color: #a29bfe;">✨ Магия</button>` : ''}
+        ${cast.isPriest ? `<button class="builder-action-btn" data-action="open-prayerbook" data-idx="${idx}" style="padding: 4px 10px; font-size: 0.75rem; border-color: #d1b384; color: #d1b384;">🙏 Молитва</button>` : ''}
+        <button class="builder-action-btn" data-action="add-note" data-idx="${idx}" style="padding: 4px 10px; font-size: 0.75rem;">📝</button>
+        <button class="builder-action-btn" data-action="open-card" data-idx="${idx}" style="padding: 4px 10px; font-size: 0.75rem;">📖 Карточка</button>
+      </div>
+      <div style="margin-top: 6px;">
+        ${getStanceButtons(idx, u.stance || 'neutral')}
+      </div>
+      ` : ''}
+    </div>
+  `;
 }
 
 export function renderUnits() {
@@ -162,84 +222,139 @@ export function renderUnits() {
     return;
   }
 
-  container.innerHTML = gameState.units.map((u, idx) => {
-    const isDead = u.currentHp <= 0;
-    const isActivated = u.activated === true;
-    const cast = getUnitCastClass(idx);
+  // Заголовок и переключатели
+  const controlsHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="builder-action-btn ${activeBattleFilter === 'all' ? 'primary' : ''}" onclick="window.filterBattleUnits('all')" style="padding:4px 10px; font-size:0.8rem;">Все</button>
+        <button class="builder-action-btn ${activeBattleFilter === 'basic' ? 'primary' : ''}" onclick="window.filterBattleUnits('basic')" style="padding:4px 10px; font-size:0.8rem;">Базовые</button>
+        <button class="builder-action-btn ${activeBattleFilter === 'elite' ? 'primary' : ''}" onclick="window.filterBattleUnits('elite')" style="padding:4px 10px; font-size:0.8rem;">Элита</button>
+        <button class="builder-action-btn ${activeBattleFilter === 'hero' ? 'primary' : ''}" onclick="window.filterBattleUnits('hero')" style="padding:4px 10px; font-size:0.8rem;">Герои</button>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="builder-action-btn ${!compactMode ? 'primary' : ''}" onclick="window.toggleCompactMode()" style="padding:4px 10px; font-size:0.8rem;">Полный вид</button>
+        <button class="builder-action-btn ${compactMode ? 'primary' : ''}" onclick="window.toggleCompactMode()" style="padding:4px 10px; font-size:0.8rem;">Компактный</button>
+      </div>
+    </div>
+  `;
 
-    const statusesHTML = (u.statuses || []).map((st, sIdx) => `
-      <span class="status-tag ${st.type}">
-        ${escapeHtml(st.name)}: ${st.value}
-        <button data-action="mod-status" data-idx="${idx}" data-sidx="${sIdx}" data-delta="1" title="+1">+</button>
-        <button data-action="mod-status" data-idx="${idx}" data-sidx="${sIdx}" data-delta="-1" title="−">−</button>
-        <button data-action="rm-status" data-idx="${idx}" data-sidx="${sIdx}" title="Удалить">&times;</button>
-      </span>
-    `).join('');
-
-    // Бейдж артефакта над карточкой — крупный
-    const artifactBadge = u.artifact
-      ? `<span style="background: rgba(209,179,132,0.20); color: var(--gold); font-size:1rem; padding:6px 14px; border-radius:8px; font-weight:800; margin-left:10px; border: 2px solid var(--gold); box-shadow: 0 0 12px rgba(209,179,132,0.25);" title="${escapeHtml(u.artifact.description || u.artifact.name)}">🎁 ${escapeHtml(u.artifact.name)}</span>`
-      : '';
-
-    // Карточка с применёнными бонусами артефакта
-    const cardHtmlWithBonuses = applyArtifactBonusesToCardHtml(u.html, u.artifact);
-
-    return `
-      <div class="battle-unit-wrapper ${isDead ? 'dead' : ''} ${isActivated ? 'activated' : ''}" data-idx="${idx}">
-        <div class="unit-meta-row">
-          <span style="display:flex; align-items:center; flex-wrap:wrap; gap:6px;">
-            ${isActivated ? '<span style="color:#2ed573; margin-right:6px;">✓</span>' : ''}
-            <strong>#${idx + 1}</strong> • ${escapeHtml(u.role || 'Отряд')}${artifactBadge}
-          </span>
-          <span>${u.cost || 0} очков</span>
-        </div>
-
-        <div class="unit-card-clickable" data-action="open-card" data-idx="${idx}" title="Нажмите, чтобы открыть справку">
-          ${cardHtmlWithBonuses}
-        </div>
-
-        <div class="unit-control-panel">
-          <div style="flex: 1; min-width: 250px;">
-            <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">Активные статусы:</div>
-            <div class="status-container">
-              ${statusesHTML || '<span style="color:var(--text-muted); font-size:0.85rem;">нет активных статусов</span>'}
-            </div>
-            <div class="status-add-bar">
-              <select id="status-type-${idx}" class="status-select" aria-label="Тип статуса">
-                <option value="poison">Яд</option>
-                <option value="fire">Горение</option>
-                <option value="stone">Окаменение</option>
-                <option value="custom">Другое</option>
-              </select>
-              <input type="number" id="status-val-${idx}" value="1" min="1" max="10" style="width: 55px; padding: 4px;" class="status-select" aria-label="Значение статуса">
-              <button class="builder-action-btn" style="padding: 4px 10px; font-size: 0.8rem;" data-action="add-status" data-idx="${idx}">+ Статус</button>
-            </div>
-          </div>
-
-          <div class="hp-box">
-            <span>ХП: <strong style="font-size: 1.4rem; color: #fff;">${u.currentHp} / ${u.maxHp}</strong></span>
-            <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-              <button class="hp-btn big" data-action="hp" data-idx="${idx}" data-delta="5" title="+5 ХП">+5</button>
-              <button class="hp-btn" data-action="hp" data-idx="${idx}" data-delta="1" title="+1 ХП">+</button>
-              <button class="hp-btn" data-action="hp" data-idx="${idx}" data-delta="-1" title="−1 ХП">−</button>
-              <button class="hp-btn big" data-action="hp" data-idx="${idx}" data-delta="-5" title="−5 ХП">−5</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="unit-bottom-bar">
-          <button class="activate-btn ${isActivated ? 'active' : ''}" data-action="toggle-activated" data-idx="${idx}">
-            ${isActivated ? '✓ Активирован' : '○ Отметить активированным'}
-          </button>
-          ${cast.isMage ? `<button class="magic-btn spell-btn" data-action="open-spellbook" data-idx="${idx}">✨ Заклинание</button>` : ''}
-          ${cast.isPriest ? `<button class="magic-btn prayer-btn" data-action="open-prayerbook" data-idx="${idx}">🙏 Молитва</button>` : ''}
-          <button class="notes-btn" data-action="add-note" data-idx="${idx}">
-            📝 Заметка
-          </button>
-        </div>
+  // Вкладки (если в комнате)
+  let tabsHTML = '';
+  if (battleMode === 'room') {
+    tabsHTML = `
+      <div style="display:flex; gap:8px; margin-bottom:12px; border-bottom:1px solid var(--border); padding-bottom:8px;">
+        <button class="builder-action-btn ${viewTab === 'my' ? 'primary' : ''}" onclick="window.setViewTab('my')" style="padding:6px 14px;">Мой ростер</button>
+        <button class="builder-action-btn ${viewTab === 'opp' ? 'primary' : ''}" onclick="window.setViewTab('opp')" style="padding:6px 14px;">Оппонент</button>
+        <button class="builder-action-btn ${viewTab === 'both' ? 'primary' : ''}" onclick="window.setViewTab('both')" style="padding:6px 14px;">Оба</button>
       </div>
     `;
-  }).join('');
+  }
+
+  let unitsHTML = '';
+  
+  if (viewTab === 'my' || viewTab === 'both') {
+    unitsHTML += gameState.units.map((u, idx) => {
+      const roleLower = (u.role || '').toLowerCase();
+      const isBasic = roleLower.includes('базов');
+      const isElite = roleLower.includes('элит');
+      const isHero = roleLower.includes('герой');
+
+      if (activeBattleFilter !== 'all') {
+        if (activeBattleFilter === 'basic' && !isBasic) return '';
+        if (activeBattleFilter === 'elite' && !isElite) return '';
+        if (activeBattleFilter === 'hero' && !isHero) return '';
+      }
+
+      if (compactMode) {
+        return renderCompactUnitCard(u, idx, false);
+      }
+
+      // Полный вид (как было)
+      const isDead = u.currentHp <= 0;
+      const isActivated = u.activated === true;
+      const cast = getUnitCastClass(idx);
+
+      const statusesHTML = (u.statuses || []).map((st, sIdx) => `
+        <span class="status-tag ${st.type}">
+          ${escapeHtml(st.name)}: ${st.value}
+          <button data-action="mod-status" data-idx="${idx}" data-sidx="${sIdx}" data-delta="1" title="+1">+</button>
+          <button data-action="mod-status" data-idx="${idx}" data-sidx="${sIdx}" data-delta="-1" title="−">−</button>
+          <button data-action="rm-status" data-idx="${idx}" data-sidx="${sIdx}" title="Удалить">&times;</button>
+        </span>
+      `).join('');
+
+      const artifactBadge = u.artifact
+        ? `<span style="background: rgba(209,179,132,0.20); color: var(--gold); font-size:1rem; padding:6px 14px; border-radius:8px; font-weight:800; margin-left:10px; border: 2px solid var(--gold); box-shadow: 0 0 12px rgba(209,179,132,0.25);" title="${escapeHtml(u.artifact.description || u.artifact.name)}">🎁 ${escapeHtml(u.artifact.name)}</span>`
+        : '';
+
+      const stanceBadge = getStanceBadge(u.stance || 'neutral');
+      const stanceBtns = getStanceButtons(idx, u.stance || 'neutral');
+
+      return `
+        <div class="battle-unit-wrapper ${isDead ? 'dead' : ''} ${isActivated ? 'activated' : ''}" data-idx="${idx}">
+          <div class="unit-meta-row">
+            <span style="display:flex; align-items:center; flex-wrap:wrap; gap:6px;">
+              ${isActivated ? '<span style="color:#2ed573; margin-right:6px;">✓</span>' : ''}
+              <strong>#${idx + 1}</strong> • ${escapeHtml(u.role || 'Отряд')}${stanceBadge}${artifactBadge}
+            </span>
+            <span>${u.cost || 0} очков</span>
+          </div>
+
+          <div class="unit-card-clickable" data-action="open-card" data-idx="${idx}" title="Нажмите, чтобы открыть справку">
+            ${u.html}
+          </div>
+
+          <div class="unit-control-panel">
+            <div style="flex: 1; min-width: 250px;">
+              <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">Активные статусы:</div>
+              <div class="status-container">
+                ${statusesHTML || '<span style="color:var(--text-muted); font-size:0.85rem;">нет активных статусов</span>'}
+              </div>
+              <div class="status-add-bar">
+                <select id="status-type-${idx}" class="status-select" aria-label="Тип статуса">
+                  <option value="poison">Яд</option>
+                  <option value="fire">Горение</option>
+                  <option value="stone">Окаменение</option>
+                  <option value="custom">Другое</option>
+                </select>
+                <input type="number" id="status-val-${idx}" value="1" min="1" max="10" style="width: 55px; padding: 4px;" class="status-select" aria-label="Значение статуса">
+                <button class="builder-action-btn" style="padding: 4px 10px; font-size: 0.8rem;" data-action="add-status" data-idx="${idx}">+ Статус</button>
+              </div>
+            </div>
+
+            <div class="hp-box">
+              <span>ХП: <strong style="font-size: 1.4rem; color: #fff;">${u.currentHp} / ${u.maxHp}</strong></span>
+              <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                <button class="hp-btn big" data-action="hp" data-idx="${idx}" data-delta="5" title="+5 ХП">+5</button>
+                <button class="hp-btn" data-action="hp" data-idx="${idx}" data-delta="1" title="+1 ХП">+</button>
+                <button class="hp-btn" data-action="hp" data-idx="${idx}" data-delta="-1" title="−1 ХП">−</button>
+                <button class="hp-btn big" data-action="hp" data-idx="${idx}" data-delta="-5" title="−5 ХП">−5</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="unit-bottom-bar" style="flex-direction: column; gap: 8px; align-items: stretch;">
+            <div style="display:flex; gap:8px; flex-wrap:wrap; flex:1;">
+              <button class="activate-btn ${isActivated ? 'active' : ''}" data-action="toggle-activated" data-idx="${idx}" style="flex:1;">
+                ${isActivated ? '✓ Активирован' : '○ Активирован'}
+              </button>
+              ${cast.isMage ? `<button class="magic-btn spell-btn" data-action="open-spellbook" data-idx="${idx}" style="flex:1;">✨ Заклинание</button>` : ''}
+              ${cast.isPriest ? `<button class="magic-btn prayer-btn" data-action="open-prayerbook" data-idx="${idx}" style="flex:1;">🙏 Молитва</button>` : ''}
+              <button class="notes-btn" data-action="add-note" data-idx="${idx}" style="flex:1;">
+                📝 Заметка
+              </button>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; border-top: 1px dashed var(--border); padding-top: 8px;">
+               <span style="font-size:0.8rem; color:var(--text-muted);">Стойка:</span>
+               ${stanceBtns}
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  container.innerHTML = tabsHTML + controlsHTML + unitsHTML;
 
   container.querySelectorAll('[data-action]').forEach(btn => {
     btn.addEventListener('click', (e) => {
@@ -255,6 +370,7 @@ export function renderUnits() {
       if (action === 'open-card') openUnitCardModal(idx);
       if (action === 'open-spellbook') openSpellbookModal(idx);
       if (action === 'open-prayerbook') openPrayerModal(idx);
+      if (action === 'change-stance') changeUnitStance(idx, btn.dataset.stance);
     });
   });
 }
@@ -315,7 +431,7 @@ function toggleActivated(idx) {
   renderUnits();
 }
 
-function renderOpponentUnits() {
+export function renderOpponentUnits() {
   const wrapper = document.getElementById('dash-opponent-container');
 
   if (battleMode !== 'room' || !Array.isArray(gameState.opponentUnits) || gameState.opponentUnits.length === 0) {
@@ -331,6 +447,12 @@ function renderOpponentUnits() {
     myContainer.parentNode.insertBefore(container, myContainer.nextSibling);
   }
 
+  // Если вкладка "Мой ростер" — скрываем оппонента
+  if (viewTab === 'my') {
+    container.innerHTML = '';
+    return;
+  }
+
   const oppName = gameState.opponentName || 'Оппонент';
   const oppRosterName = gameState.opponentRosterName || '';
   const oppRosterClan = gameState.opponentRosterClan || '';
@@ -343,6 +465,11 @@ function renderOpponentUnits() {
       • Только просмотр
     </div>
     ${gameState.opponentUnits.map((u, idx) => {
+      if (compactMode) {
+        return renderCompactUnitCard(u, idx, true);
+      }
+
+      // Полный вид оппонента
       const isDead = u.currentHp <= 0;
       const role = escapeHtml(u.role || 'Отряд');
       const statusesHTML = (u.statuses || []).map(st => `
@@ -353,15 +480,15 @@ function renderOpponentUnits() {
         ? `<span style="background: rgba(209,179,132,0.20); color: var(--gold); font-size:1rem; padding:6px 14px; border-radius:8px; font-weight:800; margin-left:10px; border: 2px solid var(--gold);">🎁 ${escapeHtml(u.artifact.name || 'Артефакт')}</span>`
         : '';
 
-      const cardHtmlWithBonuses = applyArtifactBonusesToCardHtml(u.html || '', u.artifact);
+      const stanceBadge = getStanceBadge(u.stance || 'neutral');
 
       return `
         <div class="battle-unit-wrapper ${isDead ? 'dead' : ''}" style="opacity:0.92;">
           <div class="unit-meta-row">
-            <span style="display:flex; align-items:center; flex-wrap:wrap; gap:6px;"><strong>#${idx + 1}</strong> • ${role}${artifactBadge}</span>
+            <span style="display:flex; align-items:center; flex-wrap:wrap; gap:6px;"><strong>#${idx + 1}</strong> • ${role}${stanceBadge}${artifactBadge}</span>
             <span>${u.cost || 0} очков</span>
           </div>
-          ${cardHtmlWithBonuses || `<div style="padding:10px; background:rgba(0,0,0,0.2); border-radius:8px; font-size:0.9rem; color:var(--text-muted);">${escapeHtml(u.title || 'Отряд')}</div>`}
+          ${u.html || `<div style="padding:10px; background:rgba(0,0,0,0.2); border-radius:8px; font-size:0.9rem; color:var(--text-muted);">${escapeHtml(u.title || 'Отряд')}</div>`}
           <div class="unit-control-panel" style="justify-content:space-between;">
             <div style="flex:1; min-width:220px;">
               <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:4px;">Статусы:</div>

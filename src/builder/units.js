@@ -6,6 +6,8 @@ import { renderRosterSummary } from './render.js';
 import { escapeHtml } from '../utils/escape.js';
 import { showToast } from '../ui/toast.js';
 
+let activeBuilderFilter = 'all';
+
 /**
  * Возвращает CSS-класс для бейджа роли, основываясь на тексте роли.
  */
@@ -53,11 +55,28 @@ export function updateAvailableUnits() {
     return;
   }
 
+  // Фильтры
+  const filtersHTML = `
+    <div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
+      <button class="builder-action-btn ${activeBuilderFilter === 'all' ? 'primary' : ''}" onclick="filterBuilderUnits('all')" style="padding:4px 12px; font-size:0.85rem;">Все</button>
+      <button class="builder-action-btn ${activeBuilderFilter === 'basic' ? 'primary' : ''}" onclick="filterBuilderUnits('basic')" style="padding:4px 12px; font-size:0.85rem;">Базовые</button>
+      <button class="builder-action-btn ${activeBuilderFilter === 'elite' ? 'primary' : ''}" onclick="filterBuilderUnits('elite')" style="padding:4px 12px; font-size:0.85rem;">Элита</button>
+      <button class="builder-action-btn ${activeBuilderFilter === 'hero' ? 'primary' : ''}" onclick="filterBuilderUnits('hero')" style="padding:4px 12px; font-size:0.85rem;">Герои</button>
+    </div>
+  `;
+
   let unitsHTML = '<div style="display: grid; gap: 10px;">';
   cards.forEach((card, index) => {
     const title = card.querySelector('.aos-title')?.textContent || 'Отряд';
     const role = card.querySelector('.aos-badge-role')?.textContent || 'Базовый';
     const pts = card.querySelector('.aos-badge-pts')?.textContent || '';
+
+    const roleLower = role.toLowerCase();
+    if (activeBuilderFilter !== 'all') {
+      if (activeBuilderFilter === 'basic' && !roleLower.includes('базов')) return;
+      if (activeBuilderFilter === 'elite' && !roleLower.includes('элит')) return;
+      if (activeBuilderFilter === 'hero' && !roleLower.includes('герой')) return;
+    }
 
     const weaponItems = card.querySelectorAll('.aos-weapon-item');
 
@@ -129,7 +148,7 @@ export function updateAvailableUnits() {
   });
   unitsHTML += '</div>';
 
-  container.innerHTML = unitsHTML;
+  container.innerHTML = filtersHTML + unitsHTML;
 
   window.currentClanCards = Array.from(cards).map(c => ({
     title: c.querySelector('.aos-title')?.textContent || 'Отряд',
@@ -148,9 +167,11 @@ export function updateAvailableUnits() {
   });
 }
 
-/**
- * Извлекает из HTML .aos-weapon-item данные оружия.
- */
+export function filterBuilderUnits(filter) {
+  activeBuilderFilter = filter;
+  updateAvailableUnits();
+}
+
 function extractWeaponData(weaponItem) {
   if (!weaponItem) return null;
 

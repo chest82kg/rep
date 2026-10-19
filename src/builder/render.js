@@ -238,19 +238,48 @@ export function renderRosterSummary() {
     return;
   }
 
-  container.innerHTML = `
-    <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
-      ${roster.units.map((u, idx) => `
-        <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border);">
-          <span>
-            <strong>${escapeHtml(u.uniqueKey || u.title)}</strong>
-            <span style="font-size:0.8rem; color:var(--text-muted); margin-left:8px;">[${escapeHtml(u.role || '—')} • ${u.cost || 0} очков]</span>
-          </span>
-          <button data-action="remove-unit" data-idx="${idx}" style="background:none; border:none; color: #ff4757; cursor:pointer; font-weight:bold; font-size:0.85rem;">Удалить</button>
+  // Группировка юнитов по ролям
+  const groups = {
+    basic: { title: 'Базовые отряды', items: [] },
+    elite: { title: 'Элита', items: [] },
+    hero: { title: 'Герои', items: [] },
+    other: { title: 'Прочие', items: [] }
+  };
+
+  roster.units.forEach((u, idx) => {
+    const roleLower = (u.role || '').toLowerCase();
+    if (roleLower.includes('базов')) groups.basic.items.push({ ...u, origIdx: idx });
+    else if (roleLower.includes('элит')) groups.elite.items.push({ ...u, origIdx: idx });
+    else if (roleLower.includes('герой')) groups.hero.items.push({ ...u, origIdx: idx });
+    else groups.other.items.push({ ...u, origIdx: idx });
+  });
+
+  let groupsHTML = '';
+  Object.keys(groups).forEach(key => {
+    const g = groups[key];
+    if (g.items.length === 0) return;
+
+    groupsHTML += `
+      <div style="margin-bottom: 16px;">
+        <h4 style="color: var(--gold); font-size: 0.95rem; margin-bottom: 8px; padding-left: 4px; text-transform: uppercase; letter-spacing: 0.5px;">
+          ${g.title} <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 400;">(${g.items.length})</span>
+        </h4>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          ${g.items.map(u => `
+            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border);">
+              <span>
+                <strong>${escapeHtml(u.uniqueKey || u.title)}</strong>
+                <span style="font-size:0.8rem; color:var(--text-muted); margin-left:8px;">[${u.cost || 0} очков]</span>
+              </span>
+              <button data-action="remove-unit" data-idx="${u.origIdx}" style="background:none; border:none; color: #ff4757; cursor:pointer; font-weight:bold; font-size:0.85rem;">Удалить</button>
+            </div>
+          `).join('')}
         </div>
-      `).join('')}
-    </div>
-  `;
+      </div>
+    `;
+  });
+
+  container.innerHTML = groupsHTML;
 
   container.querySelectorAll('button[data-action="remove-unit"]').forEach(btn => {
     btn.addEventListener('click', () => {

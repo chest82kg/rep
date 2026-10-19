@@ -1,6 +1,15 @@
 // src/battle/index.js
 import { setPlayerName, initGameState, initAuthWatcher, saveGameStateNow, getPlayerName } from './state.js';
-import { renderDashboard, openRulesModal, closeRulesModal, closeUnitCardModal } from './render.js';
+import { 
+  renderDashboard, 
+  openRulesModal, 
+  closeRulesModal, 
+  closeUnitCardModal,
+  filterBattleUnits,
+  changeUnitStance,
+  toggleCompactMode,
+  setViewTab
+} from './render.js';
 import { initTracker } from './tracker.js';
 import { initFinishMatch, closeFinishModal } from './finish.js';
 import { initPhaseHelper, closePhaseModal } from './phase.js';
@@ -38,6 +47,7 @@ window.startBattleSession = function() {
   renderOpponentBadge();
 };
 
+// Экспорт функций для вызова из HTML (onclick)
 window.openRulesModal = openRulesModal;
 window.closeRulesModal = closeRulesModal;
 window.closeFinishModal = closeFinishModal;
@@ -50,6 +60,12 @@ window.closeUnitCardModal = closeUnitCardModal;
 window.closeStakesModal = closeStakesModal;
 window.closeMagicModal = closeMagicModal;
 window.closeBugReportModal = closeBugReportModal;
+
+// Новые функции для игрового стола
+window.filterBattleUnits = filterBattleUnits;
+window.changeUnitStance = changeUnitStance;
+window.toggleCompactMode = toggleCompactMode;
+window.setViewTab = setViewTab;
 
 window.addEventListener('beforeunload', () => {
   if (getPlayerName()) saveGameStateNow();

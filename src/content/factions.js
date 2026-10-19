@@ -125,7 +125,7 @@ export const FACTIONS_DATA = [
           </div>
         </div>
         <div class="aos-stats-grid">
-          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">6</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">8</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Движение</span><span class="aos-stat-value">3</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">3</span></div>
         </div>
@@ -159,7 +159,7 @@ export const FACTIONS_DATA = [
           </div>
         </div>
         <div class="aos-stats-grid">
-          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">5</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">7</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Движение</span><span class="aos-stat-value">3</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">2</span></div>
         </div>
@@ -195,7 +195,7 @@ export const FACTIONS_DATA = [
           </div>
         </div>
         <div class="aos-stats-grid">
-          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">8</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">11</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Движение</span><span class="aos-stat-value">4</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">3</span></div>
         </div>
@@ -229,7 +229,7 @@ export const FACTIONS_DATA = [
           </div>
         </div>
         <div class="aos-stats-grid">
-          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">8</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">11</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Движение</span><span class="aos-stat-value">4</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">2</span></div>
         </div>
@@ -267,7 +267,7 @@ export const FACTIONS_DATA = [
           </div>
         </div>
         <div class="aos-stats-grid">
-          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">14</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">17</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Движение</span><span class="aos-stat-value">3</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">4</span></div>
         </div>
@@ -302,7 +302,7 @@ export const FACTIONS_DATA = [
           </div>
         </div>
         <div class="aos-stats-grid">
-          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">10</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">13</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Движение</span><span class="aos-stat-value">3</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">3</span></div>
         </div>
@@ -377,7 +377,7 @@ export const FACTIONS_DATA = [
           </div>
         </div>
         <div class="aos-stats-grid">
-          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">5</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">7</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Движение</span><span class="aos-stat-value">4</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">2</span></div>
         </div>
@@ -411,7 +411,7 @@ export const FACTIONS_DATA = [
           </div>
         </div>
         <div class="aos-stats-grid">
-          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">5</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">7</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Движение</span><span class="aos-stat-value">4</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">2</span></div>
         </div>
@@ -447,7 +447,7 @@ export const FACTIONS_DATA = [
           </div>
         </div>
         <div class="aos-stats-grid">
-          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">6</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">9</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Движение</span><span class="aos-stat-value">5</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">3</span></div>
         </div>
@@ -481,7 +481,7 @@ export const FACTIONS_DATA = [
           </div>
         </div>
         <div class="aos-stats-grid">
-          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">7</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">10</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Движение</span><span class="aos-stat-value">4</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">3</span></div>
         </div>
@@ -512,7 +512,7 @@ export const FACTIONS_DATA = [
           </div>
         </div>
         <div class="aos-stats-grid">
-          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">12</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">15</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Движение</span><span class="aos-stat-value">4</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">4</span></div>
         </div>
@@ -595,7 +595,7 @@ export const FACTIONS_DATA = [
           </div>
         </div>
         <div class="aos-stats-grid">
-          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">4</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">6</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Движение</span><span class="aos-stat-value">3</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">3</span></div>
         </div>
@@ -625,7 +625,7 @@ export const FACTIONS_DATA = [
           </div>
         </div>
         <div class="aos-stats-grid">
-          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">5</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">7</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Движение</span><span class="aos-stat-value">3</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">2</span></div>
         </div>
@@ -656,7 +656,7 @@ export const FACTIONS_DATA = [
           </div>
         </div>
         <div class="aos-stats-grid">
-          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">7</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">10</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Движение</span><span class="aos-stat-value">3</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">4</span></div>
         </div>
@@ -685,7 +685,7 @@ export const FACTIONS_DATA = [
           </div>
         </div>
         <div class="aos-stats-grid">
-          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">10</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">13</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Движение</span><span class="aos-stat-value">2</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">5</span></div>
         </div>
@@ -717,7 +717,7 @@ export const FACTIONS_DATA = [
           </div>
         </div>
         <div class="aos-stats-grid">
-          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">13</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">16</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Движение</span><span class="aos-stat-value">4</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">4</span></div>
         </div>
@@ -872,7 +872,7 @@ export const FACTIONS_DATA = [
           </div>
         </div>
         <div class="aos-stats-grid">
-          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">4</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">6</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Движение</span><span class="aos-stat-value">5</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">2</span></div>
         </div>
@@ -901,7 +901,7 @@ export const FACTIONS_DATA = [
           </div>
         </div>
         <div class="aos-stats-grid">
-          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">4</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">6</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Движение</span><span class="aos-stat-value">4</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">2</span></div>
         </div>
@@ -937,7 +937,7 @@ export const FACTIONS_DATA = [
           </div>
         </div>
         <div class="aos-stats-grid">
-          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">6</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">9</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Движение</span><span class="aos-stat-value">5</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">3</span></div>
         </div>
@@ -966,7 +966,7 @@ export const FACTIONS_DATA = [
           </div>
         </div>
         <div class="aos-stats-grid">
-          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">6</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">9</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Движение</span><span class="aos-stat-value">4</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">3</span></div>
         </div>
@@ -997,7 +997,7 @@ export const FACTIONS_DATA = [
           </div>
         </div>
         <div class="aos-stats-grid">
-          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">11</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">14</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Движение</span><span class="aos-stat-value">5</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">4</span></div>
         </div>
@@ -1069,7 +1069,7 @@ export const FACTIONS_DATA = [
           </div>
         </div>
         <div class="aos-stats-grid">
-          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">5</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">7</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Движение</span><span class="aos-stat-value">5</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">2</span></div>
         </div>
@@ -1098,7 +1098,7 @@ export const FACTIONS_DATA = [
           </div>
         </div>
         <div class="aos-stats-grid">
-          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">5</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">7</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Движение</span><span class="aos-stat-value">5</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">2</span></div>
         </div>
@@ -1129,7 +1129,7 @@ export const FACTIONS_DATA = [
           </div>
         </div>
         <div class="aos-stats-grid">
-          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">6</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">9</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Движение</span><span class="aos-stat-value">4</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">2</span></div>
         </div>
@@ -1158,7 +1158,7 @@ export const FACTIONS_DATA = [
           </div>
         </div>
         <div class="aos-stats-grid">
-          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">6</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">9</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Движение</span><span class="aos-stat-value">5</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">3</span></div>
         </div>
@@ -1189,7 +1189,7 @@ export const FACTIONS_DATA = [
           </div>
         </div>
         <div class="aos-stats-grid">
-          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">11</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">14</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Движение</span><span class="aos-stat-value">5</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">3</span></div>
         </div>
@@ -1264,7 +1264,7 @@ export const FACTIONS_DATA = [
           </div>
         </div>
         <div class="aos-stats-grid">
-          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">4</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">6</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Движение</span><span class="aos-stat-value">4</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">2</span></div>
         </div>
@@ -1299,7 +1299,7 @@ export const FACTIONS_DATA = [
           </div>
         </div>
         <div class="aos-stats-grid">
-          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">5</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">7</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Движение</span><span class="aos-stat-value">4</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">2</span></div>
         </div>
@@ -1330,7 +1330,7 @@ export const FACTIONS_DATA = [
           </div>
         </div>
         <div class="aos-stats-grid">
-          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">8</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">11</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Движение</span><span class="aos-stat-value">3</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">5</span></div>
         </div>
@@ -1360,7 +1360,7 @@ export const FACTIONS_DATA = [
           </div>
         </div>
         <div class="aos-stats-grid">
-          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">7</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">10</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Движение</span><span class="aos-stat-value">4</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">3</span></div>
         </div>
@@ -1392,7 +1392,7 @@ export const FACTIONS_DATA = [
           </div>
         </div>
         <div class="aos-stats-grid">
-          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">12</span></div>
+          <div class="aos-stat-box"><span class="aos-stat-label">ХП</span><span class="aos-stat-value">15</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Движение</span><span class="aos-stat-value">4</span></div>
           <div class="aos-stat-box"><span class="aos-stat-label">Броня</span><span class="aos-stat-value">4</span></div>
         </div>

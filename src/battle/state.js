@@ -100,19 +100,19 @@ export function initGameState() {
     mageCap: 6,
     faithCap: 6,
     units: baseRoster.units.map(u => {
-      const parsed = parseUnitCard(u.html);
-      const maxHp = parsed.hp || 6;
+     const parsed = parseUnitCard(u.html);
+const baseHp = parsed.hp || 6;
+
       return {
         ...u,
-        currentHp: maxHp,
-        maxHp: maxHp,
+        currentHp: baseHp,
+        maxHp: baseHp,
         statuses: [],
         activated: false,
+        stance: 'neutral', // Нейтральная стойка по умолчанию
         role: u.role || parsed.role || '',
         cost: u.cost || parsed.cost || 0,
-        artifact: null,
-        // Базовые характеристики (без артефактов)
-        baseStats: parsed.stats || null
+        artifact: null
       };
     })
   };
@@ -132,8 +132,6 @@ export function initGameState() {
 /**
  * Переносит артефакты из ростера в gameState.units[idx].artifact.
  * Дополнительно: применяет бонусы ХП к maxHp и currentHp.
- *
- * Структура ростера: [{ id, targetIdx, name, cost, description, effect }, ...]
  */
 function applyArtifactsToUnits(artifacts) {
   if (!gameState || !Array.isArray(gameState.units)) return;
