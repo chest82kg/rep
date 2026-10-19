@@ -58,10 +58,10 @@ export function updateAvailableUnits() {
   // Фильтры
   const filtersHTML = `
     <div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
-      <button class="builder-action-btn ${activeBuilderFilter === 'all' ? 'primary' : ''}" onclick="filterBuilderUnits('all')" style="padding:4px 12px; font-size:0.85rem;">Все</button>
-      <button class="builder-action-btn ${activeBuilderFilter === 'basic' ? 'primary' : ''}" onclick="filterBuilderUnits('basic')" style="padding:4px 12px; font-size:0.85rem;">Базовые</button>
-      <button class="builder-action-btn ${activeBuilderFilter === 'elite' ? 'primary' : ''}" onclick="filterBuilderUnits('elite')" style="padding:4px 12px; font-size:0.85rem;">Элита</button>
-      <button class="builder-action-btn ${activeBuilderFilter === 'hero' ? 'primary' : ''}" onclick="filterBuilderUnits('hero')" style="padding:4px 12px; font-size:0.85rem;">Герои</button>
+      <button class="builder-action-btn ${activeBuilderFilter === 'all' ? 'primary' : ''}" data-action="filter" data-filter="all" style="padding:4px 12px; font-size:0.85rem;">Все</button>
+      <button class="builder-action-btn ${activeBuilderFilter === 'basic' ? 'primary' : ''}" data-action="filter" data-filter="basic" style="padding:4px 12px; font-size:0.85rem;">Базовые</button>
+      <button class="builder-action-btn ${activeBuilderFilter === 'elite' ? 'primary' : ''}" data-action="filter" data-filter="elite" style="padding:4px 12px; font-size:0.85rem;">Элита</button>
+      <button class="builder-action-btn ${activeBuilderFilter === 'hero' ? 'primary' : ''}" data-action="filter" data-filter="hero" style="padding:4px 12px; font-size:0.85rem;">Герои</button>
     </div>
   `;
 
@@ -157,19 +157,18 @@ export function updateAvailableUnits() {
     html: c.outerHTML
   }));
 
-  container.querySelectorAll('button[data-action]').forEach(btn => {
+  container.querySelectorAll('[data-action]').forEach(btn => {
     btn.addEventListener('click', () => {
       const idx = parseInt(btn.dataset.cardIdx, 10);
       const action = btn.dataset.action;
       if (action === 'add-simple') addUnitToRoster(idx);
       if (action === 'add-choice') addChoiceUnitToRoster(idx, btn.dataset.weapon);
+      if (action === 'filter') {
+        activeBuilderFilter = btn.dataset.filter;
+        updateAvailableUnits();
+      }
     });
   });
-}
-
-export function filterBuilderUnits(filter) {
-  activeBuilderFilter = filter;
-  updateAvailableUnits();
 }
 
 function extractWeaponData(weaponItem) {

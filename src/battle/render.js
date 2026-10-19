@@ -226,14 +226,14 @@ export function renderUnits() {
   const controlsHTML = `
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
-        <button class="builder-action-btn ${activeBattleFilter === 'all' ? 'primary' : ''}" onclick="window.filterBattleUnits('all')" style="padding:4px 10px; font-size:0.8rem;">Все</button>
-        <button class="builder-action-btn ${activeBattleFilter === 'basic' ? 'primary' : ''}" onclick="window.filterBattleUnits('basic')" style="padding:4px 10px; font-size:0.8rem;">Базовые</button>
-        <button class="builder-action-btn ${activeBattleFilter === 'elite' ? 'primary' : ''}" onclick="window.filterBattleUnits('elite')" style="padding:4px 10px; font-size:0.8rem;">Элита</button>
-        <button class="builder-action-btn ${activeBattleFilter === 'hero' ? 'primary' : ''}" onclick="window.filterBattleUnits('hero')" style="padding:4px 10px; font-size:0.8rem;">Герои</button>
+        <button class="builder-action-btn ${activeBattleFilter === 'all' ? 'primary' : ''}" data-action="filter" data-filter="all" style="padding:4px 10px; font-size:0.8rem;">Все</button>
+        <button class="builder-action-btn ${activeBattleFilter === 'basic' ? 'primary' : ''}" data-action="filter" data-filter="basic" style="padding:4px 10px; font-size:0.8rem;">Базовые</button>
+        <button class="builder-action-btn ${activeBattleFilter === 'elite' ? 'primary' : ''}" data-action="filter" data-filter="elite" style="padding:4px 10px; font-size:0.8rem;">Элита</button>
+        <button class="builder-action-btn ${activeBattleFilter === 'hero' ? 'primary' : ''}" data-action="filter" data-filter="hero" style="padding:4px 10px; font-size:0.8rem;">Герои</button>
       </div>
       <div style="display:flex; gap:8px;">
-        <button class="builder-action-btn ${!compactMode ? 'primary' : ''}" onclick="window.toggleCompactMode()" style="padding:4px 10px; font-size:0.8rem;">Полный вид</button>
-        <button class="builder-action-btn ${compactMode ? 'primary' : ''}" onclick="window.toggleCompactMode()" style="padding:4px 10px; font-size:0.8rem;">Компактный</button>
+        <button class="builder-action-btn ${!compactMode ? 'primary' : ''}" data-action="toggle-compact" style="padding:4px 10px; font-size:0.8rem;">Полный вид</button>
+        <button class="builder-action-btn ${compactMode ? 'primary' : ''}" data-action="toggle-compact" style="padding:4px 10px; font-size:0.8rem;">Компактный</button>
       </div>
     </div>
   `;
@@ -243,9 +243,9 @@ export function renderUnits() {
   if (battleMode === 'room') {
     tabsHTML = `
       <div style="display:flex; gap:8px; margin-bottom:12px; border-bottom:1px solid var(--border); padding-bottom:8px;">
-        <button class="builder-action-btn ${viewTab === 'my' ? 'primary' : ''}" onclick="window.setViewTab('my')" style="padding:6px 14px;">Мой ростер</button>
-        <button class="builder-action-btn ${viewTab === 'opp' ? 'primary' : ''}" onclick="window.setViewTab('opp')" style="padding:6px 14px;">Оппонент</button>
-        <button class="builder-action-btn ${viewTab === 'both' ? 'primary' : ''}" onclick="window.setViewTab('both')" style="padding:6px 14px;">Оба</button>
+        <button class="builder-action-btn ${viewTab === 'my' ? 'primary' : ''}" data-action="view-tab" data-tab="my" style="padding:6px 14px;">Мой ростер</button>
+        <button class="builder-action-btn ${viewTab === 'opp' ? 'primary' : ''}" data-action="view-tab" data-tab="opp" style="padding:6px 14px;">Оппонент</button>
+        <button class="builder-action-btn ${viewTab === 'both' ? 'primary' : ''}" data-action="view-tab" data-tab="both" style="padding:6px 14px;">Оба</button>
       </div>
     `;
   }
@@ -371,6 +371,9 @@ export function renderUnits() {
       if (action === 'open-spellbook') openSpellbookModal(idx);
       if (action === 'open-prayerbook') openPrayerModal(idx);
       if (action === 'change-stance') changeUnitStance(idx, btn.dataset.stance);
+      if (action === 'filter') filterBattleUnits(btn.dataset.filter);
+      if (action === 'toggle-compact') toggleCompactMode();
+      if (action === 'view-tab') setViewTab(btn.dataset.tab);
     });
   });
 }
@@ -529,6 +532,32 @@ export function openRulesModal(type) {
     body.innerHTML = `
       <h2 style="color:var(--gold); border-bottom:2px solid var(--border); padding-bottom:8px;">📜 Правила клана: ${escapeHtml(gameState.clan)}</h2>
       <div style="margin-top: 16px;">${cleanClanContent || 'Правила клана не найдены.'}</div>
+    `;
+  } else if (type === 'mission') {
+    // Ищем текущий батлплан
+    let battleplanId = null;
+    try {
+      const activeRoster = JSON.parse(localStorage.getItem('activeRoster') || 'null');
+      if (activeRoster) battleplanId = activeRoster.battleplanId;
+    } catch {}
+
+    if (battleplanId) {
+      const bp = DATABASE.find(item => item.id === battleplanId);
+      if (bp) {
+        body.innerHTML = `
+          <h2 style="color:var(--gold); border-bottom:2px solid var(--border); padding-bottom:8px;">🎯 ${escapeHtml(bp.title)}</h2>
+          <div style="margin-top: 16px;">${bp.content}</div>
+        `;
+        modal.classList.remove('hidden');
+        return;
+      }
+    }
+
+    // Если батлплан не выбран — показываем общие правила батлпланов
+    const generalMission = DATABASE.find(item => item.id === 'battleplan-rules');
+    body.innerHTML = `
+      <h2 style="color:var(--gold); border-bottom:2px solid var(--border); padding-bottom:8px;">🎯 Правила миссий</h2>
+      <div style="margin-top: 16px;">${generalMission ? generalMission.content : 'Правила миссий не найдены.'}</div>
     `;
   }
   modal.classList.remove('hidden');
