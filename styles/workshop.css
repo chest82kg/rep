@@ -1,0 +1,718 @@
+/* styles/workshop.css */
+
+.ws-page {
+  min-height: 100vh;
+}
+
+/* Padding и границы входят в заданную ширину элементов. */
+.ws-page,
+.ws-page *,
+.ws-page *::before,
+.ws-page *::after {
+  box-sizing: border-box;
+}
+
+.ws-page [hidden] {
+  display: none !important;
+}
+
+.ws-header,
+.ws-main {
+  width: min(1200px, 100%);
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.ws-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.ws-header h1 {
+  color: var(--gold);
+}
+
+.ws-header p,
+.ws-muted {
+  color: var(--text-muted);
+}
+
+.ws-actions,
+.ws-tabs,
+.ws-section-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.ws-page .builder-action-btn {
+  display: inline-block;
+  text-decoration: none;
+  text-align: center;
+  font: inherit;
+}
+
+.ws-page button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ws-page :is(button, a, input, select):focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 3px;
+}
+
+.ws-notice {
+  padding: 16px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--gold);
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.ws-notice button {
+  margin-top: 12px;
+}
+
+.ws-tabs {
+  margin-bottom: 16px;
+}
+
+.ws-tabs a {
+  padding: 10px 16px;
+  color: var(--text);
+  text-decoration: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.ws-tabs a:hover,
+.ws-tabs a[aria-current="page"] {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.ws-message {
+  min-height: 28px;
+  margin-bottom: 12px;
+  overflow-wrap: anywhere;
+}
+
+.ws-message.is-error {
+  color: #ffadb7;
+}
+
+.ws-error {
+  border-color: #ff4757;
+}
+
+.ws-panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.ws-panel h2 {
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+
+.ws-panel p {
+  margin: 10px 0;
+}
+
+.ws-section-heading {
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.ws-form-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(180px, 1fr);
+  gap: 16px;
+}
+
+.ws-page label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ws-page input,
+.ws-page select {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+}
+
+.ws-board-scroll {
+  overflow: auto;
+  margin: 20px 0;
+  padding-bottom: 8px;
+}
+
+.ws-board {
+  display: grid;
+  grid-template-columns: 28px repeat(14, 36px);
+  grid-template-rows: 28px repeat(14, 36px);
+  gap: 2px;
+  width: max-content;
+}
+
+.ws-axis {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.ws-cell {
+  background: #242435;
+  border: 1px solid #3a3a52;
+  border-radius: 3px;
+}
+
+.ws-cell.is-alternate {
+  background: #1b1b29;
+}
+
+.ws-search {
+  max-width: 480px;
+  margin-bottom: 16px;
+}
+
+.ws-library-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ws-library-card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  overflow-wrap: anywhere;
+}
+
+.ws-library-card h3 {
+  color: var(--text);
+}
+
+.ws-library-card .ws-actions {
+  margin-top: 12px;
+}
+
+.ws-delete {
+  border-color: #ff4757;
+  color: #ffadb7;
+}
+
+@media (max-width: 640px) {
+  .ws-header,
+  .ws-main {
+    padding: 16px;
+  }
+
+  .ws-panel {
+    padding: 16px;
+  }
+
+  .ws-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ws-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ws-tabs a {
+    text-align: center;
+  }
+}
+
+/* Поклеточный редактор местности */
+
+.ws-terrain-controls {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.ws-terrain-controls h3 {
+  margin-bottom: 12px;
+  color: var(--gold);
+}
+
+.ws-terrain-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.ws-terrain-controls .ws-actions {
+  margin-top: 16px;
+}
+
+.ws-board button.ws-cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  padding: 0;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.ws-board button.ws-cell:hover {
+  outline: 2px solid var(--gold);
+  outline-offset: -2px;
+}
+
+.ws-board button.ws-cell:focus-visible {
+  z-index: 1;
+  outline: 3px solid #fff;
+  outline-offset: -3px;
+}
+
+.ws-board .ws-cell[data-terrain="meadow"] {
+  background: #385c36;
+  border-color: #6a9561;
+}
+
+.ws-board .ws-cell[data-terrain="forest"] {
+  background: #183e2b;
+  border-color: #4f825c;
+}
+
+.ws-board .ws-cell[data-terrain="river"] {
+  background: #1b496b;
+  border-color: #598db7;
+}
+
+.ws-board .ws-cell[data-terrain="mountain"] {
+  background: #57505b;
+  border-color: #99909c;
+}
+
+.ws-terrain-mark {
+  font-size: 21px;
+  line-height: 1;
+}
+
+.ws-terrain-height {
+  position: absolute;
+  right: 2px;
+  bottom: 1px;
+  font-size: 10px;
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 1px 2px #000;
+}
+
+/* Выбор и границы составных тайлов */
+
+.ws-board .ws-cell.ws-edge-top {
+  border-top-color: #d9d4e4;
+}
+
+.ws-board .ws-cell.ws-edge-right {
+  border-right-color: #d9d4e4;
+}
+
+.ws-board .ws-cell.ws-edge-bottom {
+  border-bottom-color: #d9d4e4;
+}
+
+.ws-board .ws-cell.ws-edge-left {
+  border-left-color: #d9d4e4;
+}
+
+.ws-board .ws-cell.is-tile-selected {
+  box-shadow: inset 0 0 0 3px #ffd166;
+}
+
+.ws-board .ws-cell.is-shape-selected {
+  background: #514285;
+  box-shadow: inset 0 0 0 3px #bfaaff;
+}
+
+.ws-board .ws-cell.is-shape-selected::after {
+  content: "+";
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.ws-terrain-controls [data-selection] {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow-wrap: anywhere;
+}
+
+/* Резервные копии карт */
+
+.ws-transfer {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.ws-transfer h3 {
+  color: var(--gold);
+  margin-bottom: 12px;
+}
+
+/* Слой зон расстановки */
+
+.ws-deployment-controls {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.ws-deployment-controls h3 {
+  color: var(--gold);
+  margin-bottom: 12px;
+}
+
+.ws-deployment-controls .ws-actions {
+  margin-bottom: 12px;
+}
+
+.ws-zone-mark {
+  position: absolute;
+  top: 1px;
+  left: 2px;
+  z-index: 2;
+  min-width: 15px;
+  padding: 1px 3px;
+  border-radius: 3px;
+  font-size: 10px;
+  line-height: 1.2;
+  font-weight: 800;
+  color: #fff;
+  pointer-events: none;
+}
+
+.ws-cell[data-zone="a"] .ws-zone-mark {
+  background: #245cba;
+}
+
+.ws-cell[data-zone="b"] .ws-zone-mark {
+  background: #b52e4c;
+}
+
+.ws-board .ws-cell[data-zone="a"] {
+  background-image: linear-gradient(
+    rgba(64, 135, 255, 0.25),
+    rgba(64, 135, 255, 0.25)
+  );
+}
+
+.ws-board .ws-cell[data-zone="b"] {
+  background-image: linear-gradient(
+    rgba(255, 70, 110, 0.25),
+    rgba(255, 70, 110, 0.25)
+  );
+}
+
+/* Контрольные точки документа карты */
+
+.ws-objectives-controls {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.ws-objectives-controls h3 {
+  margin-bottom: 12px;
+  color: var(--gold);
+}
+
+.ws-objectives-controls form > label {
+  display: block;
+  margin-bottom: 12px;
+}
+
+.ws-objectives-controls input,
+.ws-objectives-controls select {
+  box-sizing: border-box;
+  max-width: 100%;
+  min-height: 40px;
+  padding: 8px;
+  color: #eeeaf5;
+  background: #20202d;
+  border: 1px solid #3b3b4d;
+  border-radius: 6px;
+  font: inherit;
+}
+
+.ws-objectives-controls form > label > input,
+.ws-objectives-controls form > label > select {
+  display: block;
+  width: 100%;
+  margin-top: 5px;
+}
+
+.ws-objectives-controls .ws-actions {
+  margin-bottom: 12px;
+}
+
+#ws-board .ws-cell {
+  position: relative;
+}
+
+.ws-objective-mark {
+  position: absolute;
+  bottom: 1px;
+  left: 1px;
+  z-index: 3;
+  padding: 1px 3px;
+  color: #ffe09c;
+  background: rgba(13, 14, 20, 0.92);
+  border: 1px solid #ffe09c;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1.1;
+  pointer-events: none;
+}
+
+/* Маркеры-памятки документа карты */
+
+.ws-markers-controls {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.ws-markers-controls h3 {
+  margin-bottom: 12px;
+  color: var(--gold);
+}
+
+.ws-markers-controls form > label {
+  margin-bottom: 12px;
+}
+
+.ws-markers-controls .ws-actions {
+  margin-bottom: 12px;
+}
+
+.ws-markers-controls textarea {
+  display: block;
+  width: 100%;
+  min-height: 100px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  resize: vertical;
+}
+
+.ws-note-marker {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  z-index: 4;
+  padding: 1px 2px;
+  color: #fff;
+  background: #6d438e;
+  border: 1px solid #d7b7f0;
+  border-radius: 3px;
+  font-size: 8px;
+  font-weight: 800;
+  line-height: 1.1;
+  pointer-events: none;
+}
+
+/* Редактор авторских моделей */
+
+#ws-units > .ws-actions {
+  margin: 16px 0;
+}
+
+#ws-units fieldset {
+  min-width: 0;
+  margin: 20px 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+#ws-units legend {
+  padding: 0 6px;
+  color: var(--gold);
+  font-weight: 700;
+}
+
+#ws-units fieldset > label {
+  margin-bottom: 12px;
+}
+
+#ws-units textarea {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  min-height: 100px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  resize: vertical;
+}
+
+#ws-units [data-custom-form] > .ws-actions {
+  margin: 20px 0;
+}
+
+.ws-custom-preview {
+  margin: 20px 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--gold);
+  border-radius: 8px;
+  overflow-wrap: anywhere;
+}
+
+.ws-custom-preview:empty {
+  display: none;
+}
+
+.ws-custom-preview h3,
+.ws-custom-preview h4 {
+  margin: 16px 0 8px;
+  color: var(--gold);
+}
+
+.ws-custom-preview p {
+  white-space: pre-wrap;
+}
+
+#ws-units > h3 {
+  margin: 24px 0 12px;
+}
+
+/* Локальный редактор сценариев */
+
+.ws-page textarea:focus-visible,
+.ws-page summary:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 3px;
+}
+
+#ws-scenarios > .ws-actions {
+  margin: 16px 0;
+}
+
+#ws-scenarios fieldset {
+  min-width: 0;
+  margin: 20px 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+#ws-scenarios legend {
+  padding: 0 6px;
+  color: var(--gold);
+  font-weight: 700;
+}
+
+#ws-scenarios fieldset .ws-actions {
+  margin-top: 12px;
+}
+
+#ws-scenarios .ws-scenario-text {
+  margin: 20px 0;
+}
+
+#ws-scenarios textarea {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 120px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  resize: vertical;
+}
+
+#ws-scenarios [data-s-form] > .ws-actions {
+  margin: 20px 0;
+}
+
+#ws-scenarios > h3 {
+  margin: 24px 0 12px;
+  color: var(--gold);
+}
+
+.ws-scenario-preview {
+  margin: 24px 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--gold);
+  border-radius: 8px;
+  overflow-wrap: anywhere;
+}
+
+.ws-scenario-preview:empty {
+  display: none;
+}
+
+.ws-scenario-preview h3,
+.ws-scenario-preview h4 {
+  margin: 18px 0 8px;
+  color: var(--gold);
+}
+
+.ws-scenario-preview p {
+  white-space: pre-wrap;
+}
+
+.ws-scenario-preview details {
+  margin: 12px 0;
+}
+
+.ws-scenario-preview summary {
+  cursor: pointer;
+  color: var(--gold);
+}
+
+.ws-scenario-preview pre {
+  max-height: 360px;
+  margin-top: 12px;
+  padding: 12px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}

@@ -1,0 +1,25 @@
+/* ==========================================================================
+   styles/main.css
+   Общая дизайн-система.
+
+   Порядок:
+   1. Базовые переменные и структура.
+   2. Общий контент и компоненты.
+   3. Оформление отдельных разделов.
+   4. Утилиты и адаптивные переопределения.
+   ========================================================================== */
+
+@import "./foundation.css";
+
+@import "./content.css";
+@import "./components.css";
+
+@import "./content-systems.css";
+@import "./content-missions.css";
+@import "./content-factions.css";
+@import "./content-rules.css";
+@import "./content-artifacts-magic.css";
+@import "./content-glossary.css";
+
+@import "./utilities.css";
+@import "./responsive.css";

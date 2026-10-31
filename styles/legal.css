@@ -1,0 +1,383 @@
+/* styles/legal.css */
+/* Общее оформление четырёх страниц правовых документов. */
+
+body.legal-page {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+
+  background: var(--bg, #101219);
+  color: var(--text, #e6e8ee);
+
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  line-height: 1.75;
+
+  overflow-wrap: anywhere;
+  color-scheme: dark;
+}
+
+.legal-page,
+.legal-page *,
+.legal-page *::before,
+.legal-page *::after {
+  box-sizing: border-box;
+}
+
+/* Ссылки */
+
+.legal-page a {
+  color: var(--accent, #b0a1ff);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.legal-page a:hover {
+  color: var(--gold, #d1b384);
+}
+
+.legal-page a:focus-visible {
+  outline: 2px solid var(--gold, #d1b384);
+  outline-offset: 4px;
+  border-radius: 3px;
+}
+
+/* Шапка */
+
+.legal-page > header {
+  width: min(1100px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 28px 0 22px;
+  border-bottom: 1px solid var(--border, #343846);
+}
+
+.legal-page > header > a {
+  display: inline-block;
+  margin-bottom: 18px;
+
+  color: var(--gold, #d1b384);
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+}
+
+.legal-page > header > a:hover {
+  color: var(--text, #e6e8ee);
+}
+
+/* Навигация по документам */
+
+.legal-page > header nav ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.legal-page > header nav li {
+  margin: 0;
+  padding: 0;
+}
+
+.legal-page > header nav a {
+  display: block;
+  padding: 8px 12px;
+
+  border: 1px solid var(--border, #343846);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.025);
+
+  color: var(--text-muted, #b5bac8);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  text-decoration: none;
+}
+
+.legal-page > header nav a:hover {
+  border-color: var(--gold, #d1b384);
+  color: var(--text, #e6e8ee);
+  background: rgba(209, 179, 132, 0.07);
+}
+
+.legal-page > header nav a[aria-current="page"] {
+  border-color: var(--gold, #d1b384);
+  background: rgba(209, 179, 132, 0.12);
+  color: var(--gold, #d1b384);
+}
+
+/* Основная область */
+
+.legal-page > main {
+  flex: 1 0 auto;
+  width: min(960px, calc(100% - 40px));
+  margin: 32px auto;
+}
+
+.legal-page article {
+  padding: clamp(20px, 4vw, 46px);
+  border: 1px solid var(--border, #343846);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+/* Заголовки */
+
+.legal-page article h1 {
+  margin: 0 0 24px;
+  padding: 0;
+
+  color: var(--gold, #d1b384);
+  font-size: clamp(1.65rem, 4vw, 2.35rem);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.legal-page article h2 {
+  margin: 0 0 16px;
+  padding: 0;
+
+  color: var(--text, #e6e8ee);
+  font-size: clamp(1.2rem, 2.5vw, 1.5rem);
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.legal-page article h3 {
+  margin: 24px 0 12px;
+  padding: 0;
+
+  color: var(--gold, #d1b384);
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+/* Текст и разделы */
+
+.legal-page article p {
+  margin: 0 0 16px;
+}
+
+.legal-page article strong {
+  color: inherit;
+  font-weight: 700;
+}
+
+.legal-page article section {
+  margin: 30px 0 0;
+  padding: 26px 0 0;
+  border-top: 1px solid var(--border, #343846);
+  scroll-margin-top: 24px;
+}
+
+.legal-page article section > :last-child {
+  margin-bottom: 0;
+}
+
+/* Уведомление о статусе документа */
+
+.legal-page article aside {
+  margin: 0 0 26px;
+  padding: 16px 18px;
+
+  border: 1px solid rgba(255, 165, 2, 0.4);
+  border-left: 4px solid #ffa502;
+  border-radius: 8px;
+  background: rgba(255, 165, 2, 0.07);
+
+  color: var(--text-muted, #b5bac8);
+  font-size: 0.92rem;
+  line-height: 1.65;
+}
+
+.legal-page article aside strong {
+  color: #ffc568;
+}
+
+.legal-page article aside p:last-child {
+  margin-bottom: 0;
+}
+
+/* Списки */
+
+.legal-page article ul,
+.legal-page article ol {
+  margin: 0 0 18px;
+  padding-left: 25px;
+}
+
+.legal-page article ul {
+  list-style: disc outside;
+}
+
+.legal-page article ol {
+  list-style: decimal outside;
+}
+
+.legal-page article li {
+  display: list-item;
+  margin: 0 0 9px;
+  padding-left: 3px;
+}
+
+.legal-page article li::marker {
+  color: var(--gold, #d1b384);
+}
+
+/* Список категорий хранения */
+
+.legal-page article dl {
+  margin: 0 0 20px;
+}
+
+.legal-page article dt {
+  margin: 20px 0 6px;
+  color: var(--gold, #d1b384);
+  font-weight: 700;
+}
+
+.legal-page article dt:first-child {
+  margin-top: 0;
+}
+
+.legal-page article dd {
+  margin: 0;
+  padding-left: 16px;
+  border-left: 2px solid var(--border, #343846);
+  color: var(--text-muted, #b5bac8);
+}
+
+/* Подвал страниц документов */
+
+.legal-page > footer {
+  flex: 0 0 auto;
+  width: min(1100px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 22px 0 30px;
+
+  border-top: 1px solid var(--border, #343846);
+  color: var(--text-muted, #b5bac8);
+
+  font-size: 0.88rem;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.legal-page > footer p {
+  margin: 0 0 10px;
+}
+
+.legal-page > footer p:last-child {
+  margin-bottom: 0;
+}
+
+/* Телефоны */
+
+@media (max-width: 600px) {
+  .legal-page > header,
+  .legal-page > footer {
+    width: calc(100% - 24px);
+  }
+
+  .legal-page > header {
+    padding-top: 20px;
+  }
+
+  .legal-page > main {
+    width: calc(100% - 24px);
+    margin: 20px auto;
+  }
+
+  .legal-page article {
+    padding: 20px 16px;
+    border-radius: 10px;
+  }
+
+  .legal-page > header nav ul {
+    gap: 8px;
+  }
+
+  .legal-page > header nav li {
+    flex: 1 1 200px;
+  }
+
+  .legal-page > header nav a {
+    height: 100%;
+  }
+
+  .legal-page article aside {
+    padding: 12px;
+  }
+}
+
+/* Печать */
+
+@media print {
+  body.legal-page {
+    display: block;
+    min-height: auto;
+    background: #fff;
+    color: #000;
+    font-size: 11pt;
+    color-scheme: light;
+  }
+
+  .legal-page > header,
+  .legal-page > footer {
+    display: none;
+  }
+
+  .legal-page > main {
+    width: 100%;
+    margin: 0;
+  }
+
+  .legal-page article {
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .legal-page article h1,
+  .legal-page article h2,
+  .legal-page article h3,
+  .legal-page article dt,
+  .legal-page article aside strong {
+    color: #000;
+    break-after: avoid;
+  }
+
+  .legal-page article a {
+    color: #000;
+  }
+
+  .legal-page article aside {
+    background: transparent;
+    border-color: #999;
+    color: #333;
+  }
+
+  .legal-page article dd {
+    color: #333;
+  }
+
+  .legal-page article section {
+    border-color: #ccc;
+  }
+
+  .legal-page article li::marker {
+    color: #000;
+  }
+}

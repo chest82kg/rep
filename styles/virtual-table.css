@@ -1,0 +1,1026 @@
+/* ==========================================================================
+   Виртуальный стол
+   ========================================================================== */
+
+body.vt-page {
+  min-width: 320px;
+  margin: 0;
+  padding: 20px;
+  color: var(--text, #eeeaf5);
+  background: var(--bg, #101017);
+  font-family: system-ui, sans-serif;
+}
+
+.vt-page *,
+.vt-page *::before,
+.vt-page *::after {
+  box-sizing: border-box;
+}
+
+.vt-header,
+.vt-actions,
+.vt-load-panel,
+.vt-field-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.vt-header {
+  justify-content: space-between;
+  padding-bottom: 18px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--border, #30303e);
+}
+
+.vt-header h1 {
+  margin: 0 0 5px;
+  color: var(--gold, #d1b384);
+  font-size: clamp(1.4rem, 3vw, 2rem);
+}
+
+.vt-header p {
+  margin: 0;
+}
+
+.vt-header p,
+.vt-muted,
+.vt-notice,
+.vt-field-help {
+  color: var(--text-muted, #aaa6ba);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.vt-page .builder-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 9px 12px;
+  color: var(--text, #eeeaf5);
+  background: #252532;
+  border: 1px solid var(--border, #3b3b4d);
+  border-radius: 7px;
+  font: inherit;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.vt-page .builder-action-btn:hover:not(:disabled) {
+  background: #343145;
+  border-color: var(--accent-light, #a29bfe);
+}
+
+.vt-page .builder-action-btn.primary {
+  color: #fff;
+  background: #6250bf;
+  border-color: #9e8aef;
+}
+
+.vt-page button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.vt-page button:focus-visible,
+.vt-page a:focus-visible,
+.vt-page select:focus-visible,
+.vt-page input:focus-visible,
+.vt-page summary:focus-visible {
+  outline: 2px solid #e5c78e;
+  outline-offset: 3px;
+}
+
+/* ==========================================================================
+   Загрузка армий
+   ========================================================================== */
+
+.vt-load-panel {
+  align-items: flex-end;
+}
+
+.vt-load-field {
+  flex: 1 1 260px;
+  max-width: 520px;
+}
+
+.vt-load-field--side {
+  flex: 0 1 150px;
+}
+
+.vt-load-field label {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--text-muted, #aaa6ba);
+  font-size: 0.8rem;
+}
+
+.vt-load-field select,
+.vt-terrain-form select,
+.vt-terrain-form input {
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  padding: 8px;
+  color: #eeeaf5;
+  background: #20202d;
+  border: 1px solid var(--border, #3b3b4d);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 0.82rem;
+}
+
+.vt-notice {
+  margin: 12px 0;
+}
+
+.vt-message {
+  min-height: 26px;
+  margin-bottom: 12px;
+  color: #b9dfc5;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.vt-message.is-error {
+  color: #ffadb7;
+}
+
+/* ==========================================================================
+   Общая раскладка
+   ========================================================================== */
+
+.vt-layout {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr) 310px;
+  align-items: start;
+  gap: 14px;
+}
+
+.vt-panel,
+.vt-field-panel {
+  min-width: 0;
+  background: var(--bg-panel, #181820);
+  border: 1px solid var(--border, #30303e);
+  border-radius: 12px;
+}
+
+.vt-panel {
+  padding: 15px;
+}
+
+.vt-panel h2 {
+  margin: 0 0 9px;
+  color: var(--gold, #d1b384);
+  font-size: 1.05rem;
+  overflow-wrap: anywhere;
+}
+
+.vt-panel h3 {
+  margin: 18px 0 8px;
+  color: var(--accent-light, #a29bfe);
+  font-size: 0.92rem;
+  overflow-wrap: anywhere;
+}
+
+.vt-panel p {
+  margin: 7px 0;
+}
+
+.vt-panel-divider {
+  height: 1px;
+  margin: 22px 0;
+  background: var(--border, #30303e);
+  border: 0;
+}
+
+/* ==========================================================================
+   Список моделей
+   ========================================================================== */
+
+.vt-unit-list {
+  display: grid;
+  gap: 7px;
+  max-height: 70vh;
+  overflow-y: auto;
+  margin-top: 12px;
+}
+
+.vt-unit {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  color: var(--text, #eeeaf5);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid var(--border, #30303e);
+  border-radius: 8px;
+}
+
+.vt-unit strong,
+.vt-unit small {
+  display: block;
+}
+
+.vt-unit strong {
+  font-size: 0.82rem;
+  overflow-wrap: anywhere;
+}
+
+.vt-unit small {
+  margin-top: 4px;
+  color: var(--text-muted, #aaa6ba);
+  font-size: 0.73rem;
+  line-height: 1.45;
+}
+
+.vt-unit:hover {
+  background: rgba(108, 92, 231, 0.1);
+}
+
+.vt-unit.is-selected {
+  background: rgba(108, 92, 231, 0.2);
+  border-color: var(--accent-light, #a29bfe);
+}
+
+.vt-unit[data-side="a"] {
+  border-left: 3px solid #ad9aff;
+}
+
+.vt-unit[data-side="b"] {
+  border-left: 3px solid #60c9dc;
+}
+
+.vt-unit.is-activated:not(.is-dead) {
+  box-shadow: inset 3px 0 #ffc163;
+}
+
+.vt-unit.is-dead {
+  box-shadow: inset 3px 0 #d87989;
+}
+
+/* ==========================================================================
+   Поле
+   ========================================================================== */
+
+.vt-field-panel {
+  overflow: hidden;
+}
+
+.vt-field-toolbar {
+  padding: 12px;
+  border-bottom: 1px solid var(--border, #30303e);
+}
+
+.vt-field-toolbar > span {
+  flex: 1 1 160px;
+  color: var(--gold, #d1b384);
+  font-size: 0.82rem;
+}
+
+.vt-field-toolbar label,
+.vt-field-toolbar output {
+  color: var(--text-muted, #aaa6ba);
+  font-size: 0.75rem;
+}
+
+.vt-field-toolbar input {
+  width: 100px;
+  accent-color: var(--accent, #6c5ce7);
+}
+
+.vt-board-scroll {
+  max-height: 75vh;
+  padding: 14px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.vt-board {
+  --vt-cell: 48px;
+
+  display: grid;
+  grid-template-columns: 26px repeat(14, var(--vt-cell));
+  grid-template-rows: 26px repeat(14, var(--vt-cell));
+  width: max-content;
+  gap: 1px;
+  background: #30303b;
+  border: 1px solid #30303b;
+}
+
+.vt-axis {
+  display: grid;
+  place-items: center;
+  color: #b7b0c9;
+  font-size: 0.7rem;
+  background: #17171f;
+}
+
+.vt-cell {
+  position: relative;
+  display: grid;
+  width: var(--vt-cell);
+  height: var(--vt-cell);
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 3px;
+  place-items: center;
+  cursor: pointer;
+  appearance: none;
+  background: #202127;
+  border: 0;
+  border-radius: 0;
+  touch-action: manipulation;
+}
+
+.vt-cell:hover {
+  box-shadow: inset 0 0 0 2px #a29bfe;
+}
+
+.vt-cell.is-terrain-selected {
+  box-shadow: inset 0 0 0 2px #ffe1a6;
+}
+
+.vt-cell.is-selected {
+  outline: 2px solid #f4d6a2;
+  outline-offset: -3px;
+}
+
+.vt-cell:focus-visible {
+  z-index: 3;
+  outline: 3px solid #fff0cc;
+  outline-offset: -3px;
+}
+
+.vt-field-help {
+  padding: 12px;
+  margin: 0;
+  border-top: 1px solid var(--border, #30303e);
+}
+
+/* ==========================================================================
+   Жетоны
+   ========================================================================== */
+
+.vt-token {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  width: 88%;
+  height: 88%;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  color: #fff;
+  background: #6250bf;
+  border: 2px solid #c1b6ff;
+  border-radius: 50%;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+  line-height: 1.05;
+}
+
+.vt-token strong {
+  font-size: calc(var(--vt-cell) * 0.22);
+  white-space: nowrap;
+}
+
+.vt-token small {
+  margin-top: 2px;
+  font-size: calc(var(--vt-cell) * 0.18);
+  white-space: nowrap;
+}
+
+.vt-token[data-side="a"] {
+  color: #fff;
+  background: #6250bf;
+  border-color: #c1b6ff;
+}
+
+.vt-token[data-side="b"] {
+  color: #effcff;
+  background: #23697b;
+  border-color: #84e0ef;
+}
+
+.vt-token[data-side].is-activated:not(.is-dead) {
+  color: #241605;
+  background: #ffc163;
+  border-color: #ffe2ad;
+}
+
+.vt-token[data-side].is-dead {
+  color: #ffd3d9;
+  background: #713d4a;
+  border-color: #d7909f;
+}
+
+/* ==========================================================================
+   Панель модели
+   ========================================================================== */
+
+.vt-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin: 14px 0;
+}
+
+.vt-stat {
+  padding: 9px 4px;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 7px;
+}
+
+.vt-stat span {
+  display: block;
+  color: var(--text-muted, #aaa6ba);
+  font-size: 0.7rem;
+}
+
+.vt-stat strong {
+  color: var(--gold, #d1b384);
+  font-size: 1rem;
+}
+
+.vt-stat small {
+  color: #8ce5ad;
+  font-size: 0.75rem;
+}
+
+.vt-detail-actions {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+
+.vt-detail-actions .builder-action-btn {
+  flex: 1 1 90px;
+  min-height: 42px;
+}
+
+.vt-detail-block {
+  padding: 10px;
+  margin-top: 10px;
+  background: rgba(0, 0, 0, 0.16);
+  border: 1px solid var(--border, #30303e);
+  border-radius: 8px;
+}
+
+.vt-detail-block strong,
+.vt-detail-block summary {
+  color: var(--accent-light, #a29bfe);
+  font-size: 0.83rem;
+}
+
+.vt-detail-block p {
+  margin: 6px 0 0;
+  color: var(--text-muted, #aaa6ba);
+  font-size: 0.8rem;
+  line-height: 1.6;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.vt-detail-block summary {
+  cursor: pointer;
+}
+
+/* ==========================================================================
+   Направление фронта
+   ========================================================================== */
+
+.vt-facing-panel {
+  padding: 10px;
+  margin: 12px 0;
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--border, #30303e);
+  border-radius: 8px;
+}
+
+.vt-facing-panel > p:first-child {
+  margin-top: 0;
+}
+
+.vt-facing-panel strong {
+  color: var(--gold, #d1b384);
+}
+
+.vt-facing-directions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 9px;
+}
+
+.vt-facing-directions .builder-action-btn {
+  min-height: 42px;
+  padding: 8px 6px;
+  font-size: 0.78rem;
+}
+
+.vt-facing-panel .vt-detail-actions {
+  margin-bottom: 8px;
+}
+
+.vt-facing-mark {
+  position: absolute;
+  z-index: 4;
+  display: grid;
+  width: calc(var(--vt-cell) * 0.29);
+  height: calc(var(--vt-cell) * 0.29);
+  min-width: 10px;
+  min-height: 10px;
+  place-items: center;
+  color: #fff4cd;
+  background: #17151e;
+  border: 1px solid #e2c88e;
+  border-radius: 50%;
+  font-size: calc(var(--vt-cell) * 0.24);
+  font-weight: 900;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.vt-token[data-facing="n"] .vt-facing-mark {
+  top: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.vt-token[data-facing="e"] .vt-facing-mark {
+  top: 50%;
+  right: -5px;
+  transform: translateY(-50%);
+}
+
+.vt-token[data-facing="s"] .vt-facing-mark {
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.vt-token[data-facing="w"] .vt-facing-mark {
+  top: 50%;
+  left: -5px;
+  transform: translateY(-50%);
+}
+
+/* ==========================================================================
+   Участники
+   ========================================================================== */
+
+.vt-sides-summary p {
+  padding: 9px 10px;
+  margin-top: 8px;
+  color: var(--text-muted, #aaa6ba);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  background: rgba(0, 0, 0, 0.17);
+  border: 1px solid var(--border, #30303e);
+  border-radius: 7px;
+}
+
+#vt-side-a-summary {
+  border-left: 3px solid #ad9aff;
+}
+
+#vt-side-b-summary {
+  border-left: 3px solid #60c9dc;
+}
+
+/* ==========================================================================
+   Редактор тайлов
+   ========================================================================== */
+
+.vt-terrain-modes {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+
+.vt-terrain-modes .builder-action-btn {
+  flex: 1 1 90px;
+  padding: 8px;
+  font-size: 0.76rem;
+}
+
+.vt-terrain-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  margin-bottom: 12px;
+}
+
+.vt-terrain-form label {
+  display: flex;
+  min-width: 0;
+  gap: 5px;
+  color: var(--text-muted, #aaa6ba);
+  font-size: 0.76rem;
+  flex-direction: column;
+}
+
+#vt-terrain-selection {
+  margin-top: 12px;
+}
+
+#vt-terrain-help {
+  padding: 10px;
+  margin-top: 12px;
+  background: rgba(108, 92, 231, 0.1);
+  border-left: 3px solid var(--accent, #6c5ce7);
+  border-radius: 0 7px 7px 0;
+}
+
+/* Пустая клетка не считается Лугом. */
+
+.vt-cell[data-terrain="empty"] {
+  background: #202127;
+}
+
+.vt-cell[data-terrain="empty"].is-alternate {
+  background: #25262e;
+}
+
+.vt-cell[data-terrain="meadow"] {
+  background:
+    radial-gradient(
+      circle at 30% 70%,
+      rgba(194, 235, 144, 0.12),
+      transparent 45%
+    ),
+    #4a7130;
+}
+
+.vt-cell[data-terrain="forest"] {
+  background:
+    repeating-linear-gradient(
+      135deg,
+      transparent 0 10px,
+      rgba(0, 0, 0, 0.1) 10px 13px
+    ),
+    #314d2e;
+}
+
+.vt-cell[data-terrain="river"] {
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 10px,
+      rgba(176, 237, 255, 0.12) 10px 12px
+    ),
+    #286879;
+}
+
+.vt-cell[data-terrain="mountain"] {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.06),
+      transparent 55%
+    ),
+    #76513f;
+}
+
+.vt-terrain-label {
+  position: absolute;
+  z-index: 1;
+  top: 2px;
+  left: 3px;
+  padding: 1px 3px;
+  color: #fff4df;
+  font-size: 0.62rem;
+  font-weight: 800;
+  line-height: 1.2;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 3px;
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   Адаптивность
+   ========================================================================== */
+
+@media (max-width: 1250px) {
+  .vt-layout {
+    grid-template-columns: 210px minmax(0, 1fr);
+  }
+
+  .vt-details-panel {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 700px) {
+  body.vt-page {
+    padding: 12px;
+  }
+
+  .vt-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .vt-field-panel {
+    grid-row: 1;
+  }
+
+  .vt-details-panel {
+    grid-column: auto;
+  }
+
+  .vt-unit-list {
+    max-height: 300px;
+  }
+
+  .vt-board-scroll {
+    max-height: 60vh;
+    padding: 8px;
+  }
+
+  .vt-load-field,
+  .vt-load-field--side {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+
+  .vt-load-panel > .builder-action-btn {
+    flex: 1 1 140px;
+  }
+}
+
+/* ==========================================================================
+   Усталость и заметки экземпляра модели
+   ========================================================================== */
+
+.vt-markers-panel h3 {
+  margin: 0 0 10px;
+}
+
+.vt-markers-panel > .builder-action-btn {
+  width: 100%;
+}
+
+.vt-note-label {
+  display: block;
+  margin: 14px 0 6px;
+  color: var(--text-muted, #aaa6ba);
+  font-size: 0.8rem;
+}
+
+.vt-markers-panel textarea {
+  display: block;
+  width: 100%;
+  min-height: 100px;
+  padding: 10px;
+  resize: vertical;
+  color: var(--text, #eeeaf5);
+  background: #20202d;
+  border: 1px solid var(--border, #3b3b4d);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.vt-markers-panel textarea:focus-visible {
+  outline: 2px solid #e5c78e;
+  outline-offset: 2px;
+}
+
+.vt-unit .vt-fatigue-text {
+  color: #ffd18a;
+  font-weight: 700;
+}
+
+/*
+ * Маркер в углу клетки.
+ * Направление фронта остаётся у края круглого жетона.
+ */
+.vt-fatigue-mark {
+  position: absolute;
+  z-index: 5;
+  top: -5px;
+  right: -5px;
+  display: grid;
+  width: calc(var(--vt-cell) * 0.27);
+  height: calc(var(--vt-cell) * 0.27);
+  min-width: 11px;
+  min-height: 11px;
+  place-items: center;
+  color: #251700;
+  background: #ffc163;
+  border: 1px solid #ffe6ba;
+  border-radius: 3px;
+  font-size: calc(var(--vt-cell) * 0.19);
+  font-weight: 900;
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   Основные действия выбранной модели
+   ========================================================================== */
+
+.vt-model-main-controls {
+  padding: 12px;
+  margin: 12px 0;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(108, 92, 231, 0.09),
+      transparent 65%
+    ),
+    rgba(0, 0, 0, 0.14);
+  border: 1px solid var(--border, #30303e);
+  border-radius: 9px;
+}
+
+.vt-model-main-controls .vt-model-health {
+  margin: 0;
+  color: var(--text, #eeeaf5);
+  font-size: 0.9rem;
+}
+
+.vt-model-health strong {
+  color: var(--gold, #d1b384);
+  font-size: 1.15rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.vt-model-primary-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  margin: 11px 0;
+}
+
+.vt-model-primary-actions .builder-action-btn {
+  min-width: 0;
+  min-height: 44px;
+}
+
+.vt-model-primary-actions [data-action="hp"][data-delta="-1"] {
+  color: #ffc1c9;
+  background: rgba(176, 69, 87, 0.14);
+  border-color: rgba(215, 121, 137, 0.55);
+}
+
+.vt-model-primary-actions [data-action="hp"][data-delta="1"] {
+  color: #b5edc9;
+  background: rgba(58, 139, 87, 0.14);
+  border-color: rgba(112, 188, 139, 0.55);
+}
+
+.vt-model-primary-actions [data-action="activate"],
+.vt-model-primary-actions [data-action="reserve"] {
+  grid-column: 1 / -1;
+}
+
+.vt-model-main-controls .vt-stats {
+  margin: 12px 0 0;
+}
+
+/* ==========================================================================
+   Компактное управление фронтом
+   ========================================================================== */
+
+.vt-model-facing-fold {
+  margin: 12px 0;
+  background: rgba(0, 0, 0, 0.13);
+  border: 1px solid var(--border, #30303e);
+  border-radius: 8px;
+}
+
+.vt-model-facing-fold > summary {
+  padding: 12px;
+  color: var(--gold, #d1b384);
+  font-size: 0.83rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.vt-model-facing-fold > summary:focus-visible {
+  outline: 2px solid #e5c78e;
+  outline-offset: 2px;
+}
+
+.vt-model-facing-fold > .vt-facing-panel {
+  margin: 0;
+  padding: 0 10px 10px;
+  background: transparent;
+  border: 0;
+}
+
+/* Направление уже показано в summary. */
+.vt-model-facing-fold .vt-facing-panel > p:first-child {
+  display: none;
+}
+
+/* ==========================================================================
+   Быстрый выбор стороны, поиск и фильтры моделей
+   ========================================================================== */
+
+.vt-list-controls {
+  min-width: 0;
+  margin: 12px 0;
+}
+
+.vt-quick-sides {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.vt-quick-sides .builder-action-btn {
+  min-width: 0;
+  min-height: 44px;
+  padding: 8px 6px;
+}
+
+.vt-quick-sides [data-list-side="a"] {
+  border-bottom: 3px solid #ad9aff;
+}
+
+.vt-quick-sides [data-list-side="b"] {
+  border-bottom: 3px solid #60c9dc;
+}
+
+.vt-list-controls label {
+  display: block;
+  margin: 0 0 5px;
+  color: var(--text-muted, #aaa6ba);
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+
+.vt-list-controls input,
+.vt-list-controls select {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 8px;
+  color: var(--text, #eeeaf5);
+  background: #20202d;
+  border: 1px solid var(--border, #3b3b4d);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 0.8rem;
+}
+
+.vt-list-filter-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 9px;
+  margin-top: 10px;
+}
+
+.vt-list-filter-grid > div {
+  min-width: 0;
+}
+
+.vt-list-filter-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.vt-list-filter-footer .builder-action-btn {
+  min-height: 40px;
+  padding: 7px 9px;
+  font-size: 0.73rem;
+}
+
+#vt-unit-count {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+#vt-unit-selection-hint:not([hidden]) {
+  padding: 9px;
+  margin-top: 10px;
+  color: #ead9b6;
+  background: rgba(209, 179, 132, 0.08);
+  border-left: 3px solid var(--gold, #d1b384);
+  border-radius: 0 6px 6px 0;
+  overflow-wrap: anywhere;
+}

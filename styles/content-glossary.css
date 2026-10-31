@@ -1,0 +1,92 @@
+/* ==========================================================================
+   Глоссарий
+   Справочник, разделённый по смысловым категориям.
+   ========================================================================== */
+
+.glossary-lead {
+  max-width: 76ch;
+  padding: 15px 18px;
+  margin: 20px 0 24px !important;
+  color: var(--text-muted);
+  background:
+    linear-gradient(100deg, rgba(108, 92, 231, 0.09), transparent 70%),
+    rgba(18, 18, 26, 0.45);
+  border: 1px solid rgba(162, 155, 254, 0.2);
+  border-left: 4px solid var(--accent);
+  border-radius: 0 10px 10px 0;
+}
+
+.glossary-directory {
+  display: grid;
+  gap: 28px;
+  max-width: 76ch;
+  margin: 24px 0;
+}
+
+.glossary-section {
+  padding: 19px;
+  background:
+    linear-gradient(135deg, rgba(108, 92, 231, 0.055), transparent 58%),
+    var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.glossary-section-heading {
+  padding-bottom: 14px;
+  margin-bottom: 5px;
+  border-bottom: 1px solid rgba(162, 155, 254, 0.18);
+}
+
+.glossary-section-heading h3 {
+  margin: 0 0 6px !important;
+  color: var(--gold) !important;
+  font-size: 1.08rem !important;
+}
+
+.glossary-section-heading p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.89rem;
+  line-height: 1.58;
+}
+
+.glossary-list {
+  padding: 0;
+  margin: 0;
+}
+
+.glossary-entry {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.32fr) minmax(0, 1fr);
+  gap: 18px;
+  padding: 14px 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.glossary-entry:last-child {
+  padding-bottom: 3px;
+  border-bottom: none;
+}
+
+.glossary-entry dt {
+  color: var(--accent-light);
+  font-weight: 800;
+  line-height: 1.55;
+}
+
+.glossary-entry dd {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  line-height: 1.66;
+}
+
+.glossary-entry:hover dt {
+  color: #f0edf5;
+}
+
+.glossary-entry:hover dd {
+  color: var(--text);
+}

@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta
+    name="description"
+    content="Локальная мастерская карт, авторских юнитов и сценариев Мультиверс Тактикс."
+  >
+
+  <title>Мастерская — Мультиверс Тактикс</title>
+
+  <link rel="stylesheet" href="styles/main.css">
+  <link rel="stylesheet" href="styles/workshop.css">
+  <link rel="stylesheet" href="styles/map-preview.css">
+</head>
+
+<body class="ws-page">
+  <header class="ws-header">
+    <div>
+      <h1>Мастерская</h1>
+      <p>Авторские карты, юниты и сценарии</p>
+    </div>
+
+    <nav class="ws-actions" aria-label="Навигация по сайту">
+      <a class="builder-action-btn" href="index.html">
+        На главную
+      </a>
+
+      <a
+        class="builder-action-btn"
+        href="knowledge-base.html#builder"
+      >
+        Конструктор армии
+      </a>
+
+      <a class="builder-action-btn" href="virtual-table.html">
+        Виртуальный стол
+      </a>
+    </nav>
+  </header>
+
+  <main class="ws-main">
+    <p class="ws-notice">
+      Мастерская работает локально, без обязательной регистрации.
+      Очистка данных сайта или смена браузера может привести
+      к потере локальных библиотек. Это не облачное хранилище.
+      Для резервного копирования откройте карту, авторскую модель
+      или сценарий и экспортируйте документ в JSON.
+      Каждый документ экспортируется отдельно.
+      Сценарий включает прикреплённый снимок карты.
+    </p>
+
+    <nav class="ws-tabs" aria-label="Разделы мастерской">
+      <a href="#maps" data-ws-section="maps">
+        Карты
+      </a>
+
+      <a href="#units" data-ws-section="units">
+        Юниты
+      </a>
+
+      <a href="#scenarios" data-ws-section="scenarios">
+        Сценарии
+      </a>
+
+      <a href="#library" data-ws-section="library">
+        Моя библиотека
+      </a>
+    </nav>
+
+    <div
+      id="ws-message"
+      class="ws-message"
+      role="status"
+      aria-live="polite"
+    ></div>
+
+    <section
+      id="ws-storage-warning"
+      class="ws-notice ws-error"
+      role="alert"
+      hidden
+    >
+      <p id="ws-storage-warning-text"></p>
+
+      <button
+        id="ws-reload"
+        type="button"
+        class="builder-action-btn"
+      >
+        Перезагрузить библиотеку
+      </button>
+    </section>
+
+    <section id="ws-maps" class="ws-panel" hidden>
+      <div class="ws-section-heading">
+        <div>
+          <h2>Документ карты</h2>
+
+          <p class="ws-muted">
+            Карта существует отдельно от армии и партии.
+          </p>
+        </div>
+
+        <button
+          id="ws-new-map"
+          type="button"
+          class="builder-action-btn"
+        >
+          Новая карта
+        </button>
+      </div>
+
+      <form id="ws-map-form">
+        <div class="ws-form-grid">
+          <label>
+            Название карты
+
+            <input
+              id="ws-map-name"
+              type="text"
+              maxlength="120"
+              required
+              autocomplete="off"
+            >
+          </label>
+
+          <label>
+            Статус
+
+            <select id="ws-map-status">
+              <option value="draft">Черновик</option>
+              <option value="test-ready">Готово к тесту</option>
+            </select>
+          </label>
+        </div>
+
+        <p id="ws-map-meta" class="ws-muted"></p>
+
+        <div class="ws-actions">
+          <button
+            id="ws-save-map"
+            type="submit"
+            class="builder-action-btn primary"
+          >
+            Сохранить в библиотеку
+          </button>
+
+          <span id="ws-dirty-state" class="ws-muted"></span>
+        </div>
+      </form>
+
+      <div class="ws-board-scroll">
+        <div
+          id="ws-board"
+          class="ws-board"
+          aria-label="Поле карты 14 на 14"
+        ></div>
+      </div>
+
+      <p class="ws-muted">
+        Изменения карты сохраняются только по кнопке
+        «Сохранить в библиотеку».
+        История отмены хранится в памяти и очищается при открытии
+        другого документа или перезагрузке страницы.
+        Карта не изменяет текущую партию виртуального стола.
+      </p>
+    </section>
+
+    <section id="ws-units" class="ws-panel" hidden>
+      <h2>Авторские юниты</h2>
+
+      <p>
+        Загрузка локального редактора авторских моделей…
+      </p>
+    </section>
+
+    <section id="ws-scenarios" class="ws-panel" hidden>
+      <h2>Авторские сценарии</h2>
+
+      <p>
+        Загрузка локального редактора сценариев…
+      </p>
+    </section>
+
+    <section id="ws-library" class="ws-panel" hidden>
+      <div class="ws-section-heading">
+        <div>
+          <h2>Моя библиотека</h2>
+
+          <p class="ws-muted">
+            Здесь хранятся документы карт.
+            Библиотеки авторских моделей и сценариев
+            находятся в соответствующих разделах.
+          </p>
+        </div>
+
+        <button
+          id="ws-library-new"
+          type="button"
+          class="builder-action-btn primary"
+        >
+          Создать карту
+        </button>
+      </div>
+
+      <label class="ws-search">
+        Поиск по названию карты
+
+        <input
+          id="ws-library-search"
+          type="search"
+          maxlength="120"
+          autocomplete="off"
+        >
+      </label>
+
+      <p id="ws-library-count" class="ws-muted"></p>
+
+      <div
+        id="ws-library-list"
+        class="ws-library-list"
+      ></div>
+    </section>
+
+    <noscript>
+      Для работы мастерской включите JavaScript.
+    </noscript>
+  </main>
+
+  <script
+    type="module"
+    src="src/workshop/index.js"
+  ></script>
+</body>
+</html>

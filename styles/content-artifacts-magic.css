@@ -1,0 +1,231 @@
+/* ==========================================================================
+   Артефакты, магия и молитвы
+   Структурное оформление статьи rules-artifacts-magic.
+   ========================================================================== */
+
+/* ==========================================================================
+   Верхний обзор трёх систем
+   ========================================================================== */
+
+.art-magic-overview {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 20px 0 30px;
+}
+
+.art-magic-overview-card {
+  min-width: 0;
+  padding: 17px 18px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-top: 4px solid var(--accent);
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.art-magic-overview-card--artifacts {
+  background:
+    linear-gradient(135deg, rgba(209, 179, 132, 0.11), transparent 62%),
+    var(--bg-panel);
+  border-top-color: var(--gold);
+}
+
+.art-magic-overview-card--magic {
+  background:
+    linear-gradient(135deg, rgba(120, 102, 181, 0.13), transparent 62%),
+    var(--bg-panel);
+  border-top-color: #8d78df;
+}
+
+.art-magic-overview-card--prayers {
+  background:
+    linear-gradient(135deg, rgba(96, 157, 192, 0.11), transparent 62%),
+    var(--bg-panel);
+  border-top-color: #69a9d1;
+}
+
+.art-magic-overview-card h3 {
+  margin: 0 0 9px;
+  color: var(--text) !important;
+  font-size: 1.02rem !important;
+}
+
+.art-magic-overview-card p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  line-height: 1.62;
+}
+
+/* ==========================================================================
+   Раздел артефактов
+   ========================================================================== */
+
+.artifacts-section,
+.artifact-bonuses-section,
+.magic-prayers-section {
+  margin: 30px 0;
+}
+
+.artifacts-section > h3,
+.artifact-bonuses-section > h3,
+.magic-prayers-section > h3 {
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.artifacts-section > .rule-callout {
+  border-left-color: var(--gold);
+  background:
+    linear-gradient(100deg, rgba(209, 179, 132, 0.11), transparent 62%),
+    rgba(18, 18, 26, 0.66);
+}
+
+.artifacts-table-section,
+.spell-table-section,
+.prayer-table-section {
+  padding: 19px 20px 2px;
+  margin: 22px 0;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.artifacts-table-section {
+  background:
+    linear-gradient(135deg, rgba(209, 179, 132, 0.08), transparent 46%),
+    var(--bg-panel);
+  border-top: 4px solid #bd8b50;
+}
+
+.artifacts-table-section h4,
+.spell-table-section h4,
+.prayer-table-section h4 {
+  margin-top: 0;
+}
+
+.artifacts-table-section > :last-child,
+.spell-table-section > :last-child,
+.prayer-table-section > :last-child {
+  margin-bottom: 0;
+}
+
+/* ==========================================================================
+   Изменение характеристик артефактами
+   ========================================================================== */
+
+.artifact-bonuses-section {
+  padding: 20px;
+  background:
+    linear-gradient(135deg, rgba(189, 139, 80, 0.07), transparent 48%),
+    var(--bg-panel);
+  border: 1px solid var(--border);
+  border-top: 4px solid #bd8b50;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.artifact-bonuses-section > h3 {
+  margin-top: 0;
+}
+
+/* ==========================================================================
+   Магия и молитвы: роли и ресурсы
+   ========================================================================== */
+
+.magic-prayers-section {
+  padding: 20px;
+  background:
+    linear-gradient(135deg, rgba(120, 102, 181, 0.07), transparent 48%),
+    var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.magic-prayers-section > h3 {
+  margin-top: 0;
+}
+
+.magic-role-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 16px 0 24px;
+}
+
+.magic-role-card {
+  min-width: 0;
+  padding: 17px 18px;
+  background: rgba(0, 0, 0, 0.13);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.magic-role-card--magic {
+  background:
+    linear-gradient(135deg, rgba(120, 102, 181, 0.13), transparent 62%),
+    rgba(0, 0, 0, 0.13);
+  border-left: 4px solid #8d78df;
+}
+
+.magic-role-card--prayers {
+  background:
+    linear-gradient(135deg, rgba(96, 157, 192, 0.11), transparent 62%),
+    rgba(0, 0, 0, 0.13);
+  border-left: 4px solid #69a9d1;
+}
+
+.magic-role-card h5 {
+  margin: 0 0 10px;
+  color: var(--text);
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.magic-role-card p {
+  margin: 0;
+  line-height: 1.68;
+}
+
+.resource-economy-section {
+  padding: 18px 19px 1px;
+  margin: 24px 0;
+  background:
+    linear-gradient(135deg, rgba(108, 92, 231, 0.08), transparent 60%),
+    rgba(0, 0, 0, 0.11);
+  border: 1px solid rgba(162, 155, 254, 0.24);
+  border-radius: 10px;
+}
+
+.resource-economy-section h4 {
+  margin-top: 0;
+}
+
+.resource-economy-section .rule-callout {
+  margin-bottom: 18px;
+  border-left-color: #8d78df;
+  background:
+    linear-gradient(100deg, rgba(120, 102, 181, 0.11), transparent 62%),
+    rgba(18, 18, 26, 0.66);
+}
+
+/* ==========================================================================
+   Таблицы магии и молитв
+   ========================================================================== */
+
+.spell-table-section {
+  background:
+    linear-gradient(135deg, rgba(120, 102, 181, 0.1), transparent 46%),
+    var(--bg-panel);
+  border-top: 4px solid #8d78df;
+}
+
+.prayer-table-section {
+  background:
+    linear-gradient(135deg, rgba(96, 157, 192, 0.1), transparent 46%),
+    var(--bg-panel);
+  border-top: 4px solid #69a9d1;
+}

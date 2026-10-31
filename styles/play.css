@@ -1,0 +1,1819 @@
+/* ==========================================================================
+   styles/play.css
+   Игровой стол: адаптивные карточки, управление, формы и туториал.
+   ========================================================================== */
+
+body.play-page {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1220px;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 24px 22px 96px;
+  color: var(--text, #e9e8ef);
+  background:
+    radial-gradient(
+      circle at 50% -10%,
+      rgba(108, 92, 231, 0.13),
+      transparent 40%
+    ),
+    var(--bg, #101016);
+}
+
+.play-page *,
+.play-page *::before,
+.play-page *::after {
+  box-sizing: border-box;
+}
+
+.play-page h2 {
+  margin: 22px 0 12px;
+  color: var(--text, #e9e8ef);
+  font-size: clamp(1.15rem, 2vw, 1.4rem);
+  line-height: 1.3;
+}
+
+#battle-dashboard,
+#dash-units-container,
+#dash-opponent-container {
+  min-width: 0;
+}
+
+/* ==========================================================================
+   Вход
+   ========================================================================== */
+
+#setup-screen {
+  display: flex;
+  min-height: 78vh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.setup-card {
+  width: 100%;
+  max-width: 470px;
+  padding: 30px;
+  text-align: center;
+  background:
+    linear-gradient(145deg, rgba(108, 92, 231, 0.12), transparent 45%),
+    var(--bg-panel, #191922);
+  border: 1px solid rgba(162, 155, 254, 0.32);
+  border-radius: 16px;
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.3);
+}
+
+.setup-card h1,
+.setup-card h2 {
+  margin: 0 0 10px;
+  color: var(--gold, #d1b384);
+}
+
+.setup-card p {
+  margin-bottom: 20px;
+  color: var(--text-muted, #a0a0b0);
+}
+
+/* ==========================================================================
+   Шапка
+   ========================================================================== */
+
+.dash-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-bottom: 16px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border, #343442);
+}
+
+.dash-header > div {
+  min-width: 0;
+}
+
+.dash-header h1,
+.dash-header h2 {
+  margin: 0;
+  color: var(--gold, #d1b384);
+  font-size: clamp(1.4rem, 3vw, 1.9rem);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.dash-header p {
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.dash-header-actions {
+  display: flex;
+  max-width: 720px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.dash-header-actions .builder-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 8px 11px;
+  font-size: 0.8rem;
+  line-height: 1.25;
+}
+
+.action-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.action-row .builder-action-btn {
+  min-height: 44px;
+  padding: 9px 10px;
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+/* ==========================================================================
+   Сводка, ресурсы, трекер
+   ========================================================================== */
+
+.dash-meta,
+#resources-panel,
+.tracker-row {
+  display: grid;
+  gap: 8px;
+  padding: 8px;
+  margin-bottom: 10px;
+  background: var(--bg-panel, #191922);
+  border: 1px solid var(--border, #343442);
+  border-radius: 12px;
+}
+
+.dash-meta,
+.tracker-row {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+#resources-panel {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dash-meta > span,
+#resources-panel > span {
+  min-width: 0;
+  padding: 9px;
+  color: var(--text-muted, #a0a0b0);
+  font-size: 0.83rem;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 7px;
+}
+
+.dash-meta strong {
+  color: var(--gold, #d1b384);
+}
+
+.resource-mana {
+  color: #b2a6ff;
+}
+
+.resource-faith {
+  color: var(--gold, #d1b384);
+}
+
+.tracker-row {
+  margin-bottom: 16px;
+}
+
+.tracker-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 0;
+  padding: 6px;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+}
+
+.tracker-item label {
+  min-width: 0;
+  color: var(--text-muted, #a0a0b0);
+  font-size: 0.7rem;
+  font-weight: 750;
+}
+
+.tracker-btn {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  color: #fff;
+  font: inherit;
+  font-size: 1.15rem;
+  cursor: pointer;
+  background: var(--accent, #6c5ce7);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+}
+
+.tracker-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.tracker-value {
+  min-width: 28px;
+  color: var(--gold, #d1b384);
+  font-size: 1.15rem;
+  font-weight: 850;
+  text-align: center;
+}
+
+/* ==========================================================================
+   Панель фильтров
+   ========================================================================== */
+
+.bu-toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.bu-toolbar-group,
+.bu-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.bu-tabs {
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border, #343442);
+}
+
+.bu-button {
+  display: inline-flex;
+  min-width: 0;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 9px 12px;
+  color: #dbdae6;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid #414151;
+  border-radius: 8px;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.bu-button:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.065);
+  border-color: #77718c;
+}
+
+.bu-button.is-selected {
+  color: #fff;
+  background: #5b4ac6;
+  border-color: #9f90f7;
+}
+
+.bu-button--heal {
+  color: #9de2b8;
+  border-color: rgba(88, 172, 121, 0.45);
+}
+
+.bu-button--damage {
+  color: #f1abb5;
+  border-color: rgba(206, 106, 122, 0.45);
+}
+
+.bu-button--magic {
+  color: #c0b3ff;
+}
+
+.bu-button--faith {
+  color: #dfc397;
+}
+
+/* ==========================================================================
+   Сетка
+   ========================================================================== */
+
+.bu-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 16px;
+  min-width: 0;
+}
+
+@media (min-width: 960px) {
+  .bu-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.bu-empty {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 20px;
+  color: var(--text-muted, #a0a0b0);
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px dashed var(--border, #343442);
+  border-radius: 12px;
+}
+
+.bu-opponent-heading {
+  margin: 28px 0 16px;
+}
+
+.bu-opponent-heading h2 {
+  margin-bottom: 8px;
+}
+
+.bu-opponent-heading p {
+  margin: 3px 0;
+  color: var(--text-muted, #a0a0b0);
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+
+/* ==========================================================================
+   Карточка модели
+   ========================================================================== */
+
+.play-page .battle-unit-wrapper.bu-card {
+  --bu-border: #3d3b4d;
+  --bu-background: #191922;
+
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 16px;
+  overflow: hidden;
+  color: var(--text, #e9e8ef);
+  background: var(--bu-background);
+  border: 1px solid var(--bu-border);
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+  opacity: 1;
+  filter: none;
+}
+
+/* Полностью отключаем прежние декоративные полосы. */
+.play-page .battle-unit-wrapper.bu-card::before,
+.play-page .battle-unit-wrapper.bu-card::after {
+  display: none;
+  content: none;
+}
+
+.play-page .battle-unit-wrapper.bu-card.activated:not(.dead) {
+  --bu-border: #6f82b5;
+  --bu-background: #1c2332;
+}
+
+.play-page .battle-unit-wrapper.bu-card.dead {
+  --bu-border: #86535b;
+  --bu-background: #241c21;
+}
+
+/* Приглушаем содержание, но не управление. */
+.bu-card.dead .bu-heading,
+.bu-card.dead .bu-stats,
+.bu-card.dead .bu-weapons {
+  opacity: 0.62;
+}
+
+.bu-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 13px;
+}
+
+.bu-state {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 5px 9px;
+  font-size: 0.73rem;
+  font-weight: 800;
+  line-height: 1.2;
+  border: 1px solid;
+  border-radius: 6px;
+}
+
+.bu-state--ready {
+  color: #c3bbdd;
+  background: rgba(164, 147, 214, 0.07);
+  border-color: rgba(164, 147, 214, 0.3);
+}
+
+.bu-state--activated {
+  color: #d2dfff;
+  background: rgba(126, 158, 233, 0.18);
+  border-color: rgba(153, 181, 245, 0.6);
+}
+
+.bu-state--dead {
+  color: #ffc1c9;
+  background: rgba(202, 91, 110, 0.18);
+  border-color: rgba(224, 127, 143, 0.6);
+}
+
+.bu-cost {
+  color: var(--text-muted, #a0a0b0);
+  font-size: 0.77rem;
+  white-space: nowrap;
+}
+
+.bu-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  min-width: 0;
+}
+
+.bu-number {
+  flex-shrink: 0;
+  padding-top: 3px;
+  color: #9b95ab;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.play-page .bu-heading h3 {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  color: #f1eff8;
+  font-size: 1.08rem;
+  font-weight: 800;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.bu-heading h3::before,
+.bu-heading h3::after {
+  content: none;
+  display: none;
+}
+
+.bu-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 11px 0 14px;
+}
+
+.bu-role,
+.bu-stance {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  padding: 4px 7px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.3;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 5px;
+}
+
+.bu-role {
+  color: #c9c4d8;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.bu-role--basic {
+  color: #9cd9b2;
+  border-color: rgba(105, 175, 130, 0.35);
+}
+
+.bu-role--elite {
+  color: #e8cd8b;
+  border-color: rgba(204, 173, 91, 0.35);
+}
+
+.bu-role--hero {
+  color: #edacb6;
+  border-color: rgba(211, 111, 130, 0.35);
+}
+
+.bu-stance {
+  color: #bab7c6;
+  background: rgba(0, 0, 0, 0.13);
+}
+
+.bu-stance--attack {
+  color: #f1aab5;
+}
+
+.bu-stance--defense {
+  color: #9cdbb4;
+}
+
+.bu-stance--clan {
+  color: var(--gold, #d1b384);
+}
+
+/* ==========================================================================
+   Характеристики
+   ========================================================================== */
+
+.bu-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  margin-bottom: 13px;
+}
+
+.bu-stat {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 10px 5px;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.17);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+}
+
+.bu-stat-label {
+  color: #aaa6ba;
+  font-size: 0.7rem;
+  line-height: 1.4;
+}
+
+.bu-stat-value {
+  margin-top: 4px;
+  color: var(--gold, #d1b384);
+  font-size: 1.3rem;
+  line-height: 1.2;
+}
+
+.bu-stat-value small {
+  font-size: 0.65em;
+  white-space: nowrap;
+}
+
+.bu-stat--bonus {
+  background: rgba(49, 135, 84, 0.12);
+  border-color: rgba(95, 180, 125, 0.32);
+}
+
+.bu-stat--bonus .bu-stat-value {
+  color: #91e1b0;
+}
+
+.bu-stat-source {
+  max-width: 100%;
+  margin-top: 5px;
+  color: #a2c6af;
+  font-size: 0.6rem;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+/* ==========================================================================
+   Здоровье
+   ========================================================================== */
+
+.bu-health {
+  margin-bottom: 13px;
+  padding: 11px;
+  background: rgba(0, 0, 0, 0.13);
+  border: 1px solid rgba(255, 255, 255, 0.065);
+  border-radius: 9px;
+}
+
+.bu-health-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 9px;
+}
+
+.bu-health-heading > span {
+  color: var(--text-muted, #a0a0b0);
+  font-size: 0.77rem;
+}
+
+.bu-health-heading > strong {
+  color: #eeeef5;
+  font-size: 1rem;
+}
+
+.bu-health-track {
+  height: 6px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 10px;
+}
+
+.hp-bar-fill {
+  height: 100%;
+  border-radius: inherit;
+  transition: width 0.18s ease, background 0.18s ease;
+}
+
+.bu-hp-actions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.bu-hp-actions .bu-button {
+  padding: 7px;
+}
+
+/* ==========================================================================
+   Артефакты, оружие, способности
+   ========================================================================== */
+
+.bu-artifact {
+  margin: 0 0 13px;
+  background: rgba(209, 179, 132, 0.045);
+  border: 1px solid rgba(209, 179, 132, 0.3);
+  border-radius: 8px;
+}
+
+.bu-artifact > summary {
+  padding: 10px;
+  color: #dbc296;
+  font-size: 0.8rem;
+  font-weight: 750;
+  line-height: 1.45;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.bu-artifact-cost {
+  margin-left: 7px;
+  color: #a9987d;
+  font-size: 0.7rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.bu-artifact > p {
+  margin: 0;
+  padding: 0 11px 11px;
+  color: #c9c1b6;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.play-page .bu-section-label {
+  margin: 0 0 8px;
+  color: #a7a2b6;
+  font-size: 0.69rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.bu-section-label::before,
+.bu-section-label::after,
+.bu-ability h4::before,
+.bu-ability h4::after {
+  display: none;
+  content: none;
+}
+
+.bu-weapons {
+  margin-bottom: 12px;
+}
+
+.bu-weapon {
+  margin-top: 6px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 8px;
+}
+
+.bu-weapon-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 9px;
+}
+
+.bu-weapon-heading strong {
+  color: #e5e2ef;
+  font-size: 0.87rem;
+  overflow-wrap: anywhere;
+}
+
+.bu-weapon-heading > span {
+  color: #aba0d6;
+  font-size: 0.72rem;
+}
+
+.bu-weapon p {
+  margin: 6px 0 0;
+  color: #bcb7cb;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.bu-fold {
+  margin-bottom: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+}
+
+.bu-fold > summary,
+.bu-status-editor > summary {
+  padding: 11px;
+  color: #bfb5dd;
+  font-size: 0.78rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.bu-abilities {
+  display: grid;
+  gap: 8px;
+}
+
+.bu-fold .bu-abilities {
+  padding: 0 10px 10px;
+}
+
+.bu-ability {
+  padding: 11px;
+  background: rgba(157, 137, 213, 0.05);
+  border: 1px solid rgba(157, 137, 213, 0.16);
+  border-radius: 7px;
+}
+
+.play-page .bu-ability h4 {
+  margin: 0 0 5px;
+  padding: 0;
+  color: #c2b4eb;
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+
+.bu-ability p {
+  margin: 0;
+  color: #c5bfd0;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+/* ==========================================================================
+   Статусы
+   ========================================================================== */
+
+.bu-status-section {
+  margin: 12px 0;
+  padding-top: 11px;
+  border-top: 1px solid rgba(255, 255, 255, 0.075);
+}
+
+.bu-muted,
+.bu-readonly {
+  color: var(--text-muted, #a0a0b0);
+  font-size: 0.75rem;
+}
+
+.status-container {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.status-tag {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px 6px;
+  color: #e9d3d9;
+  font-size: 0.75rem;
+  font-weight: 650;
+  background: rgba(186, 85, 110, 0.18);
+  border: 1px solid rgba(186, 85, 110, 0.3);
+  border-radius: 7px;
+}
+
+.status-tag.poison {
+  color: #b1e3bc;
+  background: rgba(65, 146, 84, 0.18);
+  border-color: rgba(65, 146, 84, 0.38);
+}
+
+.status-tag.fire {
+  color: #f0cd95;
+  background: rgba(176, 113, 41, 0.18);
+  border-color: rgba(176, 113, 41, 0.38);
+}
+
+.status-tag.stone {
+  color: #d4dbe0;
+  background: rgba(126, 146, 156, 0.18);
+  border-color: rgba(126, 146, 156, 0.35);
+}
+
+.status-tag.custom,
+.status-tag.fatigue {
+  color: #d2c5f2;
+  background: rgba(130, 103, 187, 0.18);
+  border-color: rgba(130, 103, 187, 0.35);
+}
+
+.status-tag button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  min-height: 40px;
+  padding: 4px;
+  color: inherit;
+  font: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid transparent;
+  border-radius: 5px;
+}
+
+.status-tag button:hover {
+  border-color: currentColor;
+}
+
+.bu-status-editor {
+  margin-top: 5px;
+}
+
+.bu-status-editor > summary {
+  padding: 9px 0;
+}
+
+.status-add-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  padding-bottom: 5px;
+}
+
+.status-select {
+  min-width: 0;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 8px;
+  color: #e8e5ef;
+  font-family: inherit;
+  font-size: 0.85rem;
+  background: #17171f;
+  border: 1px solid #414151;
+  border-radius: 7px;
+}
+
+.status-add-bar select {
+  flex: 1 1 100px;
+}
+
+.bu-status-value {
+  flex: 0 0 60px;
+  width: 60px;
+}
+
+/* ==========================================================================
+   Действия и стойки
+   ========================================================================== */
+
+.bu-footer {
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.075);
+}
+
+.bu-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.bu-activate {
+  grid-column: 1 / -1;
+  color: #d6c9f5;
+  background: rgba(125, 97, 191, 0.1);
+  border-color: rgba(151, 126, 209, 0.45);
+}
+
+.bu-activate.is-active {
+  color: #d8e3ff;
+  background: rgba(113, 145, 215, 0.18);
+  border-color: #758dbf;
+}
+
+.bu-card.dead .bu-activate {
+  color: #c8aeb5;
+  background: rgba(150, 88, 102, 0.08);
+  border-color: #79545e;
+}
+
+.bu-stances {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+  margin-top: 11px;
+}
+
+.stance-btn {
+  min-width: 0;
+  min-height: 44px;
+  padding: 7px 4px;
+  color: #aaa5ba;
+  font-family: inherit;
+  font-size: 0.7rem;
+  font-weight: 650;
+  line-height: 1.3;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.1);
+  border: 1px solid #393645;
+  border-radius: 7px;
+}
+
+.stance-btn.active {
+  color: #e5ddfb;
+  background: rgba(130, 103, 187, 0.23);
+  border-color: #8c73bb;
+}
+
+.stance-btn[data-stance="attack"].active {
+  color: #ffd0d7;
+  background: rgba(172, 69, 91, 0.2);
+  border-color: #a96c7a;
+}
+
+.stance-btn[data-stance="defense"].active {
+  color: #bde9cb;
+  background: rgba(70, 136, 94, 0.2);
+  border-color: #6f9a7d;
+}
+
+.stance-btn[data-stance="clan"].active {
+  color: #efd6ab;
+  background: rgba(159, 123, 70, 0.2);
+  border-color: #ad9067;
+}
+
+.bu-readonly {
+  margin: 10px 0 0;
+}
+
+/* Компактный вид: без оружия и списка способностей. */
+.bu-card.compact .bu-stats {
+  margin-bottom: 10px;
+}
+
+.bu-card.compact .bu-stat {
+  padding-top: 7px;
+  padding-bottom: 7px;
+}
+
+.bu-card.compact .bu-stat-value {
+  font-size: 1.12rem;
+}
+
+/* ==========================================================================
+   Справка модели и правила
+   ========================================================================== */
+
+.bu-reference {
+  min-width: 0;
+}
+
+.play-page .bu-modal-title {
+  margin: 0 0 12px;
+  color: var(--gold, #d1b384);
+  font-size: clamp(1.15rem, 3vw, 1.5rem);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.bu-reference-meta {
+  margin: 0 0 16px;
+  color: var(--text-muted, #a0a0b0);
+  font-size: 0.85rem;
+}
+
+.bu-reference-section {
+  margin: 18px 0 10px;
+  color: #bdb0e5;
+  font-size: 1rem;
+}
+
+.bu-reference .bu-abilities {
+  margin-bottom: 18px;
+}
+
+.bu-rules-content {
+  margin-top: 16px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* ==========================================================================
+   Формы
+   ========================================================================== */
+
+.form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  margin-bottom: 13px;
+}
+
+.form-row label {
+  color: var(--text-muted, #a0a0b0);
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.form-row input,
+.form-row select,
+.form-row textarea {
+  min-width: 0;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 9px 12px;
+  color: var(--text, #e9e8ef);
+  font-family: inherit;
+  font-size: 1rem;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border, #343442);
+  border-radius: 7px;
+}
+
+.form-row textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.result-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.result-buttons button {
+  flex: 1 1 110px;
+  min-height: 44px;
+  padding: 9px;
+  color: var(--text, #e9e8ef);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border, #343442);
+  border-radius: 7px;
+}
+
+.result-buttons button.active {
+  color: #fff;
+  background: var(--accent, #6c5ce7);
+  border-color: #a291fb;
+}
+
+.form-error,
+.form-info {
+  padding: 10px 12px;
+  margin-top: 8px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  border: 1px solid;
+  border-radius: 7px;
+}
+
+.form-error {
+  color: #f1abb5;
+  background: rgba(206, 91, 111, 0.1);
+  border-color: rgba(206, 91, 111, 0.55);
+}
+
+.form-info {
+  color: #a2dfb8;
+  background: rgba(72, 157, 102, 0.1);
+  border-color: rgba(72, 157, 102, 0.55);
+}
+
+/* ==========================================================================
+   Клятвы
+   ========================================================================== */
+
+.stake-tracker-row {
+  padding: 12px 13px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border, #343442);
+  border-left: 4px solid #686176;
+  border-radius: 8px;
+}
+
+.stake-tracker-row.stake-done {
+  background: rgba(46, 213, 115, 0.04);
+  border-left-color: #6bb98b;
+}
+
+.stake-tracker-row.stake-failed {
+  background: rgba(255, 71, 87, 0.04);
+  border-left-color: #d87989;
+}
+
+.stake-tracker-row.stake-in-progress {
+  background: rgba(209, 179, 132, 0.035);
+  border-left-color: var(--gold, #d1b384);
+}
+
+/* ==========================================================================
+   Туториал
+   ========================================================================== */
+
+.tutorial-highlight {
+  position: relative;
+  z-index: 9998;
+  border-radius: 12px;
+  box-shadow:
+    0 0 0 3px var(--gold, #d1b384),
+    0 0 0 7px rgba(209, 179, 132, 0.2);
+}
+
+.tutorial-overlay {
+  position: fixed;
+  z-index: 9999;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 24px;
+  pointer-events: none;
+  background: rgba(0, 0, 0, 0.62);
+}
+
+.tutorial-box {
+  width: 100%;
+  max-width: 540px;
+  padding: 22px;
+  pointer-events: auto;
+  background: #1a1923;
+  border: 1px solid var(--gold, #d1b384);
+  border-radius: 14px;
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.6);
+}
+
+.tutorial-step-counter {
+  display: inline-block;
+  margin-bottom: 10px;
+  padding: 4px 9px;
+  color: #17120b;
+  font-size: 0.72rem;
+  font-weight: 800;
+  background: var(--gold, #d1b384);
+  border-radius: 6px;
+}
+
+.tutorial-box h3 {
+  margin: 0 0 8px;
+  color: var(--gold, #d1b384);
+  font-size: 1.15rem;
+}
+
+.tutorial-box p {
+  margin: 0 0 18px;
+  line-height: 1.6;
+}
+
+.tutorial-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tutorial-actions button {
+  min-height: 44px;
+  padding: 9px 14px;
+  color: var(--text, #e9e8ef);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  background: #14131b;
+  border: 1px solid var(--border, #343442);
+  border-radius: 8px;
+}
+
+#tut-next {
+  color: #17120b;
+  background: var(--gold, #d1b384);
+  border-color: #ecd0a7;
+}
+
+/* ==========================================================================
+   Адаптив
+   ========================================================================== */
+
+@media (max-width: 900px) {
+  body.play-page {
+    padding: 20px 16px 90px;
+  }
+
+  .dash-header-actions {
+    width: 100%;
+    max-width: none;
+    justify-content: flex-start;
+  }
+
+  .tracker-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tracker-item {
+    justify-content: space-between;
+  }
+
+  .tracker-item label {
+    flex: 1;
+    padding-left: 6px;
+  }
+}
+
+@media (max-width: 600px) {
+  body.play-page {
+    padding: 16px 12px 84px;
+  }
+
+  .setup-card {
+    padding: 24px 18px;
+  }
+
+  .dash-meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dash-meta > span:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .action-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .bu-toolbar {
+    gap: 10px;
+  }
+
+  .bu-toolbar-group {
+    width: 100%;
+  }
+
+  .bu-toolbar-group .bu-button {
+    flex: 1;
+    padding: 8px 6px;
+    font-size: 0.76rem;
+  }
+
+  .bu-tabs .bu-button {
+    flex: 1;
+    padding: 8px;
+  }
+
+  .bu-grid {
+    gap: 12px;
+  }
+
+  .play-page .battle-unit-wrapper.bu-card {
+    padding: 13px;
+    border-radius: 12px;
+  }
+
+  .play-page .bu-heading h3 {
+    font-size: 1rem;
+  }
+
+  .bu-stat-label {
+    font-size: 0.66rem;
+  }
+
+  .bu-stat-value {
+    font-size: 1.15rem;
+  }
+
+  .bu-stances {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stance-btn {
+    font-size: 0.76rem;
+  }
+
+  .tutorial-overlay {
+    padding: 12px;
+  }
+
+  .tutorial-box {
+    padding: 18px;
+  }
+
+  /* В модальном завершении есть строка из трёх полей с inline-flex. */
+  .form-row[style*="flex-direction:row"] {
+    flex-wrap: wrap;
+  }
+
+  .form-row[style*="flex-direction:row"] > div {
+    min-width: 110px;
+  }
+}
+
+@media (max-width: 380px) {
+  .dash-header-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .dash-header-actions .builder-action-btn {
+    min-width: 0;
+    width: 100%;
+    padding: 8px 5px;
+    font-size: 0.73rem;
+  }
+
+  .dash-meta,
+  #resources-panel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dash-meta > span:last-child {
+    grid-column: auto;
+  }
+
+  .bu-actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .bu-activate {
+    grid-column: auto;
+  }
+
+  .status-add-bar .bu-button {
+    flex: 1 1 100%;
+  }
+}
+
+/* ==========================================================================
+   Доступность
+   ========================================================================== */
+
+.play-page button:focus-visible,
+.play-page select:focus-visible,
+.play-page input:focus-visible,
+.play-page textarea:focus-visible,
+.play-page a:focus-visible,
+.play-page summary:focus-visible {
+  outline: 2px solid var(--gold, #d1b384);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .play-page *,
+  .play-page *::before,
+  .play-page *::after {
+    scroll-behavior: auto !important;
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* ==========================================================================
+   Контрастное состояние активации — для обоих режимов
+   ========================================================================== */
+
+.play-page .battle-unit-wrapper.bu-card.activated:not(.dead) {
+  --bu-border: #efaa43;
+  --bu-background: #302519;
+
+  border-color: var(--bu-border);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 174, 55, 0.11),
+      transparent 65%
+    ),
+    var(--bu-background);
+
+  box-shadow:
+    inset 0 3px 0 #efaa43,
+    0 6px 18px rgba(0, 0, 0, 0.18);
+}
+
+.play-page .bu-state--activated {
+  color: #241605;
+  background: #ffc163;
+  border-color: #ffd795;
+  font-weight: 850;
+}
+
+.play-page .bu-activate.is-active {
+  color: #ffe0ad;
+  background: #594023;
+  border-color: #e9aa50;
+}
+
+.play-page .bu-activate.is-active:hover {
+  color: #fff0d7;
+  background: #6b4b27;
+  border-color: #ffd18a;
+}
+
+/* Уничтожение всегда приоритетнее активации. */
+.play-page .battle-unit-wrapper.bu-card.dead {
+  --bu-border: #86535b;
+  --bu-background: #241c21;
+
+  border-color: var(--bu-border);
+  background: var(--bu-background);
+  box-shadow:
+    inset 0 3px 0 #b96b79,
+    0 6px 18px rgba(0, 0, 0, 0.15);
+}
+
+.play-page .bu-card.dead .bu-activate,
+.play-page .bu-card.dead .bu-activate.is-active {
+  color: #d1adb6;
+  background: rgba(150, 88, 102, 0.1);
+  border-color: #79545e;
+}
+
+
+/* ==========================================================================
+   Компактный режим: боевой пульт
+   ========================================================================== */
+
+.play-page .battle-unit-wrapper.bu-card.compact {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  column-gap: 10px;
+  row-gap: 10px;
+  padding: 14px;
+}
+
+/* Основные секции занимают ширину карточки. */
+.bu-card.compact > * {
+  min-width: 0;
+  grid-column: 1 / -1;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+/* Состояние и стоимость — короткая верхняя строка. */
+.bu-card.compact .bu-card-top {
+  gap: 8px;
+  margin: 0;
+}
+
+.bu-card.compact .bu-state {
+  min-height: 25px;
+  padding: 4px 8px;
+  font-size: 0.69rem;
+}
+
+.bu-card.compact .bu-cost {
+  font-size: 0.72rem;
+}
+
+/* Название остаётся читаемым и переносится без обрезания. */
+.play-page .bu-card.compact .bu-heading h3 {
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.bu-card.compact .bu-number {
+  padding-top: 2px;
+  font-size: 0.75rem;
+}
+
+/*
+ * Роль и стойка слева.
+ * Движение и Броня справа на той же строке.
+ */
+.bu-card.compact .bu-badges {
+  grid-column: 1;
+  align-self: center;
+  gap: 5px;
+  margin: 0;
+}
+
+.bu-card.compact .bu-role,
+.bu-card.compact .bu-stance {
+  padding: 3px 6px;
+  font-size: 0.65rem;
+}
+
+.bu-card.compact .bu-stats {
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  align-self: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 0;
+}
+
+/* Максимум ХП уже есть в счётчике: не повторяем его отдельной плиткой. */
+.bu-card.compact .bu-stat:first-child {
+  display: none;
+}
+
+/* Вместо больших плиток — небольшие показатели в строку. */
+.bu-card.compact .bu-stat {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 5px 7px;
+  border-radius: 6px;
+}
+
+.bu-card.compact .bu-stat-label {
+  max-width: 66px;
+  font-size: 0.63rem;
+  line-height: 1.2;
+}
+
+.bu-card.compact .bu-stat-value {
+  margin: 0;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+/*
+ * Название артефакта не повторяем под каждым показателем.
+ * Оно остаётся в раскрывающемся блоке артефакта,
+ * а числовой бонус — рядом с характеристикой.
+ */
+.bu-card.compact .bu-stat-source {
+  display: none;
+}
+
+
+/* --------------------------------------------------------------------------
+   ХП: счётчик слева, кнопки справа, полоса снизу
+   -------------------------------------------------------------------------- */
+
+.bu-card.compact .bu-health {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px 10px;
+  margin: 0;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.bu-card.compact .bu-health-heading {
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
+  margin: 0;
+}
+
+.bu-card.compact .bu-health-heading > span {
+  font-size: 0.65rem;
+}
+
+.bu-card.compact .bu-health-heading > strong {
+  font-size: 1.08rem;
+  white-space: nowrap;
+}
+
+.bu-card.compact .bu-hp-actions {
+  grid-column: 2;
+  grid-row: 1;
+  display: grid;
+  grid-template-columns: repeat(4, 44px);
+  gap: 5px;
+  margin: 0;
+}
+
+.bu-card.compact .bu-hp-actions .bu-button {
+  min-height: 44px;
+  padding: 5px;
+  font-size: 0.8rem;
+}
+
+.bu-card.compact .bu-health-track {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  height: 5px;
+}
+
+
+/* --------------------------------------------------------------------------
+   Артефакты и статусы
+   -------------------------------------------------------------------------- */
+
+.bu-card.compact .bu-artifact {
+  margin: 0;
+}
+
+.bu-card.compact .bu-artifact > summary {
+  padding: 8px 10px;
+  font-size: 0.75rem;
+}
+
+.bu-card.compact .bu-status-section {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+/* Пустую подпись не показываем, но сами статусы не скрываем. */
+.bu-card.compact .status-container > .bu-muted {
+  display: none;
+}
+
+.bu-card.compact .bu-status-editor {
+  margin: 0;
+}
+
+.bu-card.compact .bu-status-editor > summary {
+  width: fit-content;
+  padding: 10px 0;
+  font-size: 0.73rem;
+}
+
+.bu-card.compact .status-tag {
+  font-size: 0.72rem;
+}
+
+
+/* --------------------------------------------------------------------------
+   Основные действия одной строкой
+   -------------------------------------------------------------------------- */
+
+.bu-card.compact .bu-footer {
+  margin: 0;
+  padding-top: 10px;
+}
+
+.bu-card.compact .bu-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.bu-card.compact .bu-actions > .bu-button {
+  flex: 1 1 90px;
+  min-height: 44px;
+  padding: 8px;
+  font-size: 0.74rem;
+}
+
+/* Активация больше не занимает отдельный широкий ряд. */
+.bu-card.compact .bu-actions > .bu-activate {
+  flex: 1.4 1 140px;
+  grid-column: auto;
+}
+
+.bu-card.compact .bu-stances {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.bu-card.compact .stance-btn {
+  min-height: 44px;
+  padding: 6px 3px;
+  font-size: 0.68rem;
+}
+
+
+/* ==========================================================================
+   Мобильная версия компактного режима
+   ========================================================================== */
+
+@media (max-width: 600px) {
+  .play-page .battle-unit-wrapper.bu-card.compact {
+    padding: 12px;
+    row-gap: 9px;
+  }
+
+  /*
+   * На телефоне метаданные и показатели разделяем на две строки:
+   * название и бейджи не должны теснить друг друга.
+   */
+  .bu-card.compact .bu-badges {
+    grid-column: 1 / -1;
+  }
+
+  .bu-card.compact .bu-stats {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+
+  .bu-card.compact .bu-stat {
+    padding: 5px 8px;
+  }
+
+  .bu-card.compact .bu-stat-label {
+    max-width: none;
+    font-size: 0.69rem;
+  }
+
+  .bu-card.compact .bu-actions > .bu-button {
+    flex-basis: 85px;
+  }
+
+  .bu-card.compact .bu-actions > .bu-activate {
+    flex-basis: 130px;
+  }
+
+  .bu-card.compact .stance-btn {
+    font-size: 0.65rem;
+  }
+}
+
+/* Самые узкие телефоны: не уменьшаем кнопки ХП ради одной строки. */
+@media (max-width: 360px) {
+  .bu-card.compact .bu-health {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .bu-card.compact .bu-health-heading {
+    grid-column: 1;
+    grid-row: 1;
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+
+  .bu-card.compact .bu-hp-actions {
+    grid-column: 1;
+    grid-row: 2;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .bu-card.compact .bu-health-track {
+    grid-row: 3;
+  }
+
+  .bu-card.compact .bu-stances {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .bu-card.compact .stance-btn {
+    font-size: 0.73rem;
+  }
+}

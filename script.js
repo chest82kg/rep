@@ -1,4 +1,4 @@
-import { DATABASE, GLOSSARY } from './data.js';
+import { DATABASE, GLOSSARY } from './archive/data.js';
 import { renderBuilderUI } from './builder.js';
 
 // --- РОУТИНГ ---
@@ -16,11 +16,12 @@ function router() {
     renderBuilderUI(container);
   } else if (item.type === 'warcard') {
     container.innerHTML = renderWarCardTemplate(item);
+    highlightTerms();
   } else {
     container.innerHTML = renderArticleTemplate(item);
+    highlightTerms();
   }
 
-  highlightTerms();
   updateActiveSidebarLink(hash);
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -56,20 +57,16 @@ function renderWarCardTemplate(item) {
   `;
 }
 
-// --- САЙДБАР ---
+// --- САЙДБАР (Чистый рендер меню) ---
 function buildSidebar() {
   const sidebarMenu = document.getElementById('sidebar-menu');
   if (!sidebarMenu) return;
   sidebarMenu.innerHTML = '';
 
   const categories = {};
-  let builderItem = null;
 
   DATABASE.forEach(item => {
-    if (item.type === 'builder') {
-      builderItem = item;
-      return;
-    }
+    if (item.type === 'builder') return; // Билдер вынесен в статические кнопки HTML
 
     if (!categories[item.category]) {
       categories[item.category] = { title: item.categoryTitle, items: [], subCategories: {}, factions: {} };
@@ -131,21 +128,6 @@ function buildSidebar() {
     `;
     sidebarMenu.appendChild(li);
   });
-
-  // Отдельная кнопка Билдера внизу сайдбара
-  if (builderItem) {
-    let builderContainer = document.querySelector('.sidebar-builder-container');
-    if (!builderContainer) {
-      builderContainer = document.createElement('div');
-      builderContainer.className = 'sidebar-builder-container';
-      document.querySelector('.sidebar').appendChild(builderContainer);
-    }
-    builderContainer.innerHTML = `
-      <a href="#${builderItem.id}" class="builder-sidebar-button" data-id="${builderItem.id}">
-        🛠️ Конструктор Ростера
-      </a>
-    `;
-  }
 
   initAccordions();
 }
@@ -213,7 +195,7 @@ function initGlobalSearch() {
       dropdown.innerHTML = '<div class="search-item" style="padding: 10px 16px; color: var(--text-muted);">Ничего не найдено</div>';
     } else {
       dropdown.innerHTML = matches.map(m => `
-        <div class="search-item" data-id="${m.id}" style="padding: 10px 16px; cursor: pointer; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--bg-panel);">
+        <div class="search-item" data-id="${m.id}">
           <span style="font-weight: 600; color: #fff;">${m.title}</span>
           <small style="color: var(--accent); background: rgba(108,92,231,0.1); padding: 2px 6px; border-radius: 4px;">${m.categoryTitle || m.faction || m.category}</small>
         </div>
@@ -222,6 +204,7 @@ function initGlobalSearch() {
       dropdown.querySelectorAll('.search-item').forEach(el => {
         el.addEventListener('click', () => {
           const targetId = el.getAttribute('data-id');
+          if (!targetId) return;
           window.location.hash = targetId;
           input.value = '';
           dropdown.classList.add('hidden');
@@ -239,26 +222,43 @@ function initGlobalSearch() {
   });
 }
 
-// --- ПОДСВЕТКА ГЛОССАРИЯ ---
+/// --- ПОДСВЕТКА ГЛОССАРИЯ ---
 function highlightTerms() {
   const content = document.getElementById('app-content');
   if (!content) return;
 
+  const terms = Object.keys(GLOSSARY);
+  if (terms.length === 0) return;
+
+  // Регистронезависимая карта: ключ в нижнем регистре → значение
+  const GLOSSARY_LC = {};
+  terms.forEach(k => { GLOSSARY_LC[k.toLowerCase()] = GLOSSARY[k]; });
+
+  const escapedTerms = terms
+    .slice()
+    .sort((a, b) => b.length - a.length)
+    .map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+
+  const buildRegex = () => new RegExp(
+    `(?<![\\p{L}\\p{N}_])(${escapedTerms.join('|')})(?![\\p{L}\\p{N}_])`,
+    'giu'
+  );
+
   const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT, {
     acceptNode(node) {
-      if (node.parentNode.classList && node.parentNode.classList.contains('tooltip-term')) {
-        return NodeFilter.FILTER_REJECT;
-      }
+      if (!node.parentNode) return NodeFilter.FILTER_REJECT;
+      const p = node.parentNode;
+      if (p.classList && p.classList.contains('tooltip-term')) return NodeFilter.FILTER_REJECT;
+      if (p.tagName === 'SCRIPT' || p.tagName === 'STYLE') return NodeFilter.FILTER_REJECT;
       return NodeFilter.FILTER_ACCEPT;
     }
   });
 
-  const termsRegex = new RegExp(`\\b(${Object.keys(GLOSSARY).join('|')})\\b`, 'gi');
-  let node;
   const nodesToReplace = [];
-
-  while (node = walker.nextNode()) {
-    if (termsRegex.test(node.nodeValue)) {
+  let node;
+  while ((node = walker.nextNode())) {
+    const re = buildRegex();
+    if (re.test(node.nodeValue)) {
       nodesToReplace.push(node);
     }
   }
@@ -266,19 +266,31 @@ function highlightTerms() {
   nodesToReplace.forEach(textNode => {
     const fragment = document.createDocumentFragment();
     const text = textNode.nodeValue;
+    const re = buildRegex();
     let lastIdx = 0;
+    let match;
 
-    text.replace(termsRegex, (match, p1, idx) => {
-      if (idx > lastIdx) {
-        fragment.appendChild(document.createTextNode(text.slice(lastIdx, idx)));
+    while ((match = re.exec(text)) !== null) {
+      const matchIdx = match.index;
+      const matchText = match[0];
+
+      if (matchIdx > lastIdx) {
+        fragment.appendChild(document.createTextNode(text.slice(lastIdx, matchIdx)));
       }
+
+      // Ищем в глоссарии без учёта регистра
+      const lookup = GLOSSARY[matchText] || GLOSSARY_LC[matchText.toLowerCase()] || '';
+
       const span = document.createElement('span');
       span.className = 'tooltip-term';
-      span.setAttribute('data-tooltip', GLOSSARY[match] || GLOSSARY[match.toLowerCase()] || '');
-      span.textContent = match;
+      span.setAttribute('data-tooltip', lookup);
+      span.textContent = matchText;
       fragment.appendChild(span);
-      lastIdx = idx + match.length;
-    });
+
+      lastIdx = matchIdx + matchText.length;
+
+      if (matchText.length === 0) re.lastIndex++;
+    }
 
     if (lastIdx < text.length) {
       fragment.appendChild(document.createTextNode(text.slice(lastIdx)));

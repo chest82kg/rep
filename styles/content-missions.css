@@ -1,0 +1,69 @@
+/* ==========================================================================
+   Content missions
+   Батлпланы и параметры миссий.
+   ========================================================================== */
+
+.mission-block {
+  max-width: 76ch;
+  padding: 16px 17px 4px;
+  margin: 22px 0;
+  background:
+    linear-gradient(135deg, rgba(108, 92, 231, 0.09), transparent 64%),
+    rgba(18, 18, 26, 0.58);
+  border: 1px solid rgba(162, 155, 254, 0.18);
+  border-radius: 10px;
+}
+
+.mission-block > h3 {
+  margin-top: 0 !important;
+}
+
+.mission-block > p:last-child,
+.mission-block > ul:last-child,
+.mission-block > ol:last-child {
+  margin-bottom: 13px;
+}
+
+.mission-list {
+  display: grid;
+  gap: 8px;
+  padding: 0 !important;
+  margin: 14px 0 18px !important;
+  list-style: none;
+}
+
+.mission-list > li {
+  padding: 10px 12px;
+  margin: 0 !important;
+  line-height: 1.62;
+  background: rgba(0, 0, 0, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-left: 3px solid rgba(162, 155, 254, 0.62);
+  border-radius: 7px;
+}
+
+.mission-list > li::marker {
+  content: "";
+}
+
+.mission-block--special {
+  border-color: rgba(255, 165, 2, 0.24);
+  background:
+    linear-gradient(135deg, rgba(255, 165, 2, 0.08), transparent 64%),
+    rgba(18, 18, 26, 0.58);
+}
+
+.mission-block--special .mission-list > li {
+  border-left-color: var(--warning);
+}
+
+.mission-block--points {
+  border-color: rgba(209, 179, 132, 0.25);
+  background:
+    linear-gradient(135deg, rgba(209, 179, 132, 0.09), transparent 64%),
+    rgba(18, 18, 26, 0.58);
+}
+
+.mission-block--points .mission-list > li {
+  border-left-color: var(--gold);
+}

@@ -1,0 +1,88 @@
+/* ТУЛТИПЫ ГЛОССАРИЯ */
+.tooltip-term {
+  color: #a29bfe;
+  border-bottom: 1px dashed var(--accent);
+  cursor: help;
+  position: relative;
+  font-weight: 600;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.tooltip-term:hover {
+  color: #ffffff;
+  border-bottom-color: #ffffff;
+}
+
+.tooltip-term::after {
+  content: attr(data-tooltip);
+
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%) translateY(6px);
+
+  background: var(--tooltip-bg);
+  color: var(--tooltip-text);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: normal;
+
+  /* ВАЖНО: не наследовать text-transform от родителя */
+  text-transform: none;
+
+  text-align: left;
+
+  width: max-content;
+  max-width: min(420px, 90vw);
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+
+  z-index: 10000;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.75);
+
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0s linear 0.15s;
+}
+
+.tooltip-term:hover::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0s;
+}
+
+/* Если тултип не влезает сверху — показываем снизу (добавляется классом) */
+.tooltip-term.tooltip-below::after {
+  bottom: auto;
+  top: calc(100% + 10px);
+  transform: translateX(-50%) translateY(-6px);
+}
+.tooltip-term.tooltip-below:hover::after {
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Если тултип у правого края — сдвигаем влево (добавляется классом) */
+.tooltip-term.tooltip-shift-left::after {
+  left: auto;
+  right: 0;
+  transform: translateY(6px);
+}
+.tooltip-term.tooltip-shift-left:hover::after {
+  transform: translateY(0);
+}
+
+/* Если тултип у левого края — сдвигаем вправо (добавляется классом) */
+.tooltip-term.tooltip-shift-right::after {
+  left: 0;
+  transform: translateY(6px);
+}
+.tooltip-term.tooltip-shift-right:hover::after {
+  transform: translateY(0);
+}

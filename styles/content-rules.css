@@ -1,0 +1,758 @@
+/* ==========================================================================
+   Content rules
+   Основные и продвинутые правила, фазы, ОД, стойки, таблицы.
+   ========================================================================== */
+
+/* ==========================================================================
+   Последовательности действий
+   ========================================================================== */
+
+.rule-steps {
+  display: grid;
+  gap: 10px;
+  padding: 0 !important;
+  margin: 18px 0 28px !important;
+  list-style: none;
+  counter-reset: rule-step;
+}
+
+.rule-steps > li {
+  position: relative;
+  min-height: 52px;
+  padding: 13px 15px 13px 55px;
+  margin: 0 !important;
+  line-height: 1.68;
+  background:
+    linear-gradient(100deg, rgba(108, 92, 231, 0.1), transparent 48%),
+    rgba(18, 18, 26, 0.64);
+  border: 1px solid rgba(162, 155, 254, 0.17);
+  border-radius: 9px;
+  counter-increment: rule-step;
+}
+
+.rule-steps > li::before {
+  position: absolute;
+  top: 13px;
+  left: 14px;
+  display: grid;
+  width: 27px;
+  height: 27px;
+  color: #e7e3ff;
+  font-size: 0.82rem;
+  font-weight: 850;
+  line-height: 1;
+  content: counter(rule-step);
+  background: rgba(108, 92, 231, 0.3);
+  border: 1px solid rgba(162, 155, 254, 0.5);
+  border-radius: 50%;
+  place-items: center;
+}
+
+.rule-steps > li:hover {
+  border-color: rgba(162, 155, 254, 0.38);
+}
+
+.rule-steps > li > ul,
+.rule-steps > li > ol {
+  margin-bottom: 0;
+}
+
+/* ==========================================================================
+   Фазы раунда и важные правила
+   ========================================================================== */
+
+.round-phase {
+  max-width: 76ch;
+  padding: 17px 18px 5px;
+  margin: 26px 0;
+  background:
+    linear-gradient(135deg, rgba(108, 92, 231, 0.12), transparent 62%),
+    rgba(18, 18, 26, 0.62);
+  border: 1px solid rgba(162, 155, 254, 0.2);
+  border-left: 4px solid var(--accent);
+  border-radius: 10px;
+}
+
+.round-phase > h4 {
+  padding-left: 0;
+  margin-top: 0 !important;
+  color: #ded9ff;
+  font-size: 1.04rem;
+}
+
+.round-phase > h4::before {
+  display: none;
+}
+
+.round-phase > p:last-child,
+.round-phase > ul:last-child,
+.round-phase > ol:last-child,
+.round-phase > details:last-child {
+  margin-bottom: 13px;
+}
+
+.round-phase .rule-steps {
+  margin-bottom: 13px !important;
+}
+
+.rule-callout {
+  max-width: 76ch;
+  padding: 14px 16px;
+  margin: 22px 0;
+  color: #f1dfbd;
+  line-height: 1.7;
+  background:
+    linear-gradient(100deg, rgba(209, 179, 132, 0.1), transparent 62%),
+    rgba(18, 18, 26, 0.66);
+  border: 1px solid rgba(209, 179, 132, 0.24);
+  border-left: 4px solid var(--gold);
+  border-radius: 9px;
+}
+
+.rule-callout strong {
+  color: #ead09e !important;
+}
+
+/* ==========================================================================
+   Действия игрока: обзор
+   ========================================================================== */
+
+.rule-overview {
+  display: grid;
+  gap: 18px;
+  margin: 20px 0 28px;
+}
+
+.rule-overview-card {
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 12px;
+  background: var(--bg-panel);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.rule-overview-card--resource {
+  border-left-color: #d7a84b;
+  background:
+    linear-gradient(135deg, rgba(215, 168, 75, 0.1), transparent 46%),
+    var(--bg-panel);
+}
+
+.rule-overview-card--command {
+  border-left-color: #76a58a;
+  background:
+    linear-gradient(135deg, rgba(118, 165, 138, 0.1), transparent 46%),
+    var(--bg-panel);
+}
+
+.rule-overview-card h4 {
+  margin: 0 0 10px;
+  color: var(--text);
+  font-size: 1.05rem;
+}
+
+.rule-overview-card > p:first-of-type {
+  margin-top: 0;
+}
+
+.rule-overview-card > :last-child {
+  margin-bottom: 0;
+}
+
+.rule-command-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding: 0;
+  margin: 16px 0 0;
+  list-style: none;
+}
+
+.rule-command-list li {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.rule-command-list li strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--accent);
+}
+
+/* ==========================================================================
+   Продвинутые правила
+   ========================================================================== */
+
+.rule-topic-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin: 20px 0 28px;
+}
+
+.rule-topic-card {
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-panel);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.rule-topic-card--wide {
+  grid-column: 1 / -1;
+}
+
+.rule-topic-card--monster {
+  border-top: 4px solid #a65c45;
+  background:
+    linear-gradient(135deg, rgba(166, 92, 69, 0.11), transparent 46%),
+    var(--bg-panel);
+}
+
+.rule-topic-card--magic {
+  border-top: 4px solid #7866b5;
+  background:
+    linear-gradient(135deg, rgba(120, 102, 181, 0.11), transparent 46%),
+    var(--bg-panel);
+}
+
+.rule-topic-card h3 {
+  margin-top: 0;
+}
+
+.rule-topic-card h4 {
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.rule-topic-card > :last-child {
+  margin-bottom: 0;
+}
+
+/* ==========================================================================
+   Стойки и положение модели
+   ========================================================================== */
+
+.stance-intro {
+  padding: 16px 18px;
+  margin: 18px 0;
+  background: rgba(123, 99, 207, 0.08);
+  border-left: 4px solid var(--accent);
+  border-radius: 0 10px 10px 0;
+}
+
+.stance-intro p {
+  margin: 0;
+}
+
+.stance-layout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin: 20px 0 28px;
+}
+
+.stance-panel {
+  padding: 20px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.stance-panel--orientation {
+  background:
+    linear-gradient(135deg, rgba(95, 157, 198, 0.1), transparent 48%),
+    var(--bg-panel);
+  border-top: 4px solid #5f9dc6;
+}
+
+.stance-panel--stances {
+  background:
+    linear-gradient(135deg, rgba(189, 139, 80, 0.1), transparent 48%),
+    var(--bg-panel);
+  border-top: 4px solid #bd8b50;
+}
+
+.stance-panel h4 {
+  margin: 0 0 14px;
+  color: var(--text);
+}
+
+.stance-panel h5 {
+  margin: 22px 0 10px;
+  color: var(--accent);
+  font-size: 0.98rem;
+}
+
+.stance-panel > :last-child {
+  margin-bottom: 0;
+}
+
+.stance-position-note {
+  padding-top: 4px;
+  margin-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.stance-neutral-note {
+  padding: 14px 16px;
+  margin-top: 20px;
+  background: rgba(214, 169, 75, 0.08);
+  border: 1px solid rgba(214, 169, 75, 0.5);
+  border-left: 4px solid #d6a94b;
+  border-radius: 9px;
+}
+
+.stance-neutral-note h5 {
+  margin-top: 0;
+  color: #e5bf68;
+}
+
+.stance-neutral-note p {
+  margin-bottom: 0;
+}
+
+/* ==========================================================================
+   Правило «Спешки»
+   ========================================================================== */
+
+.haste-section {
+  padding: 22px;
+  margin: 20px 0 28px;
+  background:
+    linear-gradient(135deg, rgba(154, 134, 236, 0.1), transparent 48%),
+    var(--bg-panel);
+  border: 1px solid var(--border);
+  border-top: 4px solid #9a86ec;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.haste-section > p:first-child {
+  margin-top: 0;
+  font-size: 1.04em;
+}
+
+.haste-section h4 {
+  margin: 22px 0 12px;
+  color: var(--accent);
+}
+
+.haste-section .rule-callout {
+  margin: 20px 0;
+}
+
+.haste-section .rule-example {
+  margin-bottom: 0;
+}
+
+.haste-section > :last-child {
+  margin-bottom: 0;
+}
+
+/* ==========================================================================
+   Справочные таблицы действий игрока
+   ========================================================================== */
+
+.rule-reference-section {
+  padding: 20px;
+  margin: 26px 0;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.rule-reference-section--stances {
+  background:
+    linear-gradient(135deg, rgba(189, 139, 80, 0.08), transparent 45%),
+    var(--bg-panel);
+  border-top: 4px solid #bd8b50;
+}
+
+.rule-reference-section--commands {
+  background:
+    linear-gradient(135deg, rgba(111, 157, 200, 0.08), transparent 45%),
+    var(--bg-panel);
+  border-top: 4px solid #6f9dc8;
+}
+
+.rule-reference-section h3 {
+  margin-top: 0;
+}
+
+.rule-reference-section > :last-child {
+  margin-bottom: 0;
+}
+
+.rule-table-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 18px;
+  padding: 12px 14px;
+  margin-top: 16px;
+  background: rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+}
+
+.rule-table-legend p,
+.rule-table-legend ul {
+  margin: 0;
+}
+
+.rule-table-legend ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  padding-left: 20px;
+}
+
+/* ==========================================================================
+   Быстрый старт
+   ========================================================================== */
+
+.quick-start-section {
+  max-width: 76ch;
+  margin: 30px 0;
+}
+
+.quick-start-section > h3 {
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.quick-start-section--setup {
+  padding: 20px;
+  background:
+    linear-gradient(135deg, rgba(108, 92, 231, 0.08), transparent 52%),
+    var(--bg-panel);
+  border: 1px solid var(--border);
+  border-top: 4px solid var(--accent);
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.quick-start-section--setup > h3 {
+  margin-top: 0;
+}
+
+.quick-start-section--setup .rule-steps {
+  margin-bottom: 0 !important;
+}
+
+.quick-start-section--round {
+  max-width: none;
+}
+
+.quick-start-phase-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  max-width: 76ch;
+  margin: 18px 0 24px;
+}
+
+.quick-start-phase-item {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+  padding: 11px 12px;
+  background: rgba(108, 92, 231, 0.08);
+  border: 1px solid rgba(162, 155, 254, 0.2);
+  border-radius: 9px;
+}
+
+.quick-start-phase-item span {
+  display: grid;
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  color: #e7e3ff;
+  font-size: 0.8rem;
+  font-weight: 850;
+  background: rgba(108, 92, 231, 0.3);
+  border: 1px solid rgba(162, 155, 254, 0.5);
+  border-radius: 50%;
+  place-items: center;
+}
+
+.quick-start-phase-item p {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.quick-start-section--commander {
+  padding: 20px;
+  background:
+    linear-gradient(135deg, rgba(209, 179, 132, 0.08), transparent 52%),
+    var(--bg-panel);
+  border: 1px solid var(--border);
+  border-top: 4px solid var(--gold);
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.quick-start-section--commander > h3 {
+  margin-top: 0;
+}
+
+.quick-start-army-size {
+  padding: 12px 14px;
+  margin: 16px 0 18px;
+  background: rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(209, 179, 132, 0.2);
+  border-left: 3px solid var(--gold);
+  border-radius: 8px;
+}
+
+.quick-start-army-size p {
+  margin: 0;
+}
+
+.commander-rule {
+  padding: 17px 18px 4px;
+  background:
+    linear-gradient(135deg, rgba(209, 179, 132, 0.08), transparent 65%),
+    rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(209, 179, 132, 0.22);
+  border-radius: 10px;
+}
+
+.commander-rule h4 {
+  margin-top: 0;
+  color: var(--text);
+}
+
+.commander-rule > :last-child {
+  margin-bottom: 13px;
+}
+
+/* ==========================================================================
+   Очковая стоимость и состав армии
+   ========================================================================== */
+
+.points-lead {
+  max-width: 76ch;
+  padding: 16px 18px;
+  margin: 20px 0 24px !important;
+  color: #e4e0ed;
+  font-size: 1.03rem;
+  background:
+    linear-gradient(100deg, rgba(209, 179, 132, 0.1), transparent 72%),
+    rgba(18, 18, 26, 0.45);
+  border: 1px solid rgba(209, 179, 132, 0.22);
+  border-left: 4px solid var(--gold);
+  border-radius: 0 10px 10px 0;
+}
+
+.points-overview {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  max-width: 76ch;
+  margin: 20px 0 30px;
+}
+
+.points-overview-card {
+  min-width: 0;
+  padding: 17px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-top: 4px solid var(--accent);
+  border-radius: 11px;
+  box-shadow: var(--shadow-sm);
+}
+
+.points-overview-card--budget {
+  background:
+    linear-gradient(135deg, rgba(209, 179, 132, 0.11), transparent 62%),
+    var(--bg-panel);
+  border-top-color: var(--gold);
+}
+
+.points-overview-card--stakes {
+  background:
+    linear-gradient(135deg, rgba(108, 92, 231, 0.11), transparent 62%),
+    var(--bg-panel);
+  border-top-color: var(--accent);
+}
+
+.points-overview-card--commander {
+  background:
+    linear-gradient(135deg, rgba(118, 165, 138, 0.11), transparent 62%),
+    var(--bg-panel);
+  border-top-color: #76a58a;
+}
+
+.points-overview-value,
+.points-overview-label {
+  display: block;
+}
+
+.points-overview-value {
+  color: #f0edf5;
+  font-size: 1.35rem;
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+.points-overview-label {
+  margin-top: 3px;
+  color: var(--accent-light);
+  font-size: 0.8rem;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.points-overview-card p {
+  margin: 10px 0 0;
+  color: var(--text-muted);
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+.points-section {
+  max-width: 76ch;
+  margin: 32px 0;
+}
+
+.points-section > h3 {
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.points-section--formation {
+  padding: 20px;
+  background:
+    linear-gradient(135deg, rgba(108, 92, 231, 0.075), transparent 58%),
+    var(--bg-panel);
+  border: 1px solid var(--border);
+  border-top: 4px solid var(--accent);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.points-section--formation > h3 {
+  margin-top: 0;
+}
+
+.points-section--formation .rule-steps {
+  margin-bottom: 0 !important;
+}
+
+.points-rule-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 18px 0;
+}
+
+.points-rule-card {
+  min-width: 0;
+  padding: 16px 17px;
+  background: rgba(0, 0, 0, 0.12);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 9px;
+}
+
+.points-rule-card h4 {
+  margin: 0 0 10px;
+  color: var(--text);
+}
+
+.points-rule-card p:last-child {
+  margin-bottom: 0;
+}
+
+.points-rule-card--budget {
+  border-left-color: var(--gold);
+}
+
+.points-rule-card--clan {
+  border-left-color: #76a58a;
+}
+
+.points-rule-card--commander {
+  border-left-color: #5f9dc6;
+}
+
+.points-rule-card--open {
+  border-left-color: #8d78df;
+}
+
+.points-rule-card--stakes {
+  border-left-color: #9a86ec;
+}
+
+.points-section--artifacts {
+  padding: 20px;
+  background:
+    linear-gradient(135deg, rgba(189, 139, 80, 0.075), transparent 58%),
+    var(--bg-panel);
+  border: 1px solid var(--border);
+  border-top: 4px solid #bd8b50;
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.points-section--artifacts > h3 {
+  margin-top: 0;
+}
+
+.points-section--artifacts .rule-callout {
+  margin-top: 18px;
+  border-left-color: #bd8b50;
+}
+
+.points-check-list {
+  display: grid;
+  gap: 8px;
+  padding: 0 !important;
+  margin: 18px 0 0 !important;
+  list-style: none;
+}
+
+.points-check-list li {
+  padding: 10px 12px;
+  margin: 0 !important;
+  background: rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-left: 3px solid rgba(189, 139, 80, 0.72);
+  border-radius: 7px;
+}
+
+.points-check-list li::marker {
+  content: "";
+}
+
+.points-section--stakes {
+  padding: 20px;
+  background:
+    linear-gradient(135deg, rgba(120, 102, 181, 0.08), transparent 58%),
+    var(--bg-panel);
+  border: 1px solid var(--border);
+  border-top: 4px solid #8d78df;
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.points-section--stakes > h3 {
+  margin-top: 0;
+}
+
+.points-section--monsters .rule-callout {
+  border-left-color: var(--warning);
+}
+
+.points-section--example {
+  margin-bottom: 20px;
+}

@@ -1,0 +1,149 @@
+/* ==========================================================================
+   Content factions
+   Паспорт фракции, клановые правила и заголовки состава клана.
+   ========================================================================== */
+
+.faction-kicker {
+  margin: 0 0 0.65rem;
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.faction-summary {
+  margin: 0 0 1.5rem;
+  padding: 1.05rem 1.15rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--border));
+  border-left: 4px solid var(--accent);
+  border-radius: 12px;
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--accent) 10%, var(--bg-panel)),
+      var(--bg-panel)
+    );
+}
+
+.faction-summary p {
+  max-width: none;
+  margin: 0;
+}
+
+.faction-rule-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 1.25rem 0 1.5rem;
+}
+
+.faction-rule-card {
+  min-width: 0;
+  padding: 1rem 1.05rem;
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--accent);
+  border-radius: 12px;
+  background: var(--bg-panel);
+  box-shadow: 0 6px 16px rgb(0 0 0 / 0.1);
+}
+
+.faction-rule-card--wide {
+  grid-column: 1 / -1;
+}
+
+.faction-rule-card--ability {
+  border-top-color: #8d72d8;
+  background:
+    linear-gradient(
+      135deg,
+      rgb(141 114 216 / 0.12),
+      var(--bg-panel) 58%
+    );
+}
+
+.faction-rule-card--stance {
+  border-top-color: var(--accent);
+  background:
+    linear-gradient(
+      135deg,
+      rgb(212 166 75 / 0.13),
+      var(--bg-panel) 58%
+    );
+}
+
+.faction-rule-card--pool {
+  border-top-color: #5e9bb0;
+  background:
+    linear-gradient(
+      135deg,
+      rgb(94 155 176 / 0.12),
+      var(--bg-panel) 58%
+    );
+}
+
+.faction-rule-card h3 {
+  margin: 0 0 0.65rem;
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.faction-rule-card p:last-child,
+.faction-rule-card ul:last-child,
+.faction-rule-card ol:last-child {
+  margin-bottom: 0;
+}
+
+.faction-rule-card > p {
+  max-width: none;
+}
+
+.faction-rule-list {
+  max-width: none;
+  margin: 0.75rem 0 0;
+  padding-left: 1.2rem;
+}
+
+.faction-rule-list li + li {
+  margin-top: 0.5rem;
+}
+
+.faction-note {
+  margin: 1rem 0 0;
+  padding: 0.8rem 0.9rem;
+  border-left: 3px solid var(--accent);
+  border-radius: 0 8px 8px 0;
+  background: color-mix(in srgb, var(--accent) 9%, var(--bg-panel));
+  color: var(--text-muted);
+}
+
+.faction-note:last-child {
+  margin-bottom: 0;
+}
+
+.roster-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin: 2.35rem 0 1.2rem !important;
+  padding: 0;
+  color: var(--text);
+  font-size: clamp(1.3rem, 2.5vw, 1.65rem) !important;
+}
+
+.roster-heading::before,
+.roster-heading::after {
+  height: 1px;
+  content: "";
+  background: var(--border);
+}
+
+.roster-heading::before {
+  width: 1.75rem;
+  background: var(--accent);
+}
+
+.roster-heading::after {
+  flex: 1;
+}

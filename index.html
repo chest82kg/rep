@@ -3,27 +3,121 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>База знаний игры</title>
-  <link rel="stylesheet" href="style.css?v=27">
+  <meta name="description" content="Мультиверс Тактикс — цифровой компаньон для настольных сражений. База знаний, конструктор ростера, игровой стол.">
+  <title>Мультиверс Тактикс — Главная</title>
+  <link rel="stylesheet" href="styles/main.css">
+  <link rel="stylesheet" href="styles/cards.css">
+  <link rel="stylesheet" href="styles/home.css">
 </head>
 <body>
-  <div class="layout">
-    <aside class="sidebar">
-      <h2>Разделы</h2>
-      <ul class="nav-list" id="sidebar-menu"></ul>
-    </aside>
 
-    <main class="main-area">
-      <div class="search-box">
-  <input type="text" id="search-input" class="search-input" placeholder="Поиск по всей базе знаний…">
-  <div id="search-results" class="search-dropdown hidden"></div>
-</div>
+<div id="reading-progress"></div>
 
-      <article class="kb-content" id="app-content"></article>
-    </main>
+  <div class="home-container">
+    <!-- HERO SECTION -->
+    <header class="hero-section">
+      <div class="hero-content">
+        <h1 class="hero-title">МУЛЬТИВЕРС<br>ТАКТИКС</h1>
+        <p class="hero-subtitle">Цифровой компаньон для настольных сражений</p>
+        <p class="hero-description">
+          Мир рассыпался на слои. Реальность пересобирается под удары Ритма. 
+          Собирайте армии, заключайте клятвы и сражайтесь за контроль над осколками реальности.
+        </p>
+        <div class="hero-actions">
+          <a href="knowledge-base.html#builder" class="builder-action-btn primary large">🛠️ Собрать ростер</a>
+          <a href="knowledge-base.html" class="builder-action-btn large">📖 Изучить правила</a>
+        </div>
+      </div>
+      <div class="hero-decoration"></div>
+    </header>
+
+    <!-- СИСТЕМЫ ВСЕЛЕННОЙ -->
+    <section class="systems-section">
+      <h2 class="section-title">Системы вселенной</h2>
+      <div class="systems-grid">
+        
+        <!-- МФТ (Активна) -->
+        <a href="knowledge-base.html#faction-dwarves-general" class="system-card active">
+          <div class="system-badge">ЗБТ</div>
+          <div class="system-abbr">МФТ</div>
+          <div class="system-name">Мультиверс: Фракционные Тактики</div>
+          <div class="system-desc">Варгейм с миниатюрами. Две фракции, три клана, поле 14×14. Собирайте армию на 1000 очков и сражайтесь за контрольные точки.</div>
+          <div class="system-link">Перейти к правилам →</div>
+        </a>
+
+        <!-- МРТ (В планах) -->
+        <div class="system-card disabled">
+          <div class="system-badge planned">В планах</div>
+          <div class="system-abbr">МРТ</div>
+          <div class="system-name">Мультиверс: Ролевые Тактики</div>
+          <div class="system-desc">Настольная ролевая игра. Исследуйте слои, встречайте Сшивателя и раскрывайте тайны Цельного мира.</div>
+        </div>
+
+        <!-- МКТ (В планах) -->
+        <div class="system-card disabled">
+          <div class="system-badge planned">В планах</div>
+          <div class="system-abbr">МКТ</div>
+          <div class="system-name">Мультиверс: Карточные Тактики</div>
+          <div class="system-desc">Быстрые карточные дуэли. Собирайте колоды из юнитов и артефактов. Партия за 20 минут.</div>
+        </div>
+
+        <!-- МБТ (В планах) -->
+        <div class="system-card disabled">
+          <div class="system-badge planned">В планах</div>
+          <div class="system-abbr">МБТ</div>
+          <div class="system-name">Мультиверс: Настольные Тактики</div>
+          <div class="system-desc">Другие жанры в рамках вселенной: экономические, кооперативные, стратегические игры.</div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- БЫСТРЫЙ ДОСТУП -->
+    <section class="quick-access-section">
+      <h2 class="section-title">Быстрый доступ</h2>
+      <div class="quick-access-grid">
+        <a href="knowledge-base.html" class="quick-link">
+          <span class="quick-icon">📖</span>
+          <span class="quick-label">База знаний</span>
+        </a>
+        <a href="knowledge-base.html#builder" class="quick-link">
+          <span class="quick-icon">🛠️</span>
+          <span class="quick-label">Конструктор</span>
+        </a>
+        <a href="play.html" class="quick-link">
+          <span class="quick-icon">⚔️</span>
+          <span class="quick-label">Игровой стол</span>
+        </a>
+        <a href="account.html" class="quick-link">
+          <span class="quick-icon">👤</span>
+          <span class="quick-label">Личный кабинет</span>
+        </a>
+        <a href="workshop.html" class="quick-link">
+          <span class="quick-icon">🧪</span>
+          <span class="quick-label">Мастерская</span>
+        </a>
+        <a href="virtual-table.html" class="builder-action-btn large">
+  🎲 Виртуальный стол
+</a>
+      </div>
+    </section>
+
+    <!-- ФУТЕР -->
+    <footer class="site-footer" style="margin-top: 60px;">
+      <div class="site-footer-content">
+        <div class="site-footer-links">
+          <a href="about.html">ℹ️ О вселенной МТ</a>
+          <a href="privacy.html">📜 Политика обработки персональных данных</a>
+          <a href="terms.html">📋 Пользовательское соглашение</a>
+          <a href="cookies.html">🍪 Cookie и локальное хранение</a>
+          <a href="personal-data-consent.html">✅ Согласие на обработку данных</a>
+        </div>
+        <div class="site-footer-copy">
+          © 2026 Мультиверс Тактикс. Все права защищены.
+        </div>
+      </div>
+    </footer>
   </div>
 
-  <!-- Подключаем главный скрипт как модуль -->
-  <script type="module" src="script.js?v=27"></script>
 </body>
 </html>

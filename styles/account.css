@@ -1,0 +1,724 @@
+/* ==========================================================================
+   styles/account.css
+   Личный кабинет: авторизация, профиль, статистика, матчи, ростеры,
+   очистка комнат. Логика Firebase/Auth и JavaScript не затрагиваются.
+   ========================================================================== */
+
+/* ==========================================================================
+   Страница и верхняя навигация
+   ========================================================================== */
+
+body.account-page {
+  width: 100%;
+  max-width: 980px;
+  min-height: 100vh;
+  padding: 34px 30px 42px;
+  margin: 0 auto;
+}
+
+.nav-header {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0 18px;
+  margin-bottom: 26px;
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-header h1 {
+  color: #f0edf5;
+  font-size: clamp(1.55rem, 4vw, 2.15rem);
+  line-height: 1.2;
+}
+
+.nav-header h1::after {
+  display: block;
+  width: 92px;
+  height: 2px;
+  margin-top: 12px;
+  content: "";
+  background: linear-gradient(90deg, var(--gold), var(--accent), transparent);
+}
+
+.nav-header .builder-action-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   Базовая карточка кабинета
+   ========================================================================== */
+
+.account-page .card {
+  position: relative;
+  padding: 24px;
+  margin-bottom: 24px;
+  overflow: visible;
+  background:
+    radial-gradient(circle at 88% 0%, rgba(108, 92, 231, 0.09), transparent 30%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.018), transparent 42%),
+    var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow:
+    0 9px 25px rgba(0, 0, 0, 0.25),
+    inset 0 1px rgba(255, 255, 255, 0.018);
+}
+
+.account-page .card > h2 {
+  margin-bottom: 10px;
+  color: var(--gold);
+  font-size: 1.28rem;
+  line-height: 1.3;
+}
+
+.account-page .card h3 {
+  color: var(--gold);
+  font-size: 1.06rem;
+  line-height: 1.35;
+}
+
+/* Секции профиля после статистики */
+#profile-section > h3 {
+  position: relative;
+  padding-top: 26px;
+  margin-top: 28px !important;
+  margin-bottom: 13px !important;
+  border-top: 1px solid var(--border);
+}
+
+#profile-section > h3::before {
+  position: absolute;
+  top: -1px;
+  left: 0;
+  width: 78px;
+  height: 1px;
+  content: "";
+  background: var(--gold);
+}
+
+/* ==========================================================================
+   Вход и регистрация
+   ========================================================================== */
+
+#login-form {
+  width: 100%;
+}
+
+#login-form h2 {
+  margin-bottom: 0;
+}
+
+#login-form > p {
+  max-width: 620px;
+  color: var(--text-muted);
+  font-size: 0.91rem;
+  line-height: 1.6;
+}
+
+#login-form .search-input,
+.account-page .form-grid .search-input {
+  min-height: 43px;
+  background-color: rgba(0, 0, 0, 0.24);
+}
+
+#login-form > div:last-child {
+  padding-top: 2px;
+}
+
+/* Состояние, когда пользователь должен подтвердить email */
+#verify-notice {
+  background:
+    linear-gradient(135deg, rgba(255, 165, 2, 0.1), transparent 65%),
+    rgba(0, 0, 0, 0.13) !important;
+  border-color: rgba(255, 165, 2, 0.72) !important;
+  border-radius: 9px !important;
+  box-shadow: inset 3px 0 var(--warning);
+}
+
+#verify-notice h3 {
+  color: var(--warning) !important;
+}
+
+#verify-notice p {
+  max-width: 690px;
+  margin-right: auto;
+  margin-left: auto;
+  line-height: 1.6;
+}
+
+/* ==========================================================================
+   Уведомления форм
+   ========================================================================== */
+
+.form-error,
+.form-info {
+  padding: 9px 12px;
+  margin-top: 10px;
+  font-size: 0.86rem;
+  line-height: 1.48;
+  border-radius: 7px;
+}
+
+.form-error {
+  color: #ff7a86;
+  background: rgba(255, 71, 87, 0.11);
+  border: 1px solid rgba(255, 71, 87, 0.62);
+  box-shadow: inset 3px 0 var(--error);
+}
+
+.form-info {
+  color: #65e99a;
+  background: rgba(46, 213, 115, 0.1);
+  border: 1px solid rgba(46, 213, 115, 0.56);
+  box-shadow: inset 3px 0 var(--success);
+}
+
+/* Сообщения, которые наполняет JavaScript */
+#auth-message,
+#verify-message,
+#match-message,
+#migrate-message,
+#rooms-cleanup-message {
+  min-height: 0;
+}
+
+#auth-message:not(:empty),
+#verify-message:not(:empty),
+#match-message:not(:empty),
+#migrate-message:not(:empty),
+#rooms-cleanup-message:not(:empty) {
+  margin-top: 10px;
+}
+
+/* ==========================================================================
+   Профиль пользователя
+   ========================================================================== */
+
+#profile-section > div:first-child {
+  padding-bottom: 17px;
+  margin-bottom: 20px !important;
+  border-bottom: 1px solid var(--border);
+}
+
+#user-email-title {
+  overflow-wrap: anywhere;
+  color: var(--accent-light) !important;
+  font-size: clamp(1.1rem, 2.6vw, 1.35rem);
+  line-height: 1.3;
+}
+
+#btn-logout,
+#btn-verify-logout {
+  background: rgba(255, 71, 87, 0.14) !important;
+  border: 1px solid rgba(255, 71, 87, 0.62) !important;
+  color: #ff8d97 !important;
+}
+
+#btn-logout:hover,
+#btn-verify-logout:hover {
+  color: #fff !important;
+  background: var(--error) !important;
+  border-color: #ff8d97 !important;
+}
+
+/* ==========================================================================
+   Статистика
+   ========================================================================== */
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(137px, 1fr));
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.stat-box {
+  position: relative;
+  min-height: 108px;
+  padding: 14px 10px 12px;
+  overflow: hidden;
+  text-align: center;
+  background:
+    linear-gradient(155deg, rgba(255, 255, 255, 0.025), transparent 52%),
+    rgba(0, 0, 0, 0.23);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 8px;
+  transition:
+    border-color 0.16s ease,
+    background 0.16s ease,
+    transform 0.16s ease;
+}
+
+.stat-box:hover {
+  background: rgba(108, 92, 231, 0.08);
+  border-color: rgba(162, 155, 254, 0.42);
+  transform: translateY(-2px);
+}
+
+.stat-box .stat-label {
+  display: block;
+  min-height: 32px;
+  margin-bottom: 7px;
+  color: var(--text-muted);
+  font-size: 0.67rem;
+  font-weight: 800;
+  letter-spacing: 0.055em;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.stat-value {
+  display: block;
+  color: var(--gold);
+  font-size: 1.72rem;
+  font-weight: 850;
+  line-height: 1.08;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-value.small {
+  font-size: 0.92rem;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.stat-value.win {
+  color: var(--success);
+}
+
+.stat-value.loss {
+  color: var(--error);
+}
+
+.stat-value.draw {
+  color: var(--warning);
+}
+
+/* ==========================================================================
+   Локальные матчи
+   ========================================================================== */
+
+#local-matches-block {
+  padding: 16px !important;
+  background:
+    linear-gradient(135deg, rgba(108, 92, 231, 0.11), transparent 65%),
+    rgba(0, 0, 0, 0.15) !important;
+  border-color: rgba(108, 92, 231, 0.48) !important;
+  border-radius: 9px !important;
+}
+
+#local-matches-block h3 {
+  color: var(--accent-light) !important;
+}
+
+#local-matches-block > p {
+  max-width: 780px;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+#btn-clear-local,
+#btn-rooms-delete-all {
+  color: #ff8490 !important;
+  background: rgba(255, 71, 87, 0.11) !important;
+  border-color: rgba(255, 71, 87, 0.65) !important;
+}
+
+#btn-clear-local:hover,
+#btn-rooms-delete-all:hover {
+  color: #fff !important;
+  background: rgba(255, 71, 87, 0.82) !important;
+}
+
+/* ==========================================================================
+   Добавление матча
+   ========================================================================== */
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(215px, 1fr));
+  gap: 13px;
+  align-items: end;
+}
+
+.form-grid .form-group {
+  display: flex;
+  gap: 5px;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.form-grid .form-group label {
+  color: var(--text-muted);
+  font-size: 0.79rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+#profile-section .form-grid {
+  padding: 16px !important;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.022), transparent),
+    rgba(0, 0, 0, 0.18) !important;
+  border-color: var(--border) !important;
+  border-radius: 9px !important;
+}
+
+#profile-section .form-grid .form-group:last-child {
+  padding-top: 4px;
+}
+
+#btn-save-match {
+  min-width: 178px;
+}
+
+/* ==========================================================================
+   История матчей и сохранённые ростеры
+   ========================================================================== */
+
+.list-item-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 13px;
+  margin-bottom: 8px;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.022), transparent 68%),
+    rgba(0, 0, 0, 0.14);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    transform 0.15s ease;
+}
+
+.list-item-row:hover {
+  background: rgba(108, 92, 231, 0.07);
+  border-color: rgba(162, 155, 254, 0.4);
+  transform: translateY(-1px);
+}
+
+.list-item-row .item-main {
+  min-width: 200px;
+  flex: 1;
+}
+
+.list-item-row .item-actions {
+  display: flex;
+  gap: 7px;
+  flex-shrink: 0;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.list-item-row .item-actions .builder-action-btn {
+  min-height: 34px;
+  padding: 6px 9px;
+  font-size: 0.78rem;
+}
+
+.list-item-row button.danger {
+  padding: 5px 8px;
+  color: #ff7f8b;
+  font-size: 0.79rem;
+  font-weight: 800;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.list-item-row button.danger:hover {
+  color: #fff;
+  background: rgba(255, 71, 87, 0.16);
+  border-color: rgba(255, 71, 87, 0.48);
+}
+
+/* Бейджи результата матча */
+.match-badge {
+  display: inline-flex;
+  min-height: 23px;
+  padding: 3px 8px;
+  margin-right: 5px;
+  font-size: 0.67rem;
+  font-weight: 850;
+  letter-spacing: 0.035em;
+  line-height: 1;
+  text-transform: uppercase;
+  vertical-align: middle;
+  border: 1px solid transparent;
+  border-radius: 5px;
+}
+
+.badge-win {
+  color: var(--success);
+  background: rgba(46, 213, 115, 0.11);
+  border-color: rgba(46, 213, 115, 0.37);
+}
+
+.badge-loss {
+  color: #ff7985;
+  background: rgba(255, 71, 87, 0.11);
+  border-color: rgba(255, 71, 87, 0.38);
+}
+
+.badge-draw {
+  color: var(--warning);
+  background: rgba(255, 165, 2, 0.11);
+  border-color: rgba(255, 165, 2, 0.37);
+}
+
+.badge-local {
+  margin-left: 4px;
+  color: var(--accent-light);
+  background: rgba(108, 92, 231, 0.13);
+  border-color: rgba(162, 155, 254, 0.34);
+}
+
+/* Базовые пустые состояния, уже присутствующие в HTML или генерируемые JS */
+#match-history-list > p,
+#cloud-rosters-list > p,
+#local-matches-list > p {
+  padding: 17px;
+  color: var(--text-muted) !important;
+  font-size: 0.9rem;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px dashed rgba(160, 160, 176, 0.26);
+  border-radius: 8px;
+}
+
+/* ==========================================================================
+   Очистка комнат
+   ========================================================================== */
+
+#profile-section > div[style*="background: rgba(0,0,0,0.2)"] {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.02), transparent),
+    rgba(0, 0, 0, 0.18) !important;
+  border-color: var(--border) !important;
+  border-radius: 9px !important;
+}
+
+#profile-section > div[style*="background: rgba(0,0,0,0.2)"] > p {
+  max-width: 800px;
+  color: var(--text-muted) !important;
+  line-height: 1.6;
+}
+
+#rooms-cleanup-stats {
+  padding: 10px 12px;
+  color: var(--text-muted);
+  font-size: 0.87rem;
+  line-height: 1.5;
+  background: rgba(0, 0, 0, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 7px;
+}
+
+#rooms-cleanup-stats:empty {
+  display: none;
+}
+
+/* ==========================================================================
+   Просмотр сохранённого ростера
+   Модальная база — main.css/builder.css. Здесь только содержимое ростера.
+   ========================================================================== */
+
+#roster-preview-body {
+  padding-top: 4px;
+}
+
+#roster-preview-body h2 {
+  padding-right: 38px;
+  margin-bottom: 16px;
+  color: var(--gold);
+  font-size: 1.32rem;
+  line-height: 1.3;
+}
+
+#roster-preview-body h3 {
+  margin: 22px 0 10px;
+  color: var(--accent-light);
+  font-size: 1rem;
+}
+
+#roster-preview-body p {
+  margin-bottom: 9px;
+  line-height: 1.55;
+}
+
+#roster-preview-body .list-item-row {
+  margin-bottom: 7px;
+}
+
+/* ==========================================================================
+   Футер страницы кабинета
+   ========================================================================== */
+
+.account-page .site-footer {
+  padding: 21px 0 0;
+  margin-top: 42px;
+  background: transparent;
+  border-top: 1px solid var(--border);
+}
+
+.account-page .site-footer-content {
+  max-width: none;
+}
+
+/* ==========================================================================
+   Адаптив
+   ========================================================================== */
+
+@media (max-width: 700px) {
+  body.account-page {
+    padding: 22px 15px 30px;
+  }
+
+  .nav-header {
+    gap: 13px;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .nav-header .builder-action-btn {
+    width: 100%;
+  }
+
+  .account-page .card {
+    padding: 16px;
+    margin-bottom: 17px;
+    border-radius: 10px;
+  }
+
+  #profile-section > div:first-child {
+    padding-bottom: 14px;
+    margin-bottom: 16px !important;
+  }
+
+  #profile-section > h3 {
+    padding-top: 21px;
+    margin-top: 23px !important;
+  }
+
+  .stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .stat-box {
+    min-height: 96px;
+    padding: 11px 7px;
+  }
+
+  .stat-value {
+    font-size: 1.48rem;
+  }
+
+  .stat-value.small {
+    font-size: 0.83rem;
+  }
+
+  .list-item-row {
+    padding: 11px;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .list-item-row .item-main {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .list-item-row .item-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  #profile-section .form-grid,
+  #local-matches-block,
+  #profile-section > div[style*="background: rgba(0,0,0,0.2)"] {
+    padding: 13px !important;
+  }
+
+  #btn-save-match {
+    width: 100%;
+  }
+
+  #verify-notice {
+    padding: 15px !important;
+    text-align: left !important;
+  }
+
+  #verify-notice > div[style*="justify-content: center"] {
+    justify-content: stretch !important;
+    flex-direction: column;
+  }
+
+  #verify-notice .builder-action-btn {
+    width: 100%;
+  }
+
+  .account-page .site-footer {
+    padding-top: 18px;
+    margin-top: 30px;
+  }
+}
+
+@media (max-width: 390px) {
+  body.account-page {
+    padding-right: 11px;
+    padding-left: 11px;
+  }
+
+  .stat-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .account-page .card {
+    padding: 13px;
+  }
+
+  .nav-header h1 {
+    font-size: 1.42rem;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .list-item-row .item-actions .builder-action-btn {
+    flex: 1;
+  }
+}
+
+/* ==========================================================================
+   Доступность
+   ========================================================================== */
+
+.account-page button:focus-visible,
+.account-page a:focus-visible,
+.account-page input:focus-visible,
+.account-page select:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stat-box,
+  .list-item-row {
+    transition: none !important;
+  }
+}

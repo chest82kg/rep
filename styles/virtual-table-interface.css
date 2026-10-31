@@ -1,0 +1,1067 @@
+/* ==========================================================================
+   Виртуальный стол: интерфейс, пакет 1
+
+   Подключать после остальных стилей виртуального стола.
+   Не изменяет структуру игрового состояния.
+   ========================================================================== */
+
+body.vt-interface {
+  --vt-ui-surface: #14141c;
+  --vt-ui-border: #34323f;
+  --vt-ui-muted: #b4b0bf;
+  --vt-ui-gold: #d8bf92;
+}
+
+/* ==========================================================================
+   Верхняя область
+   ========================================================================== */
+
+.vt-interface .vt-header {
+  margin-bottom: 6px;
+  padding-bottom: 8px;
+}
+
+.vt-interface .vt-header h1 {
+  color: var(--vt-ui-gold);
+  font-size: 1.25rem;
+}
+
+.vt-interface .vt-header p {
+  margin-top: 4px;
+  font-size: 0.75rem;
+}
+
+.vt-interface .vt-message {
+  min-height: 0;
+  margin-bottom: 6px;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.vt-interface .vt-message:empty {
+  display: none;
+}
+
+/* ==========================================================================
+   Пропорции рабочего пространства
+   ========================================================================== */
+
+@media (min-width: 1251px) {
+  .vt-interface .vt-layout {
+    grid-template-columns:
+      235px
+      minmax(0, 1fr)
+      310px;
+  }
+}
+
+@media (min-width: 1001px) and (max-width: 1250px) {
+  .vt-interface .vt-layout {
+    grid-template-columns:
+      195px
+      minmax(0, 1fr)
+      285px;
+  }
+}
+
+/* ==========================================================================
+   Поле
+
+   Автоматические отступы центрируют поле, когда оно помещается.
+   При увеличении поле остаётся доступным от верхнего левого края.
+   ========================================================================== */
+
+.vt-interface .vt-board-scroll {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 12px;
+  background: #101017;
+}
+
+.vt-interface .vt-board {
+  flex: 0 0 auto;
+  width: max-content;
+  max-width: none;
+  margin: auto;
+}
+
+/* ==========================================================================
+   Верхняя панель поля
+   ========================================================================== */
+
+.vt-interface .vt-main-field-toolbar {
+  position: relative;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 7px 9px;
+  background: var(--vt-ui-surface);
+}
+
+.vt-interface .vt-main-field-toolbar > #vt-field-summary {
+  flex: 1 1 130px;
+  color: var(--vt-ui-muted);
+  font-size: 0.73rem;
+}
+
+.vt-interface .vt-main-field-toolbar .builder-action-btn {
+  min-height: 34px;
+  background: #24232e;
+  border-color: var(--vt-ui-border);
+}
+
+/* Настройки больше не занимают отдельную полосу. */
+
+.vt-interface .vt-main-field-toolbar > .vt-field-settings {
+  position: relative;
+  flex: 0 0 auto;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+}
+
+.vt-interface .vt-field-settings > summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 6px 10px;
+  color: #dedbe6;
+  background: #24232e;
+  border: 1px solid var(--vt-ui-border);
+  border-radius: 6px;
+  font-size: 0.73rem;
+  list-style: none;
+}
+
+.vt-interface .vt-field-settings > summary::-webkit-details-marker {
+  display: none;
+}
+
+.vt-interface .vt-field-settings > summary::after {
+  content: " ▾";
+  margin-left: 6px;
+  color: var(--vt-ui-muted);
+}
+
+.vt-interface .vt-field-settings[open] > summary {
+  border-color: var(--vt-ui-gold);
+}
+
+.vt-interface .vt-field-settings[open] > .vt-field-settings-content {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 40;
+  box-sizing: border-box;
+  width: min(350px, calc(100vw - 48px));
+  max-height: min(360px, 55vh);
+  padding: 14px;
+  color: #e8e4ef;
+  background: #1b1a24;
+  border: 1px solid #51495d;
+  border-radius: 8px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+.vt-interface .vt-field-settings-content .vt-field-help {
+  padding: 0;
+  margin: 10px 0 0;
+  border: 0;
+  background: transparent;
+}
+
+/* ==========================================================================
+   Нижняя панель инструментов
+   ========================================================================== */
+
+.vt-interface .vt-tool-dock {
+  flex: 0 0 auto;
+  min-width: 0;
+  border-top: 1px solid var(--vt-ui-border);
+  background: var(--vt-ui-surface);
+}
+
+.vt-interface .vt-tool-dock .vt-field-tools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px;
+  border: 0;
+  background: transparent;
+}
+
+.vt-interface .vt-tool-dock .vt-field-tools > .builder-action-btn {
+  flex: 0 0 auto;
+  min-width: 88px;
+  min-height: 38px;
+  padding: 7px 12px;
+  background: #24232e;
+  border-color: var(--vt-ui-border);
+}
+
+.vt-interface .vt-tool-dock .vt-field-tools > .primary {
+  color: #f8f4ff;
+  background: #4b3c79;
+  border-color: #a48dc8;
+}
+
+.vt-interface .vt-tool-dock #vt-field-tool-hint {
+  flex: 1 1 210px;
+  min-width: 0;
+  padding-left: 5px;
+  color: var(--vt-ui-muted);
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+/* ==========================================================================
+   Армия
+   ========================================================================== */
+
+.vt-interface .vt-army-panel > h2 {
+  margin-bottom: 6px;
+  color: var(--vt-ui-gold);
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+.vt-interface #vt-army-meta {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: var(--vt-ui-muted);
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+
+.vt-interface .vt-army-panel > h3 {
+  margin: 5px 0 10px;
+  font-size: 0.85rem;
+}
+
+.vt-interface .vt-quick-sides {
+  gap: 6px;
+}
+
+.vt-interface .vt-quick-sides .builder-action-btn {
+  min-height: 38px;
+}
+
+/* Поиск и фильтры доступны, но не занимают полпанели. */
+
+.vt-interface .vt-army-filter-fold {
+  margin: 9px 0 5px;
+  border-top: 1px solid var(--vt-ui-border);
+  border-bottom: 1px solid var(--vt-ui-border);
+}
+
+.vt-interface .vt-army-filter-fold > summary {
+  min-height: 38px;
+  box-sizing: border-box;
+  padding: 10px 2px;
+  color: var(--vt-ui-muted);
+  font-size: 0.76rem;
+  cursor: pointer;
+}
+
+.vt-interface .vt-army-filter-fold.has-active-filters > summary {
+  color: var(--vt-ui-gold);
+}
+
+.vt-interface .vt-army-filter-content {
+  display: grid;
+  gap: 8px;
+  padding: 3px 0 12px;
+}
+
+.vt-interface .vt-army-filter-content > label {
+  font-size: 0.75rem;
+}
+
+.vt-interface .vt-list-filter-footer {
+  margin: 5px 0 9px;
+}
+
+.vt-interface #vt-unit-count {
+  margin: 0;
+  font-size: 0.72rem;
+}
+
+.vt-interface .vt-unit {
+  border-radius: 6px;
+}
+
+.vt-interface .vt-unit strong {
+  line-height: 1.4;
+}
+
+.vt-interface .vt-unit.is-selected {
+  border-color: var(--vt-ui-gold);
+  background: #292236;
+}
+
+/* ==========================================================================
+   Правая панель: меньше визуального шума
+   ========================================================================== */
+
+.vt-interface .vt-tab[aria-selected="true"] {
+  color: #f7f1e6;
+  background: #302a3c;
+  border-color: #8e7b9f;
+}
+
+.vt-interface .vt-tabs {
+  background: #14141c;
+}
+
+.vt-interface .vt-tab-pane > h2 {
+  font-size: 1rem;
+}
+
+.vt-interface .vt-tab-pane {
+  scrollbar-gutter: stable;
+}
+
+/* ==========================================================================
+   Клавиатура и сенсорные экраны
+   ========================================================================== */
+
+.vt-interface button:focus-visible,
+.vt-interface summary:focus-visible,
+.vt-interface input:focus-visible,
+.vt-interface select:focus-visible {
+  outline: 2px solid var(--vt-ui-gold);
+  outline-offset: 2px;
+}
+
+@media (max-width: 1000px) {
+  .vt-interface .vt-board-scroll {
+    padding: 8px;
+  }
+
+  .vt-interface .vt-tool-dock .vt-field-tools > .builder-action-btn {
+    flex: 1 1 80px;
+    min-height: 44px;
+  }
+
+  .vt-interface .vt-tool-dock #vt-field-tool-hint {
+    flex-basis: 100%;
+    padding: 3px 2px 0;
+  }
+
+  .vt-interface .vt-main-field-toolbar .builder-action-btn,
+  .vt-interface .vt-field-settings > summary {
+    min-height: 44px;
+  }
+
+  .vt-interface .vt-army-filter-fold > summary {
+    min-height: 44px;
+    padding-top: 13px;
+  }
+}
+
+@media (max-width: 600px) {
+  .vt-interface .vt-header h1 {
+    font-size: 1.1rem;
+  }
+
+  .vt-interface .vt-tool-dock .vt-field-tools {
+    padding: 6px;
+  }
+
+  .vt-interface .vt-tool-dock .vt-field-tools > .builder-action-btn {
+    min-width: 0;
+    padding: 7px 8px;
+  }
+
+  .vt-interface .vt-main-field-toolbar > #vt-field-summary {
+    flex-basis: 100%;
+  }
+}
+
+/* ==========================================================================
+   Пакет 2: список армии
+   ========================================================================== */
+
+.vt-interface .vt-unit-list {
+  display: block;
+}
+
+.vt-interface .vt-unit-group {
+  margin: 0 0 16px;
+}
+
+.vt-interface .vt-unit-group-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 8px;
+  padding: 6px 2px;
+  color: var(--vt-ui-muted, #b4b0bf);
+  border-bottom: 1px solid var(--vt-ui-border, #34323f);
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+
+.vt-interface .vt-unit-group-title > span {
+  font-variant-numeric: tabular-nums;
+}
+
+.vt-interface .vt-unit-compact {
+  margin: 0 0 6px;
+  padding: 9px;
+  box-shadow: none;
+}
+
+.vt-interface .vt-unit-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+
+.vt-interface .vt-unit-number {
+  flex: 0 0 auto;
+  color: #c9baff;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.vt-interface .vt-unit[data-side="b"] .vt-unit-number {
+  color: #84e0ef;
+}
+
+.vt-interface .vt-unit-heading strong {
+  min-width: 0;
+  font-size: 0.79rem;
+  line-height: 1.4;
+}
+
+.vt-interface .vt-unit-subline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 7px;
+  color: var(--vt-ui-muted, #b4b0bf);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.vt-interface .vt-unit-hp {
+  color: #ddd7e7;
+}
+
+.vt-interface .vt-unit-coordinate {
+  color: #a7a2b5;
+}
+
+.vt-interface .vt-unit-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 7px;
+}
+
+.vt-interface .vt-unit-tag {
+  padding: 2px 5px;
+  color: #c7c1d1;
+  background: #292631;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  line-height: 1.4;
+}
+
+.vt-interface .vt-unit-tag.is-activated {
+  color: #f2d497;
+  background: #393022;
+}
+
+.vt-interface .vt-unit-tag.is-fatigued {
+  color: #f1c18b;
+  background: #392d26;
+}
+
+.vt-interface .vt-unit-tag.is-destroyed {
+  color: #ffc1c9;
+  background: #3d2630;
+}
+
+.vt-interface .vt-unit-compact.is-dead {
+  border-right-color: #9c5d6c;
+}
+
+/* ==========================================================================
+   Пакет 2: карточка модели
+   ========================================================================== */
+
+.vt-interface #vt-details .vt-model-card-title {
+  margin: 0 0 6px;
+  color: #eee5d4;
+  font-size: 1rem;
+  line-height: 1.45;
+}
+
+.vt-interface #vt-details .vt-model-card-meta {
+  margin: 3px 0;
+  font-size: 0.75rem;
+}
+
+.vt-interface .vt-card-controls {
+  margin: 16px 0;
+  padding: 12px 0;
+  border-top: 1px solid var(--vt-ui-border, #34323f);
+  border-bottom: 1px solid var(--vt-ui-border, #34323f);
+}
+
+.vt-interface .vt-card-health-row {
+  display: grid;
+  grid-template-columns: 1fr 44px minmax(75px, auto) 44px;
+  align-items: center;
+  gap: 6px;
+}
+
+.vt-interface .vt-card-health-label {
+  color: var(--vt-ui-muted, #b4b0bf);
+  font-size: 0.8rem;
+}
+
+.vt-interface .vt-card-health-value {
+  color: var(--vt-ui-gold, #d8bf92);
+  text-align: center;
+  font-size: 1.2rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.vt-interface .vt-card-health-row .builder-action-btn {
+  min-width: 0;
+  min-height: 44px;
+  padding: 4px;
+  font-size: 1.2rem;
+}
+
+.vt-interface .vt-card-health-row [data-delta="-1"] {
+  color: #ffc1c9;
+  background: #34232b;
+  border-color: #724552;
+}
+
+.vt-interface .vt-card-health-row [data-delta="1"] {
+  color: #b5edc9;
+  background: #203129;
+  border-color: #41634e;
+}
+
+.vt-interface .vt-card-states {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  margin-top: 12px;
+}
+
+.vt-interface .vt-card-states .builder-action-btn {
+  min-width: 0;
+  min-height: 44px;
+  padding: 7px 5px;
+  font-size: 0.74rem;
+  background: #22212b;
+  border-color: #413b4c;
+}
+
+.vt-interface .vt-card-states [aria-pressed="true"] {
+  color: #f4d49b;
+  background: #393022;
+  border-color: #a78850;
+}
+
+.vt-interface .vt-card-stats {
+  gap: 4px;
+  margin: 14px 0 0;
+}
+
+.vt-interface .vt-card-stats .vt-stat {
+  padding: 7px 3px;
+  background: transparent;
+}
+
+.vt-interface .vt-card-fold {
+  margin: 0;
+  border: 0;
+  border-bottom: 1px solid var(--vt-ui-border, #34323f);
+  border-radius: 0;
+  background: transparent;
+}
+
+.vt-interface .vt-card-fold > summary {
+  padding: 13px 2px;
+  color: #d9c9ae;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.vt-interface .vt-card-fold-content {
+  padding: 0 0 12px;
+}
+
+.vt-interface .vt-card-fold-content > .vt-detail-block,
+.vt-interface .vt-card-fold-content > .vt-facing-panel {
+  margin: 0;
+  padding: 10px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.vt-interface .vt-card-fold-content > .vt-detail-block
+  + .vt-detail-block {
+  border-top: 1px solid #292631;
+}
+
+.vt-interface .vt-card-fold-content .vt-facing-panel
+  > p:first-child {
+  display: none;
+}
+
+.vt-interface .vt-card-fold-content
+  > [data-action="reserve"] {
+  width: 100%;
+}
+
+.vt-interface .vt-card-fold-content .vt-markers-panel
+  > p.vt-muted {
+  font-size: 0.73rem;
+}
+
+@media (max-width: 1000px) {
+  .vt-interface .vt-card-fold > summary {
+    min-height: 44px;
+  }
+}
+
+/* ==========================================================================
+   Пакет 3: Игра / Подготовка
+   ========================================================================== */
+
+.vt-workspace-mode {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 8px;
+  padding: 7px 9px;
+  background: #16151e;
+  border: 1px solid var(--vt-ui-border, #34323f);
+  border-radius: 9px;
+}
+
+.vt-workspace-mode .builder-action-btn {
+  min-height: 38px;
+  padding: 7px 15px;
+  color: #bcb5c8;
+  background: transparent;
+  border-color: transparent;
+}
+
+.vt-workspace-mode .builder-action-btn.primary {
+  color: #f4ead8;
+  background: #302a3c;
+  border-color: #8e7b9f;
+}
+
+.vt-workspace-mode-description {
+  margin-left: 7px;
+  color: var(--vt-ui-muted, #b4b0bf);
+  font-size: 0.74rem;
+  line-height: 1.4;
+}
+
+/* Не удаляем формы — только скрываем на время игры. */
+
+.vt-workspace-modes[data-workspace-mode="game"]
+  .vt-preparation-only,
+.vt-workspace-modes[data-workspace-mode="game"]
+  [data-mission-action="remove"] {
+  display: none !important;
+}
+
+/* Служебная подсказка не нужна, когда подготовка уже открыта. */
+
+.vt-workspace-modes[data-workspace-mode="prepare"]
+  .vt-game-preparation-hint {
+  display: none;
+}
+
+.vt-workspace-modes .vt-game-preparation-hint {
+  padding: 9px 0;
+  color: var(--vt-ui-muted, #b4b0bf);
+  font-size: 0.74rem;
+  line-height: 1.5;
+}
+
+/* hidden должен иметь приоритет над display из старых стилей. */
+
+.vt-workspace-modes .vt-tab[hidden],
+.vt-workspace-modes [data-field-tool][hidden] {
+  display: none !important;
+}
+
+/* Три вкладки в игре, четыре в подготовке. */
+
+.vt-workspace-modes[data-workspace-mode="game"] .vt-tabs {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.vt-workspace-modes[data-workspace-mode="prepare"] .vt-tabs {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 1000px) {
+  .vt-workspace-mode .builder-action-btn {
+    min-height: 44px;
+  }
+
+  .vt-workspace-mode {
+    margin-bottom: 6px;
+  }
+}
+
+@media (max-width: 600px) {
+  .vt-workspace-mode {
+    padding: 5px;
+  }
+
+  .vt-workspace-mode .builder-action-btn {
+    flex: 1 1 100px;
+  }
+
+  .vt-workspace-mode-description {
+    flex: 1 1 100%;
+    margin: 2px 5px 3px;
+    font-size: 0.7rem;
+  }
+}
+
+/* ==========================================================================
+   Пакет 4: компактная панель партии
+   ========================================================================== */
+
+.vt-interface .vt-party-bar {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 7px 9px;
+  background: #16151e;
+  border-bottom: 1px solid var(--vt-ui-border, #34323f);
+}
+
+/* Сохраняем контейнеры модулей, убираем только их внешние полосы. */
+
+.vt-interface .vt-party-bar .vt-party-rounds,
+.vt-interface .vt-party-bar .vt-party-history {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+}
+
+.vt-interface .vt-party-bar .vt-party-rounds {
+  flex: 1 1 auto;
+}
+
+.vt-interface .vt-party-bar .vt-party-history {
+  flex: 0 0 auto;
+}
+
+.vt-interface .vt-party-bar #vt-round-label {
+  flex: 0 0 auto;
+  margin-right: 3px;
+  color: var(--vt-ui-gold, #d8bf92);
+  font-size: 0.81rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.vt-interface .vt-party-bar .builder-action-btn {
+  min-height: 38px;
+  padding: 7px 9px;
+  font-size: 0.74rem;
+}
+
+.vt-interface .vt-party-bar [data-round-action="next"] {
+  color: #eee8f6;
+  background: #393047;
+  border-color: #7f6c94;
+}
+
+.vt-interface .vt-party-score {
+  color: #e7d6b9;
+  background: #24212a;
+  border-color: #514556;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.vt-interface .vt-party-history [data-history-action] {
+  width: 38px;
+  min-width: 38px;
+  padding: 4px;
+  font-size: 1.15rem;
+}
+
+/* ==========================================================================
+   Дополнительные действия раунда
+
+   Раскрываем внутри потока, а не поверх сетки:
+   длинная сводка не обрезается overflow панели.
+   ========================================================================== */
+
+.vt-interface .vt-round-extras {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.vt-interface .vt-round-extras > summary {
+  display: flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 7px 9px;
+  color: var(--vt-ui-muted, #b4b0bf);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: 0.74rem;
+  list-style: none;
+  cursor: pointer;
+}
+
+.vt-interface .vt-round-extras > summary::-webkit-details-marker {
+  display: none;
+}
+
+.vt-interface .vt-round-extras > summary::after {
+  content: "▾";
+  margin-left: 6px;
+}
+
+.vt-interface .vt-round-extras[open] {
+  flex-basis: 100%;
+}
+
+.vt-interface .vt-round-extras[open] > summary {
+  width: max-content;
+  color: #e4d5bc;
+  border-color: #68566d;
+}
+
+.vt-interface .vt-round-extras-content {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 7px;
+  padding: 10px;
+  background: #1e1b26;
+  border: 1px solid var(--vt-ui-border, #34323f);
+  border-radius: 7px;
+}
+
+.vt-interface .vt-round-extras-content #vt-round-summary {
+  flex-basis: 100%;
+  color: var(--vt-ui-muted, #b4b0bf);
+  font-size: 0.73rem;
+  line-height: 1.5;
+}
+
+/* Сводка истории остаётся доступной экранному диктору. */
+
+.vt-interface .vt-party-visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+@media (max-width: 1000px) {
+  .vt-interface .vt-party-bar {
+    padding: 6px;
+  }
+
+  .vt-interface .vt-party-bar .builder-action-btn,
+  .vt-interface .vt-round-extras > summary {
+    min-height: 44px;
+  }
+
+  .vt-interface .vt-party-history [data-history-action] {
+    width: 44px;
+    min-width: 44px;
+  }
+}
+
+/* ==========================================================================
+   Пакет 5: выбор модели и предпросмотр клетки
+   ========================================================================== */
+
+/* Выбор заметен не только по изменению цвета. */
+
+.vt-interface .vt-unit.is-selected {
+  position: relative;
+  background: #302638;
+  border-color: var(--vt-ui-gold, #d8bf92);
+  outline: 1px solid var(--vt-ui-gold, #d8bf92);
+  outline-offset: -3px;
+}
+
+.vt-interface .vt-unit-tag.is-selection {
+  color: #f8e3bc;
+  background: #50402d;
+  font-weight: 700;
+}
+
+.vt-interface .vt-cell.is-selected {
+  outline: 2px solid #f4d6a2;
+  outline-offset: -3px;
+}
+
+.vt-interface .vt-cell.is-selected .vt-token {
+  outline: 2px solid #f4d6a2;
+  outline-offset: 2px;
+}
+
+/*
+ * Предпросмотр отмечает только содержимое клетки.
+ * Не означает проверку дальности, местности или игровых правил.
+ */
+
+.vt-interface .vt-cell.vt-model-target-free {
+  box-shadow: inset 0 0 0 2px #a8dcc0;
+}
+
+.vt-interface .vt-cell.vt-model-target-occupied {
+  box-shadow: inset 0 0 0 2px #d4b47d;
+}
+
+.vt-interface .vt-cell.vt-model-target-current {
+  box-shadow: inset 0 0 0 2px #f4d6a2;
+}
+
+/* Координата — поверх местности, но ниже жетонов и маркеров. */
+
+.vt-interface .vt-cell[data-preview-coordinate]::after {
+  content: attr(data-preview-coordinate);
+  position: absolute;
+  z-index: 1;
+  right: 2px;
+  bottom: 2px;
+  padding: 1px 3px;
+  color: #fff3dc;
+  background: #17151e;
+  border: 1px solid #73624d;
+  border-radius: 3px;
+  font-size: max(9px, calc(var(--vt-cell) * 0.2));
+  font-weight: 700;
+  line-height: 1.2;
+  pointer-events: none;
+}
+
+/* На пустой клетке — условное место будущего жетона. */
+
+.vt-interface .vt-cell.vt-model-target-free::before {
+  content: "";
+  position: absolute;
+  width: 68%;
+  height: 68%;
+  border: 2px dashed #a8dcc0;
+  border-radius: 50%;
+  background: rgba(168, 220, 192, 0.08);
+  pointer-events: none;
+}
+
+/* Фокус клавиатуры остаётся отличим от предпросмотра. */
+
+.vt-interface .vt-cell:focus-visible {
+  z-index: 3;
+  outline: 3px solid #fff0cc;
+  outline-offset: -3px;
+}
+
+.vt-interface #vt-field-tool-hint {
+  overflow-wrap: anywhere;
+}
+
+/* ==========================================================================
+   Пакет 6: читаемые обозначения местности
+   ========================================================================== */
+
+.vt-interface .vt-terrain-label {
+  position: absolute;
+  z-index: 1;
+  top: 2px;
+  left: 2px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  max-width: calc(100% - 4px);
+  padding: 2px 3px;
+  color: #fff4df;
+  background: rgba(15, 19, 15, 0.82);
+  border-radius: 3px;
+  font-size: clamp(8px, calc(var(--vt-cell) * 0.19), 11px);
+  font-weight: 700;
+  line-height: 1.15;
+  pointer-events: none;
+}
+
+.vt-interface .vt-terrain-label-name {
+  display: block;
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+.vt-interface .vt-terrain-label-height {
+  display: block;
+  color: #e0dccb;
+  font-size: 0.9em;
+  font-weight: 500;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * Жетон имеет приоритет над подписью.
+ * Название местности и высота остаются в title и aria-label клетки.
+ */
+
+.vt-interface .vt-cell[data-has-unit="true"] .vt-terrain-label {
+  display: none;
+}
+
+/*
+ * Выбранный тайл — пунктир внутри каждой его клетки.
+ * Выбранная модель — сплошной контур клетки и круглый контур жетона.
+ */
+
+.vt-interface .vt-cell.is-terrain-selected {
+  box-shadow: none;
+}
+
+.vt-interface .vt-cell.is-terrain-selected::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: 3px;
+  border: 1px dashed #ffe1a6;
+  border-radius: 2px;
+  pointer-events: none;
+}

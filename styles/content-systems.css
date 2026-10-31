@@ -1,0 +1,326 @@
+/* ==========================================================================
+   Content systems
+   Клятвы, статусы и эффекты.
+   ========================================================================== */
+
+/* ==========================================================================
+   Система «Клятва»
+   ========================================================================== */
+
+.article-body[data-article-id^="bet-"] {
+  --oath-panel: rgba(18, 18, 26, 0.88);
+  --oath-line: rgba(162, 155, 254, 0.23);
+}
+
+.oath-rules {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.oath-rule-block {
+  padding: 17px 18px;
+  background:
+    linear-gradient(135deg, rgba(108, 92, 231, 0.1), transparent 62%),
+    var(--oath-panel);
+  border: 1px solid var(--oath-line);
+  border-radius: 11px;
+  box-shadow: var(--shadow-sm);
+}
+
+.oath-rule-block h3 {
+  margin-top: 0 !important;
+}
+
+.oath-rule-block p:last-child,
+.oath-rule-block ul:last-child {
+  margin-bottom: 0;
+}
+
+.oath-monster-rule {
+  grid-column: 1 / -1;
+  border-color: rgba(255, 165, 2, 0.32);
+  background:
+    linear-gradient(135deg, rgba(255, 165, 2, 0.09), transparent 62%),
+    var(--oath-panel);
+}
+
+.oath-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 21px;
+}
+
+.oath-list-single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.oath-card {
+  position: relative;
+  min-width: 0;
+  padding: 18px;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(108, 92, 231, 0.13), transparent 58%),
+    var(--oath-panel);
+  border: 1px solid var(--oath-line);
+  border-radius: 11px;
+  box-shadow: var(--shadow-sm);
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+}
+
+.oath-card::before {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  content: "";
+  background: linear-gradient(var(--accent-light), var(--accent));
+}
+
+.oath-card:hover {
+  border-color: rgba(162, 155, 254, 0.56);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+  transform: translateY(-2px);
+}
+
+.oath-card h3 {
+  display: flex;
+  gap: 10px;
+  margin: 0 0 15px !important;
+  color: #f0edf5 !important;
+  font-size: 1.08rem !important;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.oath-cost {
+  display: inline-flex;
+  flex: 0 0 auto;
+  padding: 3px 8px;
+  color: #2a210f;
+  font-size: 0.73rem;
+  font-weight: 850;
+  line-height: 1.35;
+  white-space: nowrap;
+  background: linear-gradient(135deg, #e3ca9e, var(--gold));
+  border: 1px solid rgba(255, 232, 188, 0.74);
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(209, 179, 132, 0.18);
+}
+
+.oath-card p {
+  padding: 10px 12px;
+  margin-bottom: 9px;
+  font-size: 0.91rem;
+  line-height: 1.62;
+  background: rgba(0, 0, 0, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.055);
+  border-radius: 7px;
+}
+
+.oath-card p:last-child {
+  margin-bottom: 0;
+}
+
+.oath-condition {
+  border-left: 3px solid var(--accent) !important;
+}
+
+.oath-minimum {
+  color: #dfeddc;
+  border-left: 3px solid var(--success) !important;
+}
+
+.oath-minimum strong {
+  color: #77e5a5 !important;
+}
+
+.oath-note {
+  color: #f1dfbd;
+  border-left: 3px solid var(--gold) !important;
+}
+
+.oath-note strong {
+  color: #e9c992 !important;
+}
+
+.oath-warning {
+  padding: 11px 13px;
+  margin: 15px 0 0;
+  color: #ffd5d9;
+  line-height: 1.65;
+  background: rgba(255, 71, 87, 0.08);
+  border: 1px solid rgba(255, 71, 87, 0.28);
+  border-left: 4px solid var(--error);
+  border-radius: 8px;
+}
+
+.oath-warning strong {
+  color: #ff99a3 !important;
+}
+
+.oath-warning-intro {
+  margin: 18px 0 0;
+}
+
+.oath-warning-intro em {
+  color: #ffd5d9;
+}
+
+/* ==========================================================================
+   Статусы и эффекты
+   ========================================================================== */
+
+.status-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 22px;
+}
+
+.status-card {
+  position: relative;
+  min-width: 0;
+  padding: 18px;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(255, 71, 87, 0.08), transparent 58%),
+    rgba(18, 18, 26, 0.9);
+  border: 1px solid rgba(255, 120, 132, 0.2);
+  border-radius: 11px;
+  box-shadow: var(--shadow-sm);
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+}
+
+.status-card::before {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  content: "";
+  background: linear-gradient(#ff9c6a, var(--error));
+}
+
+.status-card:hover {
+  border-color: rgba(255, 120, 132, 0.5);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
+  transform: translateY(-2px);
+}
+
+.status-card h3 {
+  margin: 0 0 15px !important;
+  color: #f7eeee !important;
+  font-size: 1.08rem !important;
+}
+
+.status-card p,
+.status-card ul {
+  margin-bottom: 9px;
+}
+
+.status-card p:last-child,
+.status-card ul:last-child {
+  margin-bottom: 0;
+}
+
+.status-source,
+.status-effect,
+.status-queue,
+.status-note {
+  padding: 10px 12px;
+  font-size: 0.91rem;
+  line-height: 1.62;
+  background: rgba(0, 0, 0, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.055);
+  border-radius: 7px;
+}
+
+.status-source {
+  color: var(--text-muted);
+  border-left: 3px solid rgba(162, 155, 254, 0.72);
+}
+
+.status-source strong {
+  color: #c5bfff !important;
+}
+
+.status-effect {
+  border-left: 3px solid var(--error);
+}
+
+.status-effect strong {
+  color: #ffabb3 !important;
+}
+
+.status-effect ul {
+  padding-left: 20px;
+  margin-top: 8px;
+  margin-bottom: 0;
+}
+
+.status-effect li {
+  margin-bottom: 5px;
+}
+
+.status-effect li:last-child {
+  margin-bottom: 0;
+}
+
+.status-queue {
+  color: #f1dfbd;
+  border-left: 3px solid var(--gold);
+}
+
+.status-queue strong {
+  color: #e9c992 !important;
+}
+
+.status-note {
+  color: #e0f1ff;
+  border-left: 3px solid #58a6ff;
+}
+
+.status-note strong {
+  color: #91c5ff !important;
+}
+
+.status-card.status-card-control {
+  background:
+    linear-gradient(135deg, rgba(108, 92, 231, 0.13), transparent 58%),
+    rgba(18, 18, 26, 0.9);
+  border-color: rgba(162, 155, 254, 0.24);
+}
+
+.status-card.status-card-control::before {
+  background: linear-gradient(var(--accent-light), var(--accent));
+}
+
+.status-card.status-card-control:hover {
+  border-color: rgba(162, 155, 254, 0.54);
+}
+
+.status-card.status-card-physical {
+  background:
+    linear-gradient(135deg, rgba(255, 165, 2, 0.09), transparent 58%),
+    rgba(18, 18, 26, 0.9);
+  border-color: rgba(255, 165, 2, 0.22);
+}
+
+.status-card.status-card-physical::before {
+  background: linear-gradient(#ffd17a, var(--warning));
+}
+
+.status-card.status-card-physical:hover {
+  border-color: rgba(255, 165, 2, 0.5);
+}

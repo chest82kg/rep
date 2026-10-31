@@ -1,0 +1,19 @@
+# Зависимости и результат сборки
+node_modules/
+dist/
+
+# Служебные файлы macOS
+.DS_Store
+
+# Локальные настройки редактора и отчёты
+.vscode/
+.VSCodeCounter/
+
+# Локальные переменные окружения
+.env
+.env.*
+!.env.example
+*.local
+
+# Журналы npm
+npm-debug.log*

@@ -1,0 +1,74 @@
+/* Визуальные зоны расстановки поверх игрового поля */
+
+#vt-board .vt-cell[data-deployment] {
+  position: relative;
+}
+
+.vt-deployment-mark {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  z-index: 4;
+  min-width: 15px;
+  padding: 1px 3px;
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 3px;
+  color: #fff;
+  font-size: 10px;
+  line-height: 1.2;
+  font-weight: 800;
+  pointer-events: none;
+}
+
+.vt-cell[data-deployment="a"] .vt-deployment-mark {
+  background: #245cba;
+}
+
+.vt-cell[data-deployment="b"] .vt-deployment-mark {
+  background: #b52e4c;
+}
+
+/* Маркеры-памятки карты, независимо от отметок моделей */
+
+#vt-board .vt-cell {
+  position: relative;
+}
+
+.vt-map-marker-mark {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  z-index: 7;
+  padding: 1px 2px;
+  color: #fff;
+  background: #6d438e;
+  border: 1px solid #d7b7f0;
+  border-radius: 3px;
+  font-size: 8px;
+  font-weight: 800;
+  line-height: 1.1;
+  pointer-events: none;
+}
+
+#vt-map-markers > summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+#vt-map-markers select {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  padding: 8px;
+  color: #eeeaf5;
+  background: #20202d;
+  border: 1px solid #3b3b4d;
+  border-radius: 6px;
+  font: inherit;
+}
+
+.vt-map-marker-note {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

@@ -1,0 +1,539 @@
+/* ==========================================================================
+   Responsive
+   Адаптация макета, контента, таблиц, клятв, статусов и компонентов.
+   ========================================================================== */
+
+@media (max-width: 900px) {
+  .main-area {
+    padding: 27px 26px 40px;
+  }
+
+  .sidebar {
+    width: 240px;
+  }
+}
+
+@media (max-width: 768px) {
+  /*
+    Статья становится горизонтальным scroll-контейнером только на мобильных.
+    Таблица сохраняется настоящей таблицей: display:block не использовать.
+  */
+
+
+    .faction-rule-grid {
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
+    margin: 1rem 0 1.25rem;
+  }
+
+  .faction-rule-card--wide {
+    grid-column: auto;
+  }
+
+  .faction-summary,
+  .faction-rule-card {
+    padding: 0.9rem;
+  }
+
+  .roster-heading {
+    margin-top: 1.8rem !important;
+  }
+  
+  .mission-block {
+    max-width: none;
+    padding: 14px 13px 2px;
+    margin: 18px 0;
+  }
+
+  .mission-list {
+    gap: 7px;
+    margin: 12px 0 16px !important;
+  }
+
+  .mission-list > li {
+    padding: 9px 10px;
+    font-size: 0.94rem;
+  }
+
+  .article-body {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+  }
+
+  .kb-content table,
+  .builder-modal-content table {
+    width: max-content !important;
+    min-width: 540px;
+    max-width: none;
+    margin-top: 15px !important;
+    margin-bottom: 20px !important;
+  }
+
+  .kb-content th,
+  .builder-modal-content th {
+    padding: 9px 10px !important;
+    font-size: 0.78rem;
+  }
+
+  .kb-content td,
+  .builder-modal-content td {
+    padding: 9px 10px !important;
+    font-size: 0.84rem;
+  }
+
+  .layout {
+    min-height: auto;
+    flex-direction: column !important;
+  }
+
+  .sidebar {
+    position: static;
+    width: 100% !important;
+    height: auto !important;
+    max-height: 270px;
+    padding: 13px 10px;
+    overflow-y: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    box-shadow: none;
+  }
+
+  .sidebar h2 {
+    margin-bottom: 8px;
+  }
+
+  .sidebar-builder-container {
+    margin-top: 12px;
+  }
+
+  .main-area {
+    min-height: 0;
+    padding: 20px 15px 34px !important;
+    overflow: visible !important;
+  }
+
+  .search-box {
+    margin-bottom: 19px;
+  }
+
+  .search-box,
+  .kb-content {
+    max-width: 100% !important;
+  }
+
+  .kb-content h1 {
+    font-size: 1.65rem;
+  }
+
+  .kb-content h2 {
+    margin-top: 31px;
+    font-size: 1.32rem;
+  }
+
+  .kb-content h3 {
+    margin-top: 23px;
+  }
+
+  .kb-content h4 {
+    margin-top: 20px;
+    font-size: 0.96rem;
+  }
+
+  .kb-content p {
+    line-height: 1.68;
+  }
+
+  .oath-rules,
+  .oath-list,
+  .status-list {
+    grid-template-columns: 1fr;
+    gap: 13px;
+  }
+
+  .oath-rule-block,
+  .oath-card,
+  .status-card {
+    padding: 15px;
+  }
+
+  .oath-card:hover,
+  .status-card:hover {
+    transform: none;
+  }
+
+  .tooltip-term::after {
+    max-width: min(290px, calc(100vw - 24px));
+    font-size: 0.77rem;
+  }
+
+  .breadcrumbs {
+    margin-bottom: 13px;
+  }
+
+  .breadcrumb-item {
+    max-width: 170px;
+  }
+
+  .bug-grid-2,
+  .bug-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .builder-modal {
+    padding: 12px;
+    align-items: flex-end;
+  }
+
+  .builder-modal-content {
+    max-height: 90vh;
+    padding: 18px;
+    border-radius: 12px 12px 9px 9px;
+  }
+
+  .scroll-top-btn {
+    right: 18px;
+    bottom: 18px;
+    width: 42px;
+    height: 42px;
+    font-size: 1.15rem;
+  }
+
+  .site-footer {
+    padding: 18px 17px;
+    margin-top: 34px;
+  }
+
+  .site-footer-content {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  /* Читаемость длинных статей на мобильных. */
+
+  .article-body > p,
+  .article-body > ul,
+  .article-body > ol,
+  .article-body > blockquote,
+  .article-body > details,
+  .article-body > h2,
+  .article-body > h3,
+  .article-body > h4,
+  .round-phase,
+  .rule-callout {
+    max-width: none;
+  }
+
+  .rule-steps {
+    gap: 8px;
+    margin: 15px 0 23px !important;
+  }
+
+  .rule-steps > li {
+    min-height: 48px;
+    padding: 12px 12px 12px 50px;
+    font-size: 0.94rem;
+    line-height: 1.62;
+  }
+
+  .rule-steps > li::before {
+    top: 12px;
+    left: 12px;
+    width: 25px;
+    height: 25px;
+  }
+
+  .round-phase {
+    padding: 15px 14px 3px;
+    margin: 22px 0;
+  }
+
+  .round-phase > h4 {
+    font-size: 0.98rem;
+  }
+
+  .rule-callout {
+    padding: 13px 14px;
+    margin: 19px 0;
+  }
+}
+
+@media (max-width: 430px) {
+  .main-area {
+    padding-right: 12px !important;
+    padding-left: 12px !important;
+  }
+
+  .accordion-btn {
+    font-size: 0.88rem;
+  }
+
+  .search-input {
+    min-height: 43px;
+    padding: 10px 12px;
+  }
+
+  .kb-content h1 {
+    font-size: 1.48rem;
+  }
+
+  .kb-content ul,
+  .kb-content ol {
+    padding-left: 20px;
+  }
+
+  .lore-quote {
+    padding: 13px 14px;
+  }
+
+  .rule-example {
+    padding: 11px 12px;
+  }
+
+  .tooltip-term::after {
+    max-width: min(270px, calc(100vw - 20px));
+    padding: 9px 10px;
+  }
+
+  .site-footer-links {
+    gap: 7px 13px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .rule-overview-card {
+    padding: 16px;
+  }
+
+  .rule-command-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .rule-topic-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rule-topic-card {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 760px) {
+  .stance-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .stance-panel {
+    padding: 16px;
+  }
+
+  .stance-intro {
+    padding: 14px 15px;
+  }
+}
+
+@media (max-width: 760px) {
+  .haste-section {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 760px) {
+  .rule-reference-section {
+    padding: 16px;
+  }
+
+  .rule-table-legend,
+  .rule-table-legend ul {
+    display: block;
+  }
+
+  .rule-table-legend ul {
+    margin-top: 8px;
+  }
+
+  .rule-table-legend li + li {
+    margin-top: 5px;
+  }
+}
+
+/* ==========================================================================
+   Content modules: мобильная адаптация
+   ========================================================================== */
+
+@media (max-width: 760px) {
+  .rule-topic-grid,
+  .stance-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .rule-topic-card,
+  .stance-panel,
+  .rule-reference-section {
+    padding: 16px;
+  }
+
+  .stance-intro {
+    padding: 14px 15px;
+  }
+
+  .haste-section {
+    padding: 16px;
+  }
+
+  .rule-table-legend,
+  .rule-table-legend ul {
+    display: block;
+  }
+
+  .rule-table-legend ul {
+    margin-top: 8px;
+  }
+
+  .rule-table-legend li + li {
+    margin-top: 5px;
+  }
+}
+
+@media (max-width: 640px) {
+  .rule-overview-card {
+    padding: 16px;
+  }
+
+  .rule-command-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==========================================================================
+   Артефакты, магия и молитвы: мобильная адаптация
+   ========================================================================== */
+
+@media (max-width: 760px) {
+  .art-magic-overview,
+  .magic-role-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .artifacts-table-section,
+  .artifact-bonuses-section,
+  .magic-prayers-section,
+  .spell-table-section,
+  .prayer-table-section {
+    padding: 16px;
+  }
+
+  .resource-economy-section {
+    padding: 15px 16px 1px;
+  }
+}
+
+@media (max-width: 760px) {
+  .faq-item summary {
+    padding: 13px 14px;
+  }
+
+  .faq-answer {
+    padding: 12px 14px 14px 45px;
+  }
+}
+
+@media (max-width: 760px) {
+  .lore-lead {
+    padding: 14px 15px;
+  }
+
+  .lore-ending {
+    padding-right: 15px;
+    padding-left: 15px;
+  }
+}
+
+@media (max-width: 760px) {
+  .quick-start-section--setup,
+  .quick-start-section--commander {
+    padding: 16px;
+  }
+
+  .quick-start-phase-list {
+    grid-template-columns: 1fr;
+  }
+
+  .commander-rule {
+    padding: 15px 16px 3px;
+  }
+}
+
+/* Глоссарий: мобильная адаптация */
+
+/* ==========================================================================
+   Глоссарий: мобильная адаптация
+   ========================================================================== */
+
+@media (max-width: 760px) {
+  .glossary-lead {
+    padding: 14px 15px;
+  }
+
+  .glossary-directory {
+    gap: 20px;
+  }
+
+  .glossary-section {
+    padding: 15px;
+  }
+
+  .glossary-entry {
+    grid-template-columns: 1fr;
+    gap: 5px;
+    padding: 13px 1px;
+  }
+
+  .glossary-entry dt {
+    font-size: 0.96rem;
+  }
+
+  .glossary-entry dd {
+    font-size: 0.9rem;
+  }
+}
+
+/* Очковая стоимость: мобильная адаптация */
+
+@media (max-width: 760px) {
+  .points-lead,
+  .points-section--formation,
+  .points-section--artifacts,
+  .points-section--stakes {
+    padding: 16px;
+  }
+
+  .points-overview,
+  .points-rule-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .points-overview {
+    gap: 10px;
+  }
+
+  .points-rule-card {
+    padding: 14px 15px;
+  }
+}

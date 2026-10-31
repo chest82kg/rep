@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Виртуальный стол — Мультиверс Тактикс</title>
+
+ <link rel="stylesheet" href="styles/main.css">
+<link rel="stylesheet" href="styles/virtual-table.css">
+<link rel="stylesheet" href="styles/virtual-table-layout.css">
+<link rel="stylesheet" href="styles/virtual-table-mobile.css">
+<link rel="stylesheet"
+      href="styles/virtual-table-deployment.css">
+<link rel="stylesheet" href="styles/map-preview.css">
+<link rel="stylesheet"
+      href="styles/virtual-table-interface.css">
+</head>
+
+<body class="vt-page">
+  <header class="vt-header">
+    <div>
+      <h1>Виртуальный стол</h1>
+      <p>Локальная партия двух сторон · поле 14 × 14</p>
+    </div>
+
+    <nav class="vt-actions" aria-label="Навигация">
+      <a class="builder-action-btn" href="index.html">
+        На главную
+      </a>
+
+      <a id="vt-open-builder"
+         class="builder-action-btn"
+         href="knowledge-base.html#builder">
+        Собрать ростер для выбранной стороны
+      </a>
+
+      <a class="builder-action-btn" href="play.html">
+        Дашборд армии
+      </a>
+    </nav>
+  </header>
+
+  <section class="vt-load-panel" aria-label="Загрузка армий">
+    <div class="vt-load-field vt-load-field--side">
+      <label for="vt-side-select">Сторона</label>
+
+      <select id="vt-side-select">
+        <option value="a">Игрок А</option>
+        <option value="b">Игрок Б</option>
+      </select>
+    </div>
+
+    <div class="vt-load-field">
+      <label for="vt-roster-select">Ростер этого браузера</label>
+
+      <select id="vt-roster-select">
+        <option value="">Загрузка списка…</option>
+      </select>
+    </div>
+
+    <button id="vt-load"
+            class="builder-action-btn primary"
+            type="button">
+      Загрузить на стол
+    </button>
+
+    <button id="vt-refresh"
+            class="builder-action-btn"
+            type="button">
+      Обновить список
+    </button>
+
+    <button id="vt-clear"
+            class="builder-action-btn"
+            type="button">
+      Вернуть сторону в резерв
+    </button>
+  </section>
+
+  <p class="vt-notice">
+    Выберите сторону и загрузите для неё ростер.
+    Обе армии управляются с этого устройства.
+    Онлайн-синхронизация ещё не подключена.
+    После сборки армии нажмите в билдере «В бой»,
+    вернитесь сюда и нажмите «Загрузить на стол».
+    Для хранения нескольких ростеров сохраняйте их под разными именами.
+  </p>
+
+  <div id="vt-message"
+       class="vt-message"
+       role="status"
+       aria-live="polite"></div>
+
+  <main class="vt-layout">
+    <aside class="vt-panel vt-army-panel">
+      <h2 id="vt-army-name">Армия не загружена</h2>
+      <p id="vt-army-meta" class="vt-muted"></p>
+
+      <h3>Модели выбранной стороны</h3>
+
+      <p class="vt-muted">
+        Выключите линейку, выберите режим «Модели»,
+        затем модель и пустую клетку.
+      </p>
+
+            <section class="vt-list-controls"
+               aria-label="Выбор стороны и фильтры моделей">
+
+        <div class="vt-quick-sides"
+             role="group"
+             aria-label="Сторона списка моделей">
+
+          <button type="button"
+                  class="builder-action-btn"
+                  data-list-side="a"
+                  aria-pressed="true">
+            Игрок А
+          </button>
+
+          <button type="button"
+                  class="builder-action-btn"
+                  data-list-side="b"
+                  aria-pressed="false">
+            Игрок Б
+          </button>
+        </div>
+
+        <label for="vt-unit-search">Поиск модели</label>
+
+        <input id="vt-unit-search"
+               type="search"
+               placeholder="Название или номер"
+               maxlength="120"
+               autocomplete="off"
+               aria-controls="vt-unit-list">
+
+        <div class="vt-list-filter-grid">
+          <div>
+            <label for="vt-unit-location">Расположение</label>
+
+            <select id="vt-unit-location"
+                    aria-controls="vt-unit-list">
+              <option value="all">Все</option>
+              <option value="board">На поле</option>
+              <option value="reserve">В резерве</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="vt-unit-status">Состояние</label>
+
+            <select id="vt-unit-status"
+                    aria-controls="vt-unit-list">
+              <option value="all">Все</option>
+              <option value="ready">Готовые</option>
+              <option value="activated">Активированные</option>
+              <option value="dead">Уничтоженные</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="vt-list-filter-footer">
+          <p id="vt-unit-count"
+             class="vt-muted"
+             role="status"
+             aria-live="polite"
+             aria-atomic="true"></p>
+
+          <button id="vt-unit-filter-reset"
+                  type="button"
+                  class="builder-action-btn">
+            Сбросить фильтры
+          </button>
+        </div>
+
+        <p id="vt-unit-selection-hint"
+           class="vt-muted"
+           hidden></p>
+      </section>
+
+      <div id="vt-unit-list" class="vt-unit-list"></div>
+    </aside>
+
+    <section class="vt-field-panel" aria-label="Игровое поле">
+      <div class="vt-field-toolbar">
+        <span id="vt-field-summary">Поле 14 × 14</span>
+
+        <label for="vt-zoom">Размер клеток</label>
+
+        <input id="vt-zoom"
+               type="range"
+               min="32"
+               max="80"
+               value="48">
+
+        <output id="vt-zoom-value" for="vt-zoom">48 px</output>
+
+        <button id="vt-deselect"
+                class="builder-action-btn"
+                type="button">
+          Снять выбор модели
+        </button>
+      </div>
+
+      <div class="vt-board-scroll">
+        <div id="vt-board"
+             class="vt-board"
+             aria-label="Поле: столбцы A–N, строки 1–14"></div>
+      </div>
+
+      <p class="vt-field-help">
+        В режиме «Модели» нажатие жетона выбирает модель,
+        а нажатие пустой клетки размещает или перемещает её.
+        Стрелка показывает фронт, «У» — установленную усталость.
+        При включённой линейке нажатия только задают измерение.
+        Дальность, стоимость действий и игровые эффекты
+        игроки проверяют самостоятельно.
+      </p>
+    </section>
+
+    <aside class="vt-panel vt-details-panel">
+      <section class="vt-sides-summary">
+        <h2>Участники</h2>
+        <p id="vt-side-a-summary">Игрок А: армия не загружена</p>
+        <p id="vt-side-b-summary">Игрок Б: армия не загружена</p>
+      </section>
+
+      <hr class="vt-panel-divider">
+
+      <section id="vt-terrain-editor"></section>
+
+      <hr class="vt-panel-divider">
+
+      <h2>Выбранная модель</h2>
+
+      <div id="vt-details">
+        <p class="vt-muted">
+          Выберите модель в списке или на поле.
+        </p>
+      </div>
+    </aside>
+  </main>
+
+  <noscript>
+    Для работы виртуального стола включите JavaScript.
+  </noscript>
+
+  <script type="module"
+        src="src/virtual-table/bootstrap.js"></script>
+</body>
+</html>

@@ -1,0 +1,417 @@
+/* ==========================================================================
+   Компактная раскладка виртуального стола
+   Подключается после virtual-table.css
+   ========================================================================== */
+
+body.vt-compact {
+  padding: 12px;
+}
+
+.vt-compact .vt-header {
+  gap: 12px;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+}
+
+.vt-compact .vt-header h1 {
+  font-size: 1.45rem;
+}
+
+.vt-compact .vt-message {
+  min-height: 22px;
+  margin-bottom: 8px;
+}
+
+.vt-compact .vt-layout {
+  grid-template-columns: 210px minmax(0, 1fr) 320px;
+  align-items: stretch;
+  height: var(--vt-workspace-height, 70vh);
+  min-height: 360px;
+  gap: 10px;
+}
+
+.vt-compact .vt-army-panel {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.vt-compact .vt-army-panel > h3 {
+  margin-top: 12px;
+}
+
+.vt-compact .vt-unit-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.vt-compact .vt-field-panel {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.vt-compact .vt-field-toolbar {
+  flex: 0 0 auto;
+  gap: 6px;
+  padding: 7px 9px;
+}
+
+.vt-compact .vt-field-toolbar .builder-action-btn {
+  min-height: 32px;
+  padding: 6px 9px;
+  font-size: 0.73rem;
+}
+
+.vt-compact .vt-field-toolbar > span {
+  flex-basis: 100px;
+  font-size: 0.75rem;
+}
+
+.vt-compact .vt-field-toolbar p.vt-muted {
+  font-size: 0.7rem;
+  line-height: 1.35;
+}
+
+.vt-compact .vt-board-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  padding: 8px;
+  overflow: auto;
+}
+
+.vt-compact .vt-field-help {
+  flex: 0 0 auto;
+  padding: 6px 9px;
+  font-size: 0.7rem;
+}
+
+.vt-compact .vt-details-panel {
+  display: flex;
+  grid-column: auto;
+  min-height: 0;
+  padding: 0;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ==========================================================================
+   Вкладки
+   ========================================================================== */
+
+.vt-tabs {
+  display: grid;
+  flex: 0 0 auto;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 3px;
+  padding: 7px;
+  background: rgba(0, 0, 0, 0.15);
+  border-bottom: 1px solid var(--border, #30303e);
+}
+
+.vt-tab {
+  min-width: 0;
+  min-height: 38px;
+  padding: 6px 3px;
+  color: var(--text-muted, #aaa6ba);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 0.73rem;
+  cursor: pointer;
+}
+
+.vt-tab:hover {
+  color: #fff;
+  background: rgba(108, 92, 231, 0.12);
+}
+
+.vt-tab[aria-selected="true"] {
+  color: #fff;
+  background: #6250bf;
+  border-color: #9e8aef;
+}
+
+.vt-tab-pane {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 13px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.vt-tab-pane[hidden] {
+  display: none !important;
+}
+
+.vt-tab-pane > h2:first-child,
+.vt-tab-pane > section > h2:first-child {
+  margin-top: 0;
+}
+
+/* ==========================================================================
+   Вкладка партии
+   ========================================================================== */
+
+#vt-pane-party .vt-load-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 9px;
+  margin-top: 16px;
+}
+
+#vt-pane-party .vt-load-field,
+#vt-pane-party .vt-load-field--side {
+  width: 100%;
+  max-width: none;
+}
+
+#vt-pane-party .vt-load-panel > button {
+  width: 100%;
+}
+
+#vt-pane-party .vt-notice {
+  margin: 12px 0;
+  font-size: 0.75rem;
+}
+
+#vt-pane-party [aria-label="Начало новой партии"] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  padding: 12px 0 0;
+  margin-top: 15px;
+  border-top: 1px solid var(--border, #30303e);
+  border-bottom: 0;
+}
+
+#vt-pane-party [aria-label="Начало новой партии"] > span {
+  color: var(--gold, #d1b384);
+  font-size: 0.9rem;
+}
+
+/* Убираем лишнюю внешнюю рамку вокруг всей миссии. */
+
+#vt-pane-mission > .vt-detail-block {
+  margin-top: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+}
+
+/* ==========================================================================
+   Планшет и мобильный экран
+   ========================================================================== */
+
+@media (max-width: 1250px) and (min-width: 1001px) {
+  .vt-compact .vt-layout {
+    grid-template-columns: 175px minmax(0, 1fr) 285px;
+  }
+
+  .vt-compact .vt-panel {
+    padding: 10px;
+  }
+
+  .vt-compact .vt-details-panel {
+    padding: 0;
+  }
+
+  .vt-tab {
+    font-size: 0.68rem;
+  }
+}
+
+@media (max-width: 1000px) {
+  .vt-compact .vt-layout {
+    height: auto;
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .vt-compact .vt-field-panel {
+    grid-row: 1;
+    height: 70vh;
+    min-height: 420px;
+  }
+
+  .vt-compact .vt-details-panel {
+    grid-row: 2;
+    height: 460px;
+  }
+
+  .vt-compact .vt-army-panel {
+    grid-row: 3;
+    max-height: 400px;
+  }
+
+  .vt-compact .vt-unit-list {
+    max-height: 280px;
+  }
+
+  .vt-tab {
+    min-height: 42px;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 600px) {
+  body.vt-compact {
+    padding: 8px;
+  }
+
+  .vt-compact .vt-header {
+    align-items: flex-start;
+  }
+
+  .vt-compact .vt-actions {
+    gap: 5px;
+  }
+
+  .vt-compact .vt-actions .builder-action-btn {
+    min-height: 34px;
+    padding: 6px 8px;
+    font-size: 0.7rem;
+  }
+
+  .vt-compact .vt-field-panel {
+    height: 75vh;
+    min-height: 440px;
+  }
+
+  .vt-compact .vt-details-panel {
+    height: 430px;
+  }
+
+  .vt-compact .vt-field-toolbar {
+    padding: 6px;
+  }
+
+  .vt-compact .vt-field-toolbar input[type="range"] {
+    width: 75px;
+  }
+}
+
+/* ==========================================================================
+   Компактные настройки поля
+   ========================================================================== */
+
+.vt-compact .vt-main-field-toolbar > #vt-field-summary {
+  flex: 1 1 140px;
+}
+
+.vt-field-settings {
+  flex: 0 0 auto;
+  min-width: 0;
+  border-bottom: 1px solid var(--border, #30303e);
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.vt-field-settings > summary {
+  min-height: 36px;
+  padding: 9px;
+  color: var(--text-muted, #aaa6ba);
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.vt-field-settings > summary:focus-visible {
+  outline: 2px solid #e5c78e;
+  outline-offset: -3px;
+}
+
+.vt-field-settings-content {
+  max-height: 180px;
+  padding: 0 9px 9px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.vt-field-scale {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.vt-field-scale label,
+.vt-field-scale output {
+  color: var(--text-muted, #aaa6ba);
+  font-size: 0.75rem;
+}
+
+.vt-field-scale input[type="range"] {
+  flex: 1 1 100px;
+  min-width: 70px;
+  max-width: 260px;
+  accent-color: var(--accent, #6c5ce7);
+}
+
+.vt-field-scale output {
+  min-width: 42px;
+  font-variant-numeric: tabular-nums;
+}
+
+.vt-field-settings-content > p {
+  margin: 9px 0 0;
+  font-size: 0.73rem;
+  line-height: 1.5;
+}
+
+.vt-compact .vt-field-tools {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.vt-compact .vt-field-tools > .builder-action-btn {
+  min-width: 0;
+  min-height: 38px;
+  padding: 7px 5px;
+}
+
+.vt-compact .vt-field-tools > #vt-field-tool-hint {
+  grid-column: 1 / -1;
+  min-width: 0;
+  color: var(--text-muted, #aaa6ba);
+  font-size: 0.72rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+/*
+ * Фильтры увеличивают высоту верхней части армии.
+ * На низком экране разрешаем прокрутку всей панели,
+ * сохраняя минимальную высоту списка.
+ */
+
+.vt-compact .vt-army-panel {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.vt-compact .vt-army-panel > :not(.vt-unit-list) {
+  flex-shrink: 0;
+}
+
+.vt-compact .vt-army-panel > .vt-unit-list {
+  flex: 1 0 140px;
+  min-height: 140px;
+}
+
+@media (max-width: 1000px) {
+  .vt-compact .vt-field-tools > .builder-action-btn {
+    min-height: 44px;
+  }
+
+  .vt-field-settings > summary {
+    min-height: 44px;
+    padding: 12px 9px;
+  }
+}

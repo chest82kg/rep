@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Личный кабинет — Мультиверс Тактикс</title>
+
+  <link rel="stylesheet" href="styles/main.css">
+  <link rel="stylesheet" href="styles/account.css">
+  <link rel="stylesheet" href="styles/builder.css">
+
+  <style>
+    .registration-legal {
+      min-width: 0;
+      margin: 4px 0 0;
+      padding: 14px;
+      border: 1px solid var(--border, #444);
+      border-radius: 8px;
+    }
+
+    .registration-legal legend {
+      padding: 0 6px;
+      color: var(--text, #eee);
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .registration-legal-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin: 10px 0;
+    }
+
+    .registration-legal-row input {
+      flex: 0 0 auto;
+      width: 18px;
+      height: 18px;
+      margin-top: 3px;
+      accent-color: var(--accent, #a29bfe);
+    }
+
+    .registration-legal-row label {
+      min-width: 0;
+      color: var(--text, #eee);
+      font-size: 0.9rem;
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+    }
+
+    .registration-legal a,
+    .auth-legal-note a {
+      color: var(--accent, #a29bfe);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .registration-legal a:focus-visible,
+    .auth-legal-note a:focus-visible,
+    .registration-legal-row input:focus-visible {
+      outline: 2px solid var(--accent, #a29bfe);
+      outline-offset: 3px;
+    }
+
+    .registration-legal-note,
+    .auth-legal-note {
+      color: var(--text-muted, #aaa);
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+
+    .auth-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .auth-buttons > button {
+      flex: 1 1 140px;
+    }
+  </style>
+</head>
+
+<body class="account-page">
+  <div class="nav-header">
+    <h1>👤 Личный кабинет</h1>
+
+    <a
+      href="index.html"
+      class="builder-action-btn"
+      style="text-decoration: none;"
+    >
+      🏠 На главную
+    </a>
+  </div>
+
+  <div id="auth-section" class="card">
+    <div
+      id="login-form"
+      style="display: flex; flex-direction: column; gap: 12px; max-width: 400px;"
+    >
+      <h2>Вход / Регистрация</h2>
+
+      <p style="color: var(--text-muted); margin-bottom: 8px;">
+        Для доступа к личному кабинету и сохранения статистики
+        воспользуйтесь аккаунтом.
+      </p>
+
+      <label for="email">Электронная почта</label>
+      <input
+        type="email"
+        id="email"
+        class="search-input"
+        placeholder="Email"
+        autocomplete="email"
+        autocapitalize="none"
+        spellcheck="false"
+      >
+
+      <label for="password">Пароль</label>
+      <input
+        type="password"
+        id="password"
+        class="search-input"
+        placeholder="Пароль"
+        autocomplete="current-password"
+      >
+
+      <fieldset
+        id="registration-legal"
+        class="registration-legal"
+        aria-describedby="registration-legal-note"
+      >
+        <legend>Условия регистрации</legend>
+
+        <p
+          id="registration-legal-note"
+          class="registration-legal-note"
+        >
+          Подтверждения необходимы при создании нового аккаунта.
+          Для обычного входа они не требуются.
+        </p>
+
+        <div class="registration-legal-row">
+          <input
+            type="checkbox"
+            id="register-terms"
+            name="register-terms"
+          >
+
+          <label for="register-terms">
+            Я принимаю
+            <a
+              href="terms.html"
+              target="_blank"
+              rel="noopener noreferrer"
+            >Пользовательское соглашение</a>.
+          </label>
+        </div>
+
+        <div class="registration-legal-row">
+          <input
+            type="checkbox"
+            id="register-consent"
+            name="register-consent"
+          >
+
+          <label for="register-consent">
+            Я даю
+            <a
+              href="personal-data-consent.html"
+              target="_blank"
+              rel="noopener noreferrer"
+            >согласие на обработку персональных данных</a>.
+            С
+            <a
+              href="privacy.html"
+              target="_blank"
+              rel="noopener noreferrer"
+            >Политикой конфиденциальности</a>
+            ознакомлен.
+          </label>
+        </div>
+      </fieldset>
+
+      <p class="auth-legal-note">
+        На указанный адрес направляются письма подтверждения почты,
+        восстановления доступа и необходимые уведомления безопасности.
+        Рекламных рассылок нет.
+      </p>
+
+      <div
+        id="auth-message"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      ></div>
+
+      <div class="auth-buttons">
+        <button
+          type="button"
+          id="btn-login"
+          class="builder-action-btn primary"
+        >
+          Войти
+        </button>
+
+        <button
+          type="button"
+          id="btn-register"
+          class="builder-action-btn"
+        >
+          Регистрация
+        </button>
+      </div>
+    </div>
+
+    <div
+      id="verify-notice"
+      class="hidden"
+      style="padding: 20px; background: rgba(255,165,2,0.1); border: 1px solid #ffa502; border-radius: 8px; text-align: center; margin-top: 16px;"
+    >
+      <h3 style="color: #ffa502; margin-bottom: 8px;">
+        ✉️ Требуется подтверждение почты
+      </h3>
+
+      <p style="color: var(--text); margin-bottom: 16px;">
+        Подтвердите адрес электронной почты по ссылке из письма.
+        Если письмо не пришло, проверьте папку «Спам»
+        или отправьте его повторно.
+        После подтверждения выйдите из аккаунта и войдите заново.
+      </p>
+
+      <div
+        id="verify-message"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      ></div>
+
+      <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 12px;">
+        <button
+          type="button"
+          id="btn-resend-verify"
+          class="builder-action-btn primary"
+          style="padding: 8px 16px;"
+        >
+          Отправить письмо повторно
+        </button>
+
+        <button
+          type="button"
+          id="btn-complete-registration"
+          class="builder-action-btn"
+          style="padding: 8px 16px;"
+        >
+          Завершить регистрацию
+        </button>
+
+        <button
+          type="button"
+          id="btn-verify-logout"
+          class="builder-action-btn"
+          style="background: #ff4757; color: #fff; border: none; padding: 8px 16px;"
+        >
+          Выйти / Войти в другой аккаунт
+        </button>
+      </div>
+
+      <p class="auth-legal-note" style="margin-top: 12px;">
+        Если при создании аккаунта не удалось сохранить подтверждения,
+        нажмите «Завершить регистрацию».
+      </p>
+    </div>
+  </div>
+
+  <div id="profile-section" class="card hidden">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+      <div>
+        <h2
+          id="user-email-title"
+          style="color: var(--accent);"
+        ></h2>
+
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">
+          Статус:
+          <span style="color: #2ed573;">
+            Email подтвержден ✅
+          </span>
+        </p>
+      </div>
+
+      <button
+        type="button"
+        id="btn-logout"
+        class="builder-action-btn"
+        style="background: #ff4757; color: #fff; border: none;"
+      >
+        Выйти из аккаунта
+      </button>
+    </div>
+
+    <h3 style="color: var(--gold);">📈 Игровая статистика</h3>
+
+    <div class="stat-grid">
+      <div class="stat-box">
+        <span class="stat-label">Всего партий</span>
+        <span class="stat-value" id="stat-total-games">0</span>
+      </div>
+
+      <div class="stat-box">
+        <span class="stat-label">Побед</span>
+        <span class="stat-value win" id="stat-wins">0</span>
+      </div>
+
+      <div class="stat-box">
+        <span class="stat-label">Поражений</span>
+        <span class="stat-value loss" id="stat-losses">0</span>
+      </div>
+
+      <div class="stat-box">
+        <span class="stat-label">Ничьих</span>
+        <span class="stat-value draw" id="stat-draws">0</span>
+      </div>
+
+      <div class="stat-box">
+        <span class="stat-label">Winrate</span>
+        <span class="stat-value" id="stat-winrate">—</span>
+      </div>
+
+      <div class="stat-box">
+        <span class="stat-label">Любимый клан</span>
+        <span
+          class="stat-value small"
+          id="stat-fav-clan"
+          style="display: block; margin-top: 8px;"
+        >—</span>
+      </div>
+    </div>
+
+    <div
+      id="local-matches-block"
+      class="hidden"
+      style="margin-top: 24px; padding: 16px; background: rgba(108,92,231,0.08); border: 1px solid rgba(108,92,231,0.4); border-radius: 8px;"
+    >
+      <h3 style="color: #a29bfe; margin-bottom: 8px;">
+        📦 Локальные матчи (не в облаке)
+      </h3>
+
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 12px;">
+        Вы играли как гость. Эти матчи сохранены только
+        в этом браузере. Можно перенести их в облако.
+      </p>
+
+      <div
+        id="local-matches-list"
+        style="margin-bottom: 12px;"
+      ></div>
+
+      <button
+        type="button"
+        id="btn-migrate-local"
+        class="builder-action-btn primary"
+      >
+        ☁️ Перенести все в облако
+      </button>
+
+      <button
+        type="button"
+        id="btn-clear-local"
+        class="builder-action-btn"
+        style="background: rgba(255,71,87,0.15); border-color: #ff4757; color: #ff4757;"
+      >
+        🗑 Очистить локальные
+      </button>
+
+      <div
+        id="migrate-message"
+        role="status"
+        aria-live="polite"
+      ></div>
+    </div>
+
+    <h3 style="color: var(--gold); margin-top: 32px; margin-bottom: 12px;">
+      ➕ Добавить сыгранный матч вручную
+    </h3>
+
+    <div
+      class="form-grid"
+      style="background: rgba(0,0,0,0.2); padding: 16px; border-radius: 8px; border: 1px solid var(--border);"
+    >
+      <div class="form-group">
+        <label for="match-opponent">Имя оппонента:</label>
+        <input
+          type="text"
+          id="match-opponent"
+          class="search-input"
+          placeholder="Например: игровой псевдоним"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="match-rank">Ранг оппонента:</label>
+        <input
+          type="text"
+          id="match-rank"
+          class="search-input"
+          placeholder="Например: Ветеран / 2 ранг"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="match-faction">Клан, за который вы играли:</label>
+        <select id="match-faction" class="search-input">
+          <option value="Кхад‑Дарум: Клан Железной Кузни">Кхад‑Дарум: Клан Железной Кузни</option>
+          <option value="Кхад‑Дарум: Клан Глубоких Троп">Кхад‑Дарум: Клан Глубоких Троп</option>
+          <option value="Кхад‑Дарум: Клан Рунных Кузнецов">Кхад‑Дарум: Клан Рунных Кузнецов</option>
+          <option value="Арафия: Клан Скорпионов">Арафия: Клан Скорпионов</option>
+          <option value="Арафия: Клан Барханов">Арафия: Клан Барханов</option>
+          <option value="Арафия: Клан Костяных Шаманов">Арафия: Клан Костяных Шаманов</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="match-opponent-clan">Клан оппонента:</label>
+        <select id="match-opponent-clan" class="search-input">
+          <option value="">-- Не указан --</option>
+          <option value="Кхад‑Дарум: Клан Железной Кузни">Кхад‑Дарум: Клан Железной Кузни</option>
+          <option value="Кхад‑Дарум: Клан Глубоких Троп">Кхад‑Дарум: Клан Глубоких Троп</option>
+          <option value="Кхад‑Дарум: Клан Рунных Кузнецов">Кхад‑Дарум: Клан Рунных Кузнецов</option>
+          <option value="Арафия: Клан Скорпионов">Арафия: Клан Скорпионов</option>
+          <option value="Арафия: Клан Барханов">Арафия: Клан Барханов</option>
+          <option value="Арафия: Клан Костяных Шаманов">Арафия: Клан Костяных Шаманов</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="match-result">Результат:</label>
+        <select id="match-result" class="search-input">
+          <option value="win">🏆 Победа</option>
+          <option value="loss">💀 Поражение</option>
+          <option value="draw">🤝 Ничья</option>
+        </select>
+      </div>
+
+      <div
+        class="form-group"
+        style="grid-column: 1 / -1; display: flex; justify-content: flex-end; margin-top: 8px;"
+      >
+        <button
+          type="button"
+          id="btn-save-match"
+          class="builder-action-btn primary"
+        >
+          Сохранить матч
+        </button>
+      </div>
+    </div>
+
+    <div
+      id="match-message"
+      role="status"
+      aria-live="polite"
+    ></div>
+
+    <h3 style="color: var(--gold); margin-top: 32px; margin-bottom: 12px;">
+      📜 История игр
+    </h3>
+
+    <div id="match-history-list">
+      <p style="color: var(--text-muted);">
+        История матчей пока пуста.
+      </p>
+    </div>
+
+    <h3 style="color: var(--gold); margin-top: 32px; margin-bottom: 12px;">
+      💾 Ваши сохраненные ростера
+    </h3>
+
+    <div id="cloud-rosters-list">
+      <p style="color: var(--text-muted);">
+        Загрузка ростеров...
+      </p>
+    </div>
+
+    <h3 style="color: var(--gold); margin-top: 32px; margin-bottom: 12px;">
+      🧹 Очистка комнат
+    </h3>
+
+    <div style="background: rgba(0,0,0,0.2); padding: 16px; border-radius: 8px; border: 1px solid var(--border);">
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 12px;">
+        Комнаты для игры с оппонентом.
+        Здесь можно удалить свои старые комнаты (старше 6 часов),
+        чтобы не копились в базе.
+        Комнаты, где вы гость, будут только отписаны —
+        их удалит хост.
+      </p>
+
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <button
+          type="button"
+          id="btn-rooms-scan"
+          class="builder-action-btn"
+        >
+          🔍 Найти старые комнаты
+        </button>
+
+        <button
+          type="button"
+          id="btn-rooms-delete-old"
+          class="builder-action-btn primary"
+        >
+          🧹 Удалить старые
+        </button>
+
+        <button
+          type="button"
+          id="btn-rooms-delete-all"
+          class="builder-action-btn"
+          style="background: rgba(255,71,87,0.15); border-color: #ff4757; color: #ff4757;"
+        >
+          🗑 Удалить все мои
+        </button>
+      </div>
+
+      <div
+        id="rooms-cleanup-stats"
+        style="margin-top: 12px;"
+      ></div>
+
+      <div
+        id="rooms-cleanup-message"
+        role="status"
+        aria-live="polite"
+        style="margin-top: 12px;"
+      ></div>
+    </div>
+  </div>
+
+  <!-- Просмотр ростера -->
+  <div id="roster-preview-modal" class="builder-modal hidden">
+    <div class="builder-modal-content">
+      <button
+        type="button"
+        class="builder-modal-close"
+        onclick="closeRosterPreview()"
+        aria-label="Закрыть просмотр ростера"
+      >
+        &times;
+      </button>
+
+      <div id="roster-preview-body"></div>
+    </div>
+  </div>
+
+  <script type="module" src="src/account/index.js"></script>
+
+  <footer class="site-footer">
+    <div class="site-footer-content">
+      <div class="site-footer-links">
+        <a href="about.html">ℹ️ О вселенной МТ</a>
+        <a href="privacy.html">📜 Политика обработки персональных данных</a>
+        <a href="terms.html">📋 Пользовательское соглашение</a>
+        <a href="cookies.html">🍪 Cookie и локальное хранение</a>
+        <a href="personal-data-consent.html">✅ Согласие на обработку данных</a>
+      </div>
+
+      <div class="site-footer-copy">
+        © 2026 Мультиверс Тактикс. Все права защищены.
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

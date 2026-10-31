@@ -1,0 +1,613 @@
+/* ==========================================================================
+   Content
+   Базовые стили статей: типографика, таблицы, изображения, примеры,
+   теги, tooltip и читаемость длинного текста.
+   ========================================================================== */
+
+/* ==========================================================================
+   Статьи базы знаний
+   ========================================================================== */
+
+.kb-content {
+  padding-bottom: 20px;
+}
+
+.kb-content h1 {
+  padding-bottom: 13px;
+  margin-bottom: 20px;
+  color: #f0edf5;
+  font-size: clamp(1.7rem, 4vw, 2.25rem);
+  line-height: 1.18;
+  border-bottom: 1px solid var(--border);
+}
+
+.kb-content h1::after {
+  display: block;
+  width: 104px;
+  height: 2px;
+  margin-top: 13px;
+  content: "";
+  background: linear-gradient(90deg, var(--gold), var(--accent), transparent);
+}
+
+.article-body {
+  min-width: 0;
+  animation: fadeIn 0.32s ease-out both;
+}
+
+.article-body > h2:first-child {
+  margin-top: 0;
+}
+
+.kb-content h2 {
+  padding-bottom: 8px;
+  margin: 40px 0 15px;
+  color: var(--gold);
+  font-size: clamp(1.3rem, 3vw, 1.65rem);
+  font-weight: 700;
+  line-height: 1.25;
+  border-bottom: 1px solid rgba(209, 179, 132, 0.16);
+}
+
+.kb-content h3 {
+  margin: 28px 0 11px;
+  color: var(--gold) !important;
+  font-size: clamp(1.08rem, 2.4vw, 1.3rem) !important;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.kb-content h4 {
+  position: relative;
+  padding-left: 12px;
+  margin: 23px 0 10px;
+  color: var(--accent-light);
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.kb-content h4::before {
+  position: absolute;
+  top: 0.32em;
+  left: 0;
+  width: 4px;
+  height: 1.1em;
+  content: "";
+  background: var(--accent);
+  border-radius: 4px;
+}
+
+.kb-content p {
+  margin-bottom: 17px;
+  line-height: 1.78;
+}
+
+.kb-content ul,
+.kb-content ol {
+  padding-left: 25px;
+  margin-bottom: 18px;
+}
+
+.kb-content li {
+  padding-left: 2px;
+  margin-bottom: 8px;
+}
+
+.kb-content li::marker {
+  color: var(--accent-light);
+}
+
+.kb-content li > ul,
+.kb-content li > ol {
+  padding-top: 8px;
+  margin-top: 6px;
+  margin-bottom: 3px;
+}
+
+.kb-content strong,
+.kb-content b {
+  color: var(--accent-light);
+  font-weight: 700;
+}
+
+.kb-content em {
+  color: var(--text-muted);
+}
+
+.kb-content hr {
+  height: 1px;
+  margin: 30px 0;
+  background: var(--border);
+  border: none;
+}
+
+.lore-quote {
+  position: relative;
+  padding: 15px 18px;
+  margin: 21px 0;
+  color: var(--text-muted);
+  font-style: italic;
+  line-height: 1.7;
+  background:
+    linear-gradient(90deg, rgba(108, 92, 231, 0.09), transparent),
+    var(--bg-panel);
+  border: 1px solid rgba(108, 92, 231, 0.15);
+  border-left: 4px solid var(--accent);
+  border-radius: 0 9px 9px 0;
+}
+
+/* ==========================================================================
+   Таблицы
+   ========================================================================== */
+
+/*
+  Важно: table остаётся настоящей таблицей.
+  Нельзя задавать ей display: block — это ломает расчёт колонок.
+*/
+
+.kb-content table,
+.builder-modal-content table {
+  width: 100% !important;
+  margin: 18px 0 24px !important;
+  color: var(--text);
+  line-height: 1.5;
+  background:
+    linear-gradient(135deg, rgba(108, 92, 231, 0.05), transparent 46%),
+    var(--bg-panel) !important;
+  border: 1px solid var(--border) !important;
+  border-spacing: 0;
+  border-collapse: separate !important;
+  border-radius: 10px;
+  box-shadow: var(--shadow-sm);
+}
+
+.kb-content thead,
+.builder-modal-content thead {
+  background: rgba(108, 92, 231, 0.1);
+}
+
+.kb-content th,
+.builder-modal-content th {
+  padding: 11px 12px !important;
+  color: var(--gold);
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.35;
+  text-align: left;
+  vertical-align: top;
+  letter-spacing: 0.01em;
+  border-bottom: 1px solid rgba(209, 179, 132, 0.3) !important;
+}
+
+.kb-content td,
+.builder-modal-content td {
+  padding: 10px 12px !important;
+  font-size: 0.9rem;
+  vertical-align: top;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07) !important;
+}
+
+.kb-content tbody tr:last-child td,
+.builder-modal-content tbody tr:last-child td {
+  border-bottom: none !important;
+}
+
+.kb-content tbody tr {
+  transition: background 0.14s ease;
+}
+
+.kb-content tbody tr:hover {
+  background: rgba(108, 92, 231, 0.06);
+}
+
+.kb-content td strong,
+.builder-modal-content td strong {
+  color: #f0edf5;
+}
+
+/* ==========================================================================
+   Изображения и примеры
+   ========================================================================== */
+
+.rule-image,
+.kb-content img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 20px 0 24px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  box-shadow: var(--shadow-sm);
+}
+
+.rule-image {
+  padding: 2px;
+}
+
+.kb-content img[alt*="поле"],
+.kb-content img[alt*="Тайлы"],
+.kb-content img[alt*="Расстановка"],
+.kb-content img[alt*="Эвакуация"] {
+  background:
+    linear-gradient(135deg, rgba(108, 92, 231, 0.09), transparent 46%),
+    var(--bg-panel);
+}
+
+.rule-example {
+  padding: 12px 15px;
+  margin: 18px 0;
+  background:
+    linear-gradient(135deg, rgba(108, 92, 231, 0.075), transparent 65%),
+    rgba(0, 0, 0, 0.18);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 9px;
+}
+
+.rule-example summary {
+  color: var(--accent-light);
+  font-size: 0.92rem;
+  font-weight: 750;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.rule-example summary::-webkit-details-marker {
+  display: none;
+}
+
+.rule-example summary::before {
+  display: inline-block;
+  margin-right: 7px;
+  content: "▸";
+  transition: transform 0.15s ease;
+}
+
+.rule-example[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.rule-example > div {
+  padding-top: 11px;
+  margin-top: 11px;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  line-height: 1.65;
+  border-top: 1px solid var(--border);
+}
+
+/* ==========================================================================
+   Теги и подсказки терминов
+   ========================================================================== */
+
+.kb-content .aos-tag,
+.builder-modal-content .aos-tag {
+  display: inline-flex;
+  padding: 1px 6px;
+  margin: 0 1px;
+  color: #ddd9ff;
+  font-size: 0.82em;
+  font-style: normal;
+  font-weight: 750;
+  line-height: 1.45;
+  white-space: nowrap;
+  background: rgba(108, 92, 231, 0.16);
+  border: 1px solid rgba(162, 155, 254, 0.38);
+  border-radius: 5px;
+}
+
+.tooltip-term {
+  position: relative;
+  color: #d8d3ff;
+  font-weight: 650;
+  cursor: help;
+  text-decoration-line: underline;
+  text-decoration-color: rgba(162, 155, 254, 0.55);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: color 0.15s ease, text-decoration-color 0.15s ease;
+}
+
+.tooltip-term:hover,
+.tooltip-term:focus {
+  color: #fff;
+  text-decoration-color: var(--gold);
+  outline: none;
+}
+
+.tooltip-term::before,
+.tooltip-term::after {
+  position: absolute;
+  z-index: 15000;
+  left: 50%;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-50%, 5px);
+  transition:
+    opacity 0.16s ease,
+    transform 0.16s ease,
+    visibility 0s linear 0.16s;
+}
+
+.tooltip-term::before {
+  bottom: calc(100% + 8px);
+  width: 0;
+  height: 0;
+  content: "";
+  border-top: 6px solid var(--tooltip-bg);
+  border-right: 6px solid transparent;
+  border-left: 6px solid transparent;
+}
+
+.tooltip-term::after {
+  bottom: calc(100% + 14px);
+  width: max-content;
+  max-width: min(330px, calc(100vw - 28px));
+  padding: 10px 12px;
+  color: var(--tooltip-text);
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 1.48;
+  text-align: left;
+  text-decoration: none;
+  white-space: normal;
+  content: attr(data-tooltip);
+  background:
+    linear-gradient(135deg, rgba(108, 92, 231, 0.16), transparent 70%),
+    var(--tooltip-bg);
+  border: 1px solid rgba(162, 155, 254, 0.48);
+  border-radius: 8px;
+  box-shadow: var(--shadow-md);
+}
+
+.tooltip-term:hover::before,
+.tooltip-term:hover::after,
+.tooltip-term:focus::before,
+.tooltip-term:focus::after {
+  visibility: visible;
+  opacity: 1;
+  transform: translate(-50%, 0);
+  transition:
+    opacity 0.16s ease,
+    transform 0.16s ease,
+    visibility 0s;
+}
+
+.tooltip-term.tooltip-below::before {
+  top: calc(100% + 8px);
+  bottom: auto;
+  border-top: none;
+  border-bottom: 6px solid var(--tooltip-bg);
+}
+
+.tooltip-term.tooltip-below::after {
+  top: calc(100% + 14px);
+  bottom: auto;
+}
+
+.tooltip-term.tooltip-shift-left::before,
+.tooltip-term.tooltip-shift-left::after {
+  right: 0;
+  left: auto;
+  transform: translate(0, 5px);
+}
+
+.tooltip-term.tooltip-shift-left:hover::before,
+.tooltip-term.tooltip-shift-left:hover::after {
+  transform: translate(0, 0);
+}
+
+.tooltip-term.tooltip-shift-left::before {
+  right: 8px;
+}
+
+.tooltip-term.tooltip-shift-right::before,
+.tooltip-term.tooltip-shift-right::after {
+  right: auto;
+  left: 0;
+  transform: translate(0, 5px);
+}
+
+.tooltip-term.tooltip-shift-right:hover::before,
+.tooltip-term.tooltip-shift-right:hover::after {
+  transform: translate(0, 0);
+}
+
+.tooltip-term.tooltip-shift-right::before {
+  left: 8px;
+}
+
+/* ==========================================================================
+   Читаемость длинных статей
+   ========================================================================== */
+
+.article-body > p,
+.article-body > ul,
+.article-body > ol,
+.article-body > blockquote,
+.article-body > details,
+.article-body > h2,
+.article-body > h3,
+.article-body > h4 {
+  max-width: 76ch;
+}
+
+.article-body > p {
+  text-wrap: pretty;
+}
+
+.article-body > p + h2,
+.article-body > ul + h2,
+.article-body > ol + h2,
+.article-body > details + h2 {
+  margin-top: 46px;
+}
+
+.kb-content li > ul,
+.kb-content li > ol {
+  padding-left: 22px;
+  border-left: 1px solid rgba(162, 155, 254, 0.2);
+}
+
+/* ==========================================================================
+   ЧАВО
+   ========================================================================== */
+
+.faq-list {
+  display: grid;
+  gap: 10px;
+  max-width: 76ch;
+  margin: 22px 0;
+}
+
+.faq-item {
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(108, 92, 231, 0.08), transparent 65%),
+    var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.faq-item:hover,
+.faq-item[open] {
+  border-color: rgba(162, 155, 254, 0.42);
+  box-shadow: var(--shadow-sm);
+}
+
+.faq-item summary {
+  display: flex;
+  gap: 11px;
+  padding: 14px 16px;
+  color: var(--text);
+  font-weight: 750;
+  line-height: 1.5;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  align-items: center;
+}
+
+.faq-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq-item summary::before {
+  display: grid;
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  color: var(--accent-light);
+  font-size: 0.88rem;
+  font-weight: 800;
+  line-height: 1;
+  content: "+";
+  background: rgba(108, 92, 231, 0.18);
+  border: 1px solid rgba(162, 155, 254, 0.38);
+  border-radius: 50%;
+  transition: transform 0.16s ease, background 0.16s ease;
+  place-items: center;
+}
+
+.faq-item[open] summary::before {
+  color: #2a210f;
+  content: "−";
+  background: var(--gold);
+  border-color: var(--gold);
+}
+
+.faq-answer {
+  padding: 13px 16px 15px 49px;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+}
+
+.faq-answer p {
+  margin: 0;
+  line-height: 1.7;
+}
+
+.faq-answer strong {
+  color: #f1dfbd;
+}
+
+/* ==========================================================================
+   Лор и начало
+   Нарративные статьи получают лёгкие акценты без превращения текста в набор
+   карточек: основной тон остаётся спокойным и литературным.
+   ========================================================================== */
+
+.lore-article {
+  max-width: 76ch;
+}
+
+.lore-article > h2 {
+  margin-top: 0;
+}
+
+.lore-lead {
+  padding: 16px 18px;
+  margin: 20px 0 24px !important;
+  color: #e4e0ed;
+  font-size: 1.03rem;
+  line-height: 1.8 !important;
+  background:
+    linear-gradient(100deg, rgba(108, 92, 231, 0.1), transparent 72%),
+    rgba(18, 18, 26, 0.45);
+  border: 1px solid rgba(162, 155, 254, 0.2);
+  border-left: 4px solid var(--accent);
+  border-radius: 0 10px 10px 0;
+}
+
+.lore-article--rhythm .lore-lead {
+  background:
+    linear-gradient(100deg, rgba(120, 102, 181, 0.13), transparent 72%),
+    rgba(18, 18, 26, 0.45);
+  border-left-color: #8d78df;
+}
+
+.lore-article--stitcher .lore-lead {
+  background:
+    linear-gradient(100deg, rgba(189, 139, 80, 0.1), transparent 72%),
+    rgba(18, 18, 26, 0.45);
+  border-left-color: #bd8b50;
+}
+
+.lore-article .lore-quote {
+  max-width: none;
+  margin: 26px 0;
+  font-size: 1.04rem;
+}
+
+.lore-ending {
+  padding: 3px 18px 1px;
+  margin: 28px 0 0;
+  background:
+    linear-gradient(100deg, rgba(209, 179, 132, 0.07), transparent 72%),
+    rgba(18, 18, 26, 0.34);
+  border-top: 1px solid rgba(209, 179, 132, 0.22);
+  border-bottom: 1px solid rgba(209, 179, 132, 0.14);
+}
+
+.lore-ending p:first-child {
+  margin-top: 17px;
+}
+
+.lore-ending p:last-child {
+  margin-bottom: 17px;
+}
+
+.lore-article--rhythm .lore-ending {
+  border-top-color: rgba(141, 120, 223, 0.3);
+  border-bottom-color: rgba(141, 120, 223, 0.18);
+}
+
+.lore-article--stitcher .lore-ending {
+  border-top-color: rgba(189, 139, 80, 0.32);
+  border-bottom-color: rgba(189, 139, 80, 0.18);
+}
