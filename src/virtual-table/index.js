@@ -8,6 +8,11 @@ import { ARTIFACTS_LIST } from '../content/artifacts.js';
 import { escapeHtml } from '../utils/escape.js';
 
 import {
+  initModelDice,
+  renderModelDice
+} from './dice.js';
+
+import {
   initTerrainEditor,
   renderTerrainEditor,
   handleTerrainClick,
@@ -1173,6 +1178,7 @@ function render() {
   renderTableDeployment(state?.deployment);
   renderTableMapMarkers(state?.mapMarkers);
   renderSelectedModelPanel();
+  renderModelDice();
   renderRounds();
   renderTableScenario(state?.scenario);
   updateModelContext();
@@ -2261,6 +2267,20 @@ $('vt-zoom').addEventListener('input', applyZoom);
 /* ==========================================================================
    Инициализация модулей
    ========================================================================== */
+
+initModelDice({
+  getState: () => state,
+  getSelectedUnit: selectedUnit,
+
+  // Только существующий локальный режим:
+  // обе армии управляются с одного устройства.
+  //
+  // При подключении комнаты здесь будет проверка
+  // закреплённой за аккаунтом стороны.
+  canRoll: () => true,
+
+  message
+});
 
 initTerrainEditor({
   getState: () => state,
