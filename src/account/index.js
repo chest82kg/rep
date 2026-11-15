@@ -4,7 +4,7 @@ import { auth } from '../core/firebase.js';
 
 import {
   onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+} from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 
 import {
   initAuthUI,
@@ -20,6 +20,7 @@ import {
   setCurrentUser,
   loadUserData,
   nextGeneration,
+  getGeneration,
   closeRosterPreview
 } from './profile.js';
 
@@ -35,7 +36,11 @@ initMatchesUI();
 initRoomsCleanupUI();
 
 onAuthStateChanged(auth, async user => {
-  const gen = nextGeneration();
+  // Любая смена Auth-состояния инвалидирует все незавершённые
+  // загрузки и действия предыдущего пользователя.
+  const generation = nextGeneration();
+
+  closeRosterPreview();
 
   if (!user) {
     setCurrentUser(null);
@@ -51,7 +56,7 @@ onAuthStateChanged(auth, async user => {
 
   // Восстановление незавершённой регистрации в этом браузере.
   // Это не серверное ограничение доступа и не требование
-  // повторного согласия для всех существующих аккаунтов.
+  // повторного согласия для существующих аккаунтов.
   if (registrationNeedsCompletion(user)) {
     setCurrentUser(null);
     showRegistrationCompletion(user);
@@ -67,7 +72,14 @@ onAuthStateChanged(auth, async user => {
   setCurrentUser(user);
   showProfile(user.email);
 
-  await loadUserData(user.uid, gen);
+  await loadUserData(user.uid, generation);
+
+  // Пока ожидали Firestore, пользователь мог выйти,
+  // подтвердить другую учётную запись или сменить её.
+  if (generation !== getGeneration()) {
+    return;
+  }
+
   renderLocalMatches();
 });
 

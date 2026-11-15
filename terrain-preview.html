@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Тест рельефа — Мультиверс Тактикс</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: system-ui, sans-serif;
+      background: #171d21;
+      color: #e5e6dc;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 24px;
+    }
+
+    main {
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(22px, 4vw, 32px);
+    }
+
+    p {
+      line-height: 1.5;
+    }
+
+    .muted {
+      color: #abb6b8;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      padding: 16px;
+      background: #232c31;
+      border: 1px solid #455158;
+      border-radius: 10px;
+    }
+
+    .controls label {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    input[type="file"] {
+      max-width: 100%;
+    }
+
+    button {
+      color: #e5e6dc;
+      background: #334448;
+      border: 1px solid #718c8a;
+      padding: 9px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #40575a;
+    }
+
+    button:focus-visible {
+      outline: 3px solid #9ee2d1;
+      outline-offset: 3px;
+    }
+
+    .viewport {
+      margin-top: 16px;
+      overflow: auto;
+      border: 1px solid #455158;
+      border-radius: 12px;
+      background:
+        radial-gradient(ellipse at center, #303a3d, #171d21 75%);
+    }
+
+    svg {
+      display: block;
+      width: 100%;
+      min-width: 620px;
+      height: auto;
+    }
+
+    .surface {
+      stroke: #303c33;
+      stroke-width: 1.2;
+      stroke-linejoin: round;
+    }
+
+    .wall {
+      stroke: #31392c;
+      stroke-width: 1;
+      stroke-linejoin: round;
+    }
+
+    .height-label {
+      fill: #f8f2d9;
+      font-size: 12px;
+      font-weight: 800;
+      text-anchor: middle;
+      paint-order: stroke;
+      stroke: #202925;
+      stroke-width: 4px;
+      stroke-linejoin: round;
+      pointer-events: none;
+    }
+
+    .cell {
+      cursor: pointer;
+    }
+
+    .cell:hover .surface {
+      stroke: #d7e6bd;
+      stroke-width: 2;
+    }
+
+    .cell:focus {
+      outline: none;
+    }
+
+    .cell:focus-visible .surface,
+    .cell.selected .surface {
+      stroke: #a0ecdb;
+      stroke-width: 3;
+    }
+
+    .model {
+      pointer-events: none;
+    }
+
+    .inspector {
+      margin-top: 16px;
+      padding: 16px;
+      min-height: 130px;
+      background: #232c31;
+      border: 1px solid #455158;
+      border-radius: 10px;
+    }
+
+    .inspector h2 {
+      margin-top: 0;
+      font-size: 18px;
+    }
+
+    #selection {
+      white-space: pre-line;
+      line-height: 1.6;
+    }
+
+    #texture-status {
+      min-height: 24px;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 12px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <h1>Мультиверс Тактикс · тест изометрического рельефа</h1>
+
+    <p class="muted">
+      Отдельный визуальный прототип. Не подключается к комнате,
+      не читает сохранения и не изменяет партию.
+    </p>
+
+    <section class="controls" aria-label="Настройки просмотра">
+      <label>
+        Выбрать текстуру луга
+        <input id="texture" type="file" accept="image/*">
+      </label>
+
+      <label>
+        Высота ступени
+        <input
+          id="height-scale"
+          type="range"
+          min="10"
+          max="42"
+          value="24"
+        >
+        <output id="height-value">24 px</output>
+      </label>
+
+      <label>
+        <input id="show-labels" type="checkbox" checked>
+        Числа высоты
+      </label>
+
+      <button id="move-model" type="button">
+        Переставить тестовую модель
+      </button>
+    </section>
+
+    <p id="texture-status" class="muted" role="status"></p>
+
+    <div class="viewport">
+      <svg
+        id="scene"
+        viewBox="0 0 1000 740"
+        role="group"
+        aria-label="Тестовая карта пять на пять клеток"
+      ></svg>
+    </div>
+
+    <section class="inspector">
+      <h2>Осмотр клетки</h2>
+      <div id="selection" role="status" aria-live="polite">
+        Нажми на верхнюю поверхность клетки.
+      </div>
+    </section>
+
+    <p class="muted">
+      Карта: базовый луг высоты 0; в правом дальнем участке —
+      тайл собственной высоты +1; поверх одной его клетки —
+      ещё один тайл +1. Итоговая высота вершины равна 2.
+      Боковые стенки ниже уровня 0 — условная подставка,
+      а не дополнительная игровая высота.
+    </p>
+  </main>
+
+  <script type="module">
+    const NS = 'http://www.w3.org/2000/svg';
+
+    const svg = document.getElementById('scene');
+    const textureInput = document.getElementById('texture');
+    const textureStatus = document.getElementById('texture-status');
+    const heightInput = document.getElementById('height-scale');
+    const heightValue = document.getElementById('height-value');
+    const labelsInput = document.getElementById('show-labels');
+    const selectionOutput = document.getElementById('selection');
+
+    const SIZE = 5;
+    const TILE = 112;
+    const ORIGIN_X = 500;
+    const ORIGIN_Y = 160;
+
+    let textureUrl = '';
+    let textureRequest = 0;
+    let step = Number(heightInput.value);
+    let selected = null;
+    let modelIndex = 0;
+
+    const modelPositions = [
+      { x: 1, y: 3 },
+      { x: 3, y: 1 },
+      { x: 4, y: 4 }
+    ];
+
+    function element(name, attributes = {}, text = '') {
+      const result = document.createElementNS(NS, name);
+
+      for (const [key, value] of Object.entries(attributes)) {
+        result.setAttribute(key, String(value));
+      }
+
+      if (text) result.textContent = text;
+
+      return result;
+    }
+
+    function layersAt(x, y) {
+      const layers = [
+        { name: 'Базовый луг', height: 0 }
+      ];
+
+      if (x >= 2 && y <= 2) {
+        layers.push({
+          name: 'Верхний луговой тайл',
+          height: 1
+        });
+      }
+
+      if (x === 3 && y === 1) {
+        layers.push({
+          name: 'Малый тайл поверх верхнего',
+          height: 1
+        });
+      }
+
+      return layers;
+    }
+
+    function heightAt(x, y) {
+      return layersAt(x, y).reduce(
+        (sum, layer) => sum + layer.height,
+        0
+      );
+    }
+
+    function project(x, y, height = 0) {
+      return [
+        ORIGIN_X + (x - y) * TILE / 2,
+        ORIGIN_Y + (x + y) * TILE / 4 - height * step
+      ];
+    }
+
+    function points(vertices) {
+      return vertices.map(point => point.join(',')).join(' ');
+    }
+
+    function inspect(x, y) {
+      selected = { x, y };
+
+      const layers = layersAt(x, y);
+      const coordinate = `${'ABCDE'[x]}${y + 1}`;
+
+      selectionOutput.textContent =
+        `Клетка ${coordinate}\n` +
+        `Итоговая высота: ${heightAt(x, y)}\n` +
+        'Слои сверху вниз:\n' +
+        [...layers].reverse().map(layer =>
+          `• ${layer.name}: ` +
+          `${layer.height > 0 ? '+' : ''}${layer.height}`
+        ).join('\n');
+
+      svg.querySelectorAll('.cell').forEach(cell => {
+        cell.classList.toggle(
+          'selected',
+          cell.dataset.x === String(x) &&
+          cell.dataset.y === String(y)
+        );
+      });
+    }
+
+    function appendModel(parent, x, y, height) {
+      const [cx, cy] = project(x + 0.5, y + 0.5, height);
+
+      const group = element('g', {
+        class: 'model',
+        'aria-hidden': 'true'
+      });
+
+      group.append(
+        element('ellipse', {
+          cx,
+          cy: cy + 2,
+          rx: 15,
+          ry: 7,
+          fill: '#101a1d',
+          stroke: '#a0ecdb',
+          'stroke-width': 2
+        }),
+
+        element('path', {
+          d:
+            `M ${cx - 10} ${cy - 3} ` +
+            `L ${cx - 7} ${cy - 23} ` +
+            `L ${cx + 7} ${cy - 23} ` +
+            `L ${cx + 10} ${cy - 3} Z`,
+          fill: '#69a99d',
+          stroke: '#162c2b',
+          'stroke-width': 2
+        }),
+
+        element('circle', {
+          cx,
+          cy: cy - 30,
+          r: 7,
+          fill: '#e0d8bc',
+          stroke: '#162c2b',
+          'stroke-width': 2
+        })
+      );
+
+      parent.append(group);
+    }
+
+    function render() {
+      svg.replaceChildren();
+
+      const defs = element('defs');
+
+      const pattern = element('pattern', {
+        id: 'grass',
+        patternUnits: 'userSpaceOnUse',
+        width: TILE * 4,
+        height: TILE * 4
+      });
+
+      if (textureUrl) {
+        pattern.append(
+          element('image', {
+            href: textureUrl,
+            x: 0,
+            y: 0,
+            width: TILE * 4,
+            height: TILE * 4,
+            preserveAspectRatio: 'none'
+          })
+        );
+      } else {
+        pattern.append(
+          element('rect', {
+            width: TILE * 4,
+            height: TILE * 4,
+            fill: '#7f8853'
+          })
+        );
+      }
+
+      defs.append(pattern);
+      svg.append(defs);
+
+      const cells = [];
+
+      for (let y = 0; y < SIZE; y += 1) {
+        for (let x = 0; x < SIZE; x += 1) {
+          cells.push({ x, y });
+        }
+      }
+
+      // Для этой демонстрационной карты:
+      // рисуем от дальних клеток к ближним.
+      // Это не универсальный алгоритм для любого рельефа.
+      cells.sort((a, b) =>
+        (a.x + a.y) - (b.x + b.y) || a.x - b.x
+      );
+
+      const model = modelPositions[modelIndex];
+
+      for (const { x, y } of cells) {
+        const height = heightAt(x, y);
+
+        const top = project(x, y, height);
+        const right = project(x + 1, y, height);
+        const bottom = project(x + 1, y + 1, height);
+        const left = project(x, y + 1, height);
+
+        const group = element('g', {
+          class: 'cell',
+          tabindex: 0,
+          role: 'button',
+          'aria-label':
+            `Клетка ${'ABCDE'[x]}${y + 1}, высота ${height}`,
+          'data-x': x,
+          'data-y': y
+        });
+
+        if (selected?.x === x && selected?.y === y) {
+          group.classList.add('selected');
+        }
+
+        // Видимые грани со стороны переднего края карты.
+        // У внешней границы используем условное основание -0.6.
+        const neighborX = x + 1 < SIZE
+          ? heightAt(x + 1, y)
+          : -0.6;
+
+        const neighborY = y + 1 < SIZE
+          ? heightAt(x, y + 1)
+          : -0.6;
+
+        if (height > neighborX) {
+          group.append(
+            element('polygon', {
+              class: 'wall',
+              points: points([
+                right,
+                bottom,
+                project(x + 1, y + 1, neighborX),
+                project(x + 1, y, neighborX)
+              ]),
+              fill: '#555b3d',
+              'pointer-events': 'none'
+            })
+          );
+        }
+
+        if (height > neighborY) {
+          group.append(
+            element('polygon', {
+              class: 'wall',
+              points: points([
+                left,
+                bottom,
+                project(x + 1, y + 1, neighborY),
+                project(x, y + 1, neighborY)
+              ]),
+              fill: '#414b35',
+              'pointer-events': 'none'
+            })
+          );
+        }
+
+        // Фактура задаётся в общих координатах карты.
+        // Соседние клетки получают соседние части изображения.
+        const surface = element('rect', {
+          class: 'surface',
+          x: x * TILE,
+          y: y * TILE,
+          width: TILE,
+          height: TILE,
+          fill: 'url(#grass)',
+          transform:
+            `matrix(0.5 0.25 -0.5 0.25 ` +
+            `${ORIGIN_X} ${ORIGIN_Y - height * step})`
+        });
+
+        group.append(surface);
+
+        if (labelsInput.checked) {
+          const [lx, ly] = project(
+            x + 0.22,
+            y + 0.22,
+            height
+          );
+
+          group.append(
+            element('text', {
+              class: 'height-label',
+              x: lx,
+              y: ly + 5
+            }, `H ${height}`)
+          );
+        }
+
+        if (model.x === x && model.y === y) {
+          appendModel(group, x, y, height);
+        }
+
+        group.addEventListener('click', () => inspect(x, y));
+
+        group.addEventListener('keydown', event => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            inspect(x, y);
+          }
+        });
+
+        svg.append(group);
+      }
+    }
+
+    function loadTexture(url, local = false) {
+      const request = ++textureRequest;
+      const image = new Image();
+
+      image.onload = () => {
+        if (request !== textureRequest) return;
+
+        textureUrl = url;
+        textureStatus.textContent = local
+          ? 'Выбранная текстура загружена локально в браузер.'
+          : 'Текстура загружена из assets/terrain/meadow-surface.png.';
+
+        render();
+      };
+
+      image.onerror = () => {
+        if (request !== textureRequest) return;
+
+        textureStatus.textContent =
+          'Не удалось открыть текстуру. Выбери изображение кнопкой выше.';
+      };
+
+      image.src = url;
+    }
+
+    textureInput.addEventListener('change', () => {
+      const file = textureInput.files?.[0];
+      if (!file) return;
+
+      if (!file.type.startsWith('image/')) {
+        textureStatus.textContent = 'Выбери файл изображения.';
+        return;
+      }
+
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        loadTexture(String(reader.result), true);
+      };
+
+      reader.onerror = () => {
+        textureStatus.textContent = 'Не удалось прочитать изображение.';
+      };
+
+      reader.readAsDataURL(file);
+    });
+
+    heightInput.addEventListener('input', () => {
+      step = Number(heightInput.value);
+      heightValue.textContent = `${step} px`;
+      render();
+    });
+
+    labelsInput.addEventListener('change', render);
+
+    document.getElementById('move-model')
+      .addEventListener('click', () => {
+        modelIndex = (modelIndex + 1) % modelPositions.length;
+        render();
+      });
+
+    render();
+    loadTexture('assets/terrain/meadow-surface.png');
+  </script>
+</body>
+</html>

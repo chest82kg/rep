@@ -36,6 +36,9 @@ import {
 
 import { initCustomUnits } from './custom-units.js';
 import { initScenarios } from './scenarios.js';
+import { initWorkshopWorkspace } from './workspace.js';
+import { initUnitsWorkspace } from './units-workspace.js';
+import { initScenariosWorkspace } from './scenarios-workspace.js';
 
 
 const STORAGE_KEY = 'mt_workshop_library_v1';
@@ -897,3 +900,8 @@ initScenarios({
   getMaps: () => writeLocked ? [] : clone(library.maps),
   validateMap
 });
+
+// Оболочка запускается после создания всех панелей редакторов.
+initWorkshopWorkspace();
+initUnitsWorkspace();
+initScenariosWorkspace();

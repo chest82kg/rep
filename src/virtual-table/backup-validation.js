@@ -293,9 +293,9 @@ function checkUnits(units) {
     });
 
     if (unit.position !== null) {
-      knownKeys(
+           knownKeys(
         unit.position,
-        ['x', 'y', 'surfaceId'],
+        ['x', 'y', 'surfaceId', 'supportTileId'],
         `${path}.position`
       );
     }

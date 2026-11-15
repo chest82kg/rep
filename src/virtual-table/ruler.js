@@ -1,7 +1,12 @@
 // src/virtual-table/ruler.js
 //
-// Геометрическая линейка.
+// Общая геометрическая линейка сетки и изометрии.
 // Не рассчитывает игровую дальность.
+//
+// Единственное состояние измерения для обоих видов.
+// Щелчки изометрии передаются существующим клеткам сетки.
+//
+// Не изменяет партию, модели, terrain или сохранения.
 
 const LETTERS = 'ABCDEFGHIJKLMN';
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -46,7 +51,7 @@ export function initRuler() {
   let end = null;
 
   const panel = document.createElement('section');
-  panel.className = 'vt-field-toolbar';
+  panel.className = 'vt-field-toolbar vt-ruler-toolbar';
   panel.setAttribute('aria-label', 'Измерение на поле');
 
   panel.innerHTML = `
@@ -69,12 +74,22 @@ export function initRuler() {
   const clearButton = panel.querySelector('#vt-ruler-clear');
   const result = panel.querySelector('#vt-ruler-result');
 
-  const overlay = document.createElementNS(SVG_NS, 'svg');
+  function svgElement(name, attributes = {}) {
+    const element = document.createElementNS(SVG_NS, name);
 
-  overlay.setAttribute('aria-hidden', 'true');
-  overlay.setAttribute('focusable', 'false');
+    for (const [key, value] of Object.entries(attributes)) {
+      element.setAttribute(key, String(value));
+    }
 
-  Object.assign(overlay.style, {
+    return element;
+  }
+
+  const gridOverlay = svgElement('svg', {
+    'aria-hidden': 'true',
+    focusable: 'false'
+  });
+
+  Object.assign(gridOverlay.style, {
     position: 'absolute',
     left: '0',
     top: '0',
@@ -85,13 +100,23 @@ export function initRuler() {
     overflow: 'visible'
   });
 
+  const isoOverlay = svgElement('g', {
+    class: 'vt-iso-ruler-overlay',
+    'aria-hidden': 'true',
+    'pointer-events': 'none'
+  });
+
+  // Явно задаём и CSS-свойство, чтобы слой
+  // никогда не перехватывал игровые нажатия.
+  isoOverlay.style.pointerEvents = 'none';
+
   board.style.position = 'relative';
 
   function label(point) {
     return `${LETTERS[point.x]}${point.y + 1}`;
   }
 
-  function geometry(point) {
+  function gridGeometry(point) {
     const cell = board.querySelector(
       `button[data-x="${point.x}"][data-y="${point.y}"]`
     );
@@ -114,21 +139,74 @@ export function initRuler() {
     };
   }
 
-  function svgElement(name, attributes) {
-    const element = document.createElementNS(SVG_NS, name);
+  function isoGeometry(scene, point) {
+    const surface = scene.querySelector(
+      `[data-iso-x="${point.x}"]` +
+      `[data-iso-y="${point.y}"] .vt-iso-surface`
+    );
 
-    for (const [key, value] of Object.entries(attributes)) {
-      element.setAttribute(key, String(value));
-    }
+    if (!surface) return null;
 
-    return element;
+    // Координаты самой поверхности уже учитывают
+    // визуальную высоту рельефа в isometric.js.
+    const box = surface.getBBox();
+
+    return {
+      points: surface.getAttribute('points'),
+      centerX: box.x + box.width / 2,
+      centerY: box.y + box.height / 2
+    };
   }
 
-  function drawCell(point, color) {
-    const cell = geometry(point);
+  function drawLine(target, first, second) {
+    if (!first || !second) return;
+
+    const coordinates = {
+      x1: first.centerX,
+      y1: first.centerY,
+      x2: second.centerX,
+      y2: second.centerY,
+      'stroke-linecap': 'round',
+      'vector-effect': 'non-scaling-stroke'
+    };
+
+    target.append(
+      svgElement('line', {
+        ...coordinates,
+        stroke: '#111a1e',
+        'stroke-width': 6
+      }),
+      svgElement('line', {
+        ...coordinates,
+        stroke: '#ffe09c',
+        'stroke-width': 3,
+        'stroke-dasharray': '8 5'
+      })
+    );
+  }
+
+  function drawPoint(target, geometry, color) {
+    if (!geometry) return;
+
+    target.append(
+      svgElement('circle', {
+        cx: geometry.centerX,
+        cy: geometry.centerY,
+        r: 4,
+        fill: color,
+        stroke: '#151d23',
+        'stroke-width': 2,
+        'vector-effect': 'non-scaling-stroke'
+      })
+    );
+  }
+
+  function drawGridCell(point, color) {
+    const cell = gridGeometry(point);
+
     if (!cell) return;
 
-    overlay.append(
+    gridOverlay.append(
       svgElement('rect', {
         x: cell.x + 3,
         y: cell.y + 3,
@@ -139,65 +217,90 @@ export function initRuler() {
         'fill-opacity': 0.14,
         stroke: color,
         'stroke-width': 3
-      }),
-      svgElement('circle', {
-        cx: cell.centerX,
-        cy: cell.centerY,
-        r: 4,
-        fill: color,
-        stroke: '#15151d',
-        'stroke-width': 2
       })
     );
+
+    drawPoint(gridOverlay, cell, color);
   }
 
-  function draw() {
-    if (!board.contains(overlay)) {
-      board.append(overlay);
+  function drawIsoCell(scene, point, color) {
+    const cell = isoGeometry(scene, point);
+
+    if (!cell) return;
+
+    if (cell.points) {
+      isoOverlay.append(
+        svgElement('polygon', {
+          points: cell.points,
+          fill: color,
+          'fill-opacity': 0.14,
+          stroke: color,
+          'stroke-width': 3,
+          'stroke-linejoin': 'round',
+          'vector-effect': 'non-scaling-stroke'
+        })
+      );
     }
 
-    overlay.replaceChildren();
+    drawPoint(isoOverlay, cell, color);
+  }
 
-    overlay.setAttribute(
+  function drawGrid() {
+    if (!board.contains(gridOverlay)) {
+      board.append(gridOverlay);
+    }
+
+    gridOverlay.replaceChildren();
+
+    gridOverlay.setAttribute(
       'viewBox',
-      `0 0 ${Math.max(1, board.clientWidth)} ${Math.max(1, board.clientHeight)}`
+      `0 0 ${Math.max(1, board.clientWidth)} ` +
+      `${Math.max(1, board.clientHeight)}`
     );
 
     if (start && end) {
-      const first = geometry(start);
-      const second = geometry(end);
-
-      if (first && second) {
-        const coordinates = {
-          x1: first.centerX,
-          y1: first.centerY,
-          x2: second.centerX,
-          y2: second.centerY,
-          'stroke-linecap': 'round'
-        };
-
-        overlay.append(
-          svgElement('line', {
-            ...coordinates,
-            stroke: '#11121a',
-            'stroke-width': 6
-          }),
-          svgElement('line', {
-            ...coordinates,
-            stroke: '#ffe09c',
-            'stroke-width': 3,
-            'stroke-dasharray': '8 5'
-          })
-        );
-      }
+      drawLine(
+        gridOverlay,
+        gridGeometry(start),
+        gridGeometry(end)
+      );
     }
 
-    if (start) drawCell(start, '#ffe09c');
-    if (end) drawCell(end, '#8ee5f0');
+    if (start) drawGridCell(start, '#ffe09c');
+    if (end) drawGridCell(end, '#8ee5f0');
+  }
+
+  function drawIso() {
+    const scene = boardScroll.querySelector('.vt-iso-scene');
+
+    if (!scene) return;
+
+    if (!scene.contains(isoOverlay)) {
+      scene.append(isoOverlay);
+    }
+
+    isoOverlay.replaceChildren();
+
+    if (start && end) {
+      drawLine(
+        isoOverlay,
+        isoGeometry(scene, start),
+        isoGeometry(scene, end)
+      );
+    }
+
+    if (start) drawIsoCell(scene, start, '#ffe09c');
+    if (end) drawIsoCell(scene, end, '#8ee5f0');
+  }
+
+  function draw() {
+    drawGrid();
+    drawIso();
   }
 
   function refresh() {
-    // Скрываем пустую панель результата вне режима измерения.
+    // Как прежде: завершённое измерение остаётся
+    // видимым после переключения инструмента.
     panel.hidden = !enabled && !start;
     panel.style.display = panel.hidden ? 'none' : '';
 
@@ -222,19 +325,27 @@ export function initRuler() {
     draw();
   }
 
-  updateView = refresh;
-
-  clearButton.addEventListener('click', () => {
+  function clearMeasurement() {
     start = null;
     end = null;
     refresh();
-  });
+  }
 
-  // Перехватываем только режим линейки.
+  updateView = refresh;
+
+  clearButton.addEventListener('click', clearMeasurement);
+
+  // Единственный обработчик выбора точек.
+  // Изометрия вызывает настоящую кнопку клетки,
+  // а этот capture-обработчик останавливает её
+  // до игровых обработчиков index.js.
   board.addEventListener('click', event => {
     if (!enabled) return;
 
-    const cell = event.target.closest('button[data-x][data-y]');
+    const cell = event.target instanceof Element
+      ? event.target.closest('button[data-x][data-y]')
+      : null;
+
     if (!cell || !board.contains(cell)) return;
 
     event.preventDefault();
@@ -266,25 +377,52 @@ export function initRuler() {
     refresh();
   }, true);
 
-  // Escape не переключает инструмент незаметно:
-  // очищает текущее измерение, оставляя режим линейки.
-  board.addEventListener('keydown', event => {
-    if (event.key === 'Escape' && enabled) {
-      event.preventDefault();
-
-      start = null;
-      end = null;
-
-      refresh();
+  // Работает и при фокусе на сетке, и на SVG-клетке.
+  // Не перехватывает Escape вне области карты.
+  boardScroll.addEventListener('keydown', event => {
+    if (
+      !enabled ||
+      event.key !== 'Escape' ||
+      event.defaultPrevented ||
+      event.isComposing ||
+      event.altKey ||
+      event.ctrlKey ||
+      event.metaKey ||
+      event.shiftKey
+    ) {
+      return;
     }
-  });
 
+    const target = event.target;
+
+    if (
+      target instanceof Element &&
+      target.closest('input, textarea, select, [contenteditable="true"]')
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    clearMeasurement();
+  }, true);
+
+  // renderBoard() и draw() изометрии пересоздают содержимое.
+  // Восстанавливаем слой только если он действительно удалён.
+  // Собственные изменения слоя не запускают цикл перерисовки.
   new MutationObserver(() => {
-    if (!board.contains(overlay)) {
+    const scene = boardScroll.querySelector('.vt-iso-scene');
+
+    const gridMissing = !board.contains(gridOverlay);
+    const isoMissing = scene && !scene.contains(isoOverlay);
+
+    if (gridMissing || isoMissing) {
       draw();
     }
-  }).observe(board, {
-    childList: true
+  }).observe(boardScroll, {
+    childList: true,
+    subtree: true
   });
 
   if ('ResizeObserver' in window) {

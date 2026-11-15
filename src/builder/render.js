@@ -1945,63 +1945,92 @@ function resetRoster() {
    Мобильный интерфейс
    ========================================================================== */
 
-function initBuilderMobile() {
-  const media = window.matchMedia(
-    `(max-width: ${MOBILE_BREAKPOINT}px)`
+// Одна подписка matchMedia на время жизни страницы.
+// Ссылки на DOM старого экземпляра билдера не сохраняем.
+let builderMobileMedia = null;
+
+function applyBuilderMobileState(isMobile) {
+  const sticky = document.getElementById(
+    'builder-sticky-budget'
   );
 
-  const applyMobileState = isMobile => {
-    const details = document.querySelectorAll(
-      '.builder-container .builder-card'
+  // Билдер сейчас не открыт: подписка не вмешивается
+  // в другие статьи и страницы приложения.
+  if (!sticky) {
+    return;
+  }
+
+  const details = document.querySelectorAll(
+    '.builder-container .builder-card'
+  );
+
+  details.forEach(element => {
+    element.classList.toggle(
+      'collapsible-mobile',
+      isMobile
     );
 
-    details.forEach(element => {
-      if (isMobile) {
-        element.classList.add('collapsible-mobile');
-
-        element.open =
-          element.id === 'bc-clan' ||
-          element.id === 'bc-battleplan' ||
-          element.id === 'bc-units';
-      } else {
-        element.classList.remove('collapsible-mobile');
-        element.open = true;
-      }
-    });
-
-    const sticky = document.getElementById('builder-sticky-budget');
-
-    if (sticky) {
-      sticky.classList.toggle('hidden', !isMobile);
+    if (isMobile) {
+      // Сохраняем прежнее поведение мобильной раскладки.
+      element.open =
+        element.id === 'bc-clan' ||
+        element.id === 'bc-battleplan' ||
+        element.id === 'bc-units';
+    } else {
+      element.open = true;
     }
+  });
 
-    updateStickyBudget();
-  };
+  sticky.classList.toggle('hidden', !isMobile);
 
-  applyMobileState(media.matches);
-
-  const handleChange = event => {
-    applyMobileState(event.matches);
-  };
-
-  if (media.addEventListener) {
-    media.addEventListener('change', handleChange);
-  } else {
-    media.addListener(handleChange);
-  }
-
-  const stickyTop = document.getElementById('sticky-scroll-top');
-
-  if (stickyTop) {
-    stickyTop.addEventListener('click', () => {
-      window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-      });
-    });
-  }
+  updateStickyBudget();
 }
 
+function handleBuilderMobileChange(event) {
+  applyBuilderMobileState(event.matches);
+}
+
+function initBuilderMobile() {
+  if (!builderMobileMedia) {
+    builderMobileMedia = window.matchMedia(
+      `(max-width: ${MOBILE_BREAKPOINT}px)`
+    );
+
+    if (
+      typeof builderMobileMedia.addEventListener === 'function'
+    ) {
+      builderMobileMedia.addEventListener(
+        'change',
+        handleBuilderMobileChange
+      );
+    } else {
+      builderMobileMedia.addListener(
+        handleBuilderMobileChange
+      );
+    }
+  }
+
+  // При каждом открытии применяем состояние к новому DOM.
+  // Новую подписку при этом не создаём.
+  applyBuilderMobileState(builderMobileMedia.matches);
+
+  const stickyTop = document.getElementById(
+    'sticky-scroll-top'
+  );
+
+  if (stickyTop) {
+    stickyTop.onclick = () => {
+      const reducedMotion = window.matchMedia(
+        '(prefers-reduced-motion: reduce)'
+      ).matches;
+
+      window.scrollTo({
+        top: 0,
+        behavior: reducedMotion ? 'auto' : 'smooth'
+      });
+    };
+  }
+}
 /* ==========================================================================
    Сообщения
    ========================================================================== */

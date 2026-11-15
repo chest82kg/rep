@@ -99,6 +99,8 @@ export function initScenarios({ getMaps, validateMap }) {
   let dirty = false;
   let importing = false;
   let generation = 0;
+  let previewTimer = null;
+    let draftRecovery = null;
 
   function validSnapshot(map) {
     return Boolean(
@@ -137,6 +139,47 @@ export function initScenarios({ getMaps, validateMap }) {
       Object.keys(SECTIONS).every(key =>
         text(value.sections[key], MAX_SECTION_LENGTH)
       )
+    );
+  }
+
+    // Документы уже прошли проверку формата.
+  // Порядок ключей объектов не важен,
+  // порядок элементов массивов сохраняет значение.
+  function sameJsonValue(left, right) {
+    if (left === right) return true;
+
+    if (Array.isArray(left) || Array.isArray(right)) {
+      return (
+        Array.isArray(left) &&
+        Array.isArray(right) &&
+        left.length === right.length &&
+        left.every((value, index) =>
+          sameJsonValue(value, right[index])
+        )
+      );
+    }
+
+    if (!record(left) || !record(right)) return false;
+
+    const keys = Object.keys(left);
+
+    return (
+      keys.length === Object.keys(right).length &&
+      keys.every(key =>
+        Object.hasOwn(right, key) &&
+        sameJsonValue(left[key], right[key])
+      )
+    );
+  }
+
+  function sameScenarioContent(left, right) {
+    return (
+      left.name === right.name &&
+      left.status === right.status &&
+      Object.keys(SECTIONS).every(key =>
+        left.sections[key] === right.sections[key]
+      ) &&
+      sameJsonValue(left.map, right.map)
     );
   }
 
@@ -343,6 +386,68 @@ export function initScenarios({ getMaps, validateMap }) {
   const card = find('[data-s-card]');
   const fileInput = find('[data-s-file]');
 
+    // Последнее успешное удаление в текущем сеансе страницы.
+  let lastDeletedScenario = null;
+
+  const undoDeleteButton = dom.createElement('button');
+
+  undoDeleteButton.type = 'button';
+  undoDeleteButton.className = 'builder-action-btn';
+  undoDeleteButton.textContent = 'Восстановить удалённый сценарий';
+  undoDeleteButton.disabled = true;
+
+  find('.ws-transfer .ws-actions').append(undoDeleteButton);
+
+  function syncUndoDeleteButton() {
+    undoDeleteButton.disabled =
+      locked ||
+      importing ||
+      !lastDeletedScenario;
+
+    undoDeleteButton.title = lastDeletedScenario
+      ? `Восстановить: ${lastDeletedScenario.name}`
+      : 'В текущем сеансе нет удалённого сценария';
+  }
+
+    const openBriefButton = dom.createElement('button');
+
+  openBriefButton.type = 'button';
+  openBriefButton.className = 'builder-action-btn';
+  openBriefButton.textContent = 'Открыть памятку';
+  openBriefButton.setAttribute('aria-haspopup', 'dialog');
+
+  // Кнопка добавляется в renderPreview().
+  // Так она сохраняется при перестройке оболочки
+  // и каждом обновлении памятки.
+  openBriefButton.classList.add('ws-scenario-open-brief');
+
+    const saveAsNewButton = dom.createElement('button');
+
+  saveAsNewButton.type = 'button';
+  saveAsNewButton.className = 'builder-action-btn';
+  saveAsNewButton.dataset.sSaveAsNew = '';
+  saveAsNewButton.textContent = 'Сохранить как новый сценарий';
+
+  find('.ws-transfer .ws-actions').prepend(saveAsNewButton);
+
+    const revertButton = dom.createElement('button');
+
+  revertButton.type = 'button';
+  revertButton.className = 'builder-action-btn';
+  revertButton.dataset.sRevert = '';
+  revertButton.textContent = 'Вернуть сохранённую версию';
+  revertButton.disabled = true;
+
+  saveAsNewButton.after(revertButton);
+
+  function syncRevertButton() {
+    revertButton.disabled =
+      locked ||
+      importing ||
+      !current ||
+      !dirty;
+  }
+
   function message(value, error = false) {
     const target = find('[data-s-message]');
     target.textContent = value;
@@ -350,21 +455,69 @@ export function initScenarios({ getMaps, validateMap }) {
   }
 
   function updateButtons() {
-    find('[data-s-save]').disabled = locked;
+    const saveButton = find('[data-s-save]');
+
+    saveButton.disabled =
+      locked ||
+      importing ||
+      Boolean(current && !dirty);
+
+    saveButton.title = current && !dirty
+      ? 'Нет несохранённых изменений.'
+      : '';
+
     find('[data-s-import]').disabled = locked || importing;
+    saveAsNewButton.disabled = locked || importing;
+
+    syncRevertButton();
+    syncUndoDeleteButton();
   }
 
   function setDirty(value) {
     dirty = value;
 
-    find('[data-s-dirty]').textContent = value
+      const indicator = find('[data-s-dirty]');
+
+    indicator.textContent = value
       ? 'Есть несохранённые изменения'
-      : '';
+      : current
+        ? 'Изменения сохранены'
+        : 'Новый сценарий · ещё не сохранён';
+
+    indicator.classList.toggle('has-unsaved-changes', value);
+
+    updateButtons();
+
+    if (value) draftRecovery?.schedule();
+  }
+
+  function schedulePreview() {
+    clearTimeout(previewTimer);
+
+    const scheduledGeneration = generation;
+
+    previewTimer = setTimeout(() => {
+      previewTimer = null;
+
+      // Не обновляем старый черновик после открытия,
+      // создания или сохранения другого документа.
+      if (scheduledGeneration !== generation) return;
+
+      try {
+        renderPreview(readDocument({ draft: true }));
+      } catch (error) {
+        message(
+          `Не удалось обновить памятку: ${error.message}`,
+          true
+        );
+      }
+    }, 350);
   }
 
   function changed() {
     generation += 1;
     setDirty(true);
+    schedulePreview();
   }
 
   function lock(value) {
@@ -448,17 +601,56 @@ export function initScenarios({ getMaps, validateMap }) {
   }
 
   function mapInfo() {
-    find('[data-s-map-info]').textContent = mapSnapshot
-      ? `Снимок: ${mapSnapshot.name} · ` +
-        `редакция ${mapSnapshot.revision} · ` +
-        `местность: ${mapSnapshot.layers.terrain.length} тайлов · ` +
-        `зоны: ${mapSnapshot.layers.deployment.length} клеток · ` +
-        `КТ: ${mapSnapshot.layers.objectives.length} · ` +
-        `маркеры: ${mapSnapshot.layers.markers.length}`
-      : 'Снимок карты не прикреплён.';
+    const info = find('[data-s-map-info]');
+    const field = info.closest('fieldset');
+
+    let preview = field.querySelector('[data-s-attached-map-preview]');
+
+    if (!preview) {
+      preview = dom.createElement('div');
+      preview.dataset.sAttachedMapPreview = '';
+      preview.className = 'ws-scenario-attached-map';
+      preview.setAttribute('aria-label', 'Прикреплённый снимок карты');
+
+      info.after(preview);
+    }
+
+    preview.replaceChildren();
+
+    find('[data-s-remove-map]').disabled = !mapSnapshot;
+
+    if (!mapSnapshot) {
+      info.textContent = 'Снимок карты не прикреплён.';
+
+      const empty = dom.createElement('p');
+      empty.className = 'ws-scenario-map-empty';
+
+      empty.textContent =
+        'Выберите сохранённую карту и нажмите «Взять снимок карты». ' +
+        'Здесь появится её изображение.';
+
+      preview.append(empty);
+      return;
+    }
+
+    info.textContent =
+      `Снимок: ${mapSnapshot.name} · ` +
+      `редакция ${mapSnapshot.revision} · ` +
+      `местность: ${mapSnapshot.layers.terrain.length} тайлов · ` +
+      `зоны: ${mapSnapshot.layers.deployment.length} клеток · ` +
+      `КТ: ${mapSnapshot.layers.objectives.length} · ` +
+      `маркеры: ${mapSnapshot.layers.markers.length}`;
+
+    preview.append(
+      createMapPreview(mapSnapshot, {
+        caption:
+          'Прикреплённый снимок. Изменение исходной карты ' +
+          'не обновляет его автоматически.'
+      })
+    );
   }
 
-  function readDocument() {
+  function readDocument({ draft = false } = {}) {
     const now = new Date().toISOString();
 
     const sections = Object.fromEntries(
@@ -476,7 +668,8 @@ export function initScenarios({ getMaps, validateMap }) {
       revision: current?.revision || 1,
       createdAt: current?.createdAt || now,
       updatedAt: now,
-      name: find('[data-s-name]').value.trim(),
+            name: find('[data-s-name]').value.trim() ||
+        (draft ? 'Новый сценарий' : ''),
       status: find('[data-s-status]').value,
       map: mapSnapshot ? clone(mapSnapshot) : null,
       sections
@@ -494,6 +687,10 @@ export function initScenarios({ getMaps, validateMap }) {
 
   function renderPreview(scenario) {
     card.replaceChildren();
+
+    // Перемещаем ту же кнопку, а не создаём новую:
+    // обработчик открытия окна сохраняется.
+    card.append(openBriefButton);
 
     function line(tag, value) {
       const node = dom.createElement(tag);
@@ -554,10 +751,52 @@ export function initScenarios({ getMaps, validateMap }) {
     );
   }
 
+  function syncOpenedScenario() {
+    list.querySelectorAll('.ws-library-card').forEach(item => {
+      const openButton = item.querySelector(
+        '[data-scenario-action="open"]'
+      );
+
+      const opened = Boolean(
+        current && openButton?.dataset.id === current.id
+      );
+
+      item.classList.toggle('is-open-document', opened);
+
+      if (!openButton) return;
+
+      openButton.textContent = opened ? 'Открыт' : 'Открыть';
+      openButton.disabled = opened;
+
+      if (opened) {
+        openButton.setAttribute('aria-current', 'true');
+        openButton.title =
+          'Этот сценарий уже открыт в редакторе. ' +
+          'Для отмены правок используйте ' +
+          '«Документ → Вернуть сохранённую версию».';
+      } else {
+        openButton.removeAttribute('aria-current');
+        openButton.removeAttribute('title');
+      }
+    });
+  }
+
   function fill(scenario) {
+    // Вызывается после подтверждённого перехода
+    // или успешного сохранения документа.
+    draftRecovery?.clearActive();
+
+    clearTimeout(previewTimer);
+    previewTimer = null;
+
     generation += 1;
 
     current = scenario ? clone(scenario) : null;
+        syncOpenedScenario();
+
+    const editor = host.querySelector('.ws-scenario-editor');
+
+    if (editor) editor.scrollTop = 0;
     mapSnapshot = scenario?.map ? clone(scenario.map) : null;
 
     form.reset();
@@ -580,8 +819,10 @@ export function initScenarios({ getMaps, validateMap }) {
     mapInfo();
     setDirty(false);
     card.replaceChildren();
-
-    if (scenario) renderPreview(scenario);
+    
+    renderPreview(
+      scenario || readDocument({ draft: true })
+    );
 
     try {
       refreshMaps();
@@ -672,6 +913,7 @@ export function initScenarios({ getMaps, validateMap }) {
       item.append(title, meta, actions);
       list.append(item);
     });
+        syncOpenedScenario();
   }
 
   function independentCopy(source) {
@@ -702,7 +944,21 @@ export function initScenarios({ getMaps, validateMap }) {
     }
   }
 
-  form.addEventListener('input', changed);
+  // Отслеживаем именно поля сценария.
+  // Переключатели и поиск внутри просмотра карты
+  // не являются изменением документа.
+  form.addEventListener('input', event => {
+    if (!(event.target instanceof Element)) return;
+
+    if (
+      event.target.matches(
+        '[data-s-name], [data-s-section]'
+      )
+    ) {
+      changed();
+    }
+  });
+
   find('[data-s-status]').addEventListener('change', changed);
 
   find('[data-s-new]').addEventListener('click', () => {
@@ -761,9 +1017,10 @@ export function initScenarios({ getMaps, validateMap }) {
       mapInfo();
 
       message(
-        `Взят снимок карты «${source.name}», ` +
+        `Прикреплён снимок карты «${source.name}», ` +
         `редакция ${source.revision}. ` +
-        'Нажмите «Обновить памятку» для просмотра и сохраните сценарий.'
+        'Карта показана справа, памятка обновляется автоматически. ' +
+        'Сохраните сценарий, чтобы записать изменения.'
       );
     } catch (error) {
       message(error.message, true);
@@ -784,33 +1041,390 @@ export function initScenarios({ getMaps, validateMap }) {
     changed();
     mapInfo();
 
-    message(
-      'Снимок убран из формы. ' +
-      'Обновите памятку и сохраните сценарий.'
+     message(
+      'Снимок убран из формы. Памятка обновляется автоматически. ' +
+      'Сохраните сценарий, чтобы записать изменения.'
     );
   });
 
   find('[data-s-preview]').addEventListener('click', () => {
+    clearTimeout(previewTimer);
+    previewTimer = null;
+
     try {
-      renderPreview(readDocument());
-      message('Памятка обновлена. Это не сохраняет сценарий.');
+      renderPreview(readDocument({ draft: true }));
+
+      message(
+        'Черновая памятка обновлена. ' +
+        'Изменения записываются только кнопкой ' +
+        '«Сохранить сценарий».'
+      );
     } catch (error) {
       message(error.message, true);
     }
   });
+  revertButton.addEventListener('click', () => {
+    if (
+      locked ||
+      importing ||
+      !current ||
+      !dirty
+    ) {
+      return;
+    }
 
-  form.addEventListener('submit', event => {
+    try {
+      // Не восстанавливаем устаревшую версию, если библиотека
+      // уже изменилась, а storage-событие ещё не обработано.
+      if (localStorage.getItem(KEY) !== expectedRaw) {
+        lock(
+          'Библиотека сценариев изменена в другой вкладке. ' +
+          'Возврат сохранённой версии заблокирован. ' +
+          'Текущий ввод остаётся в форме; ' +
+          'его можно экспортировать в JSON.'
+        );
+
+        return;
+      }
+
+      const saved = library.scenarios.find(
+        scenario => scenario.id === current.id
+      );
+
+      if (!saved) {
+        throw new Error(
+          'Сохранённый сценарий не найден. ' +
+          'Текущий ввод оставлен без изменений.'
+        );
+      }
+
+      if (!confirm(
+        `Вернуть сохранённую версию «${saved.name}»?\n\n` +
+        'Несохранённые изменения названия, статуса, ' +
+        'всех текстовых разделов и снимка карты будут отброшены.\n\n' +
+        'Сама библиотека не изменится.'
+      )) {
+        return;
+      }
+
+      // Используем штатное заполнение:
+      // оно отменяет отложенный предпросмотр,
+      // обновляет карту и очищает активный временный черновик.
+      fill(saved);
+
+      // Закрываем меню, чтобы сразу видеть результат.
+      const documentMenu = revertButton.closest('details');
+
+      if (documentMenu) {
+        documentMenu.open = false;
+
+        documentMenu.querySelector('summary')
+          ?.focus({ preventScroll: true });
+      }
+
+      message(
+        `Восстановлена сохранённая версия «${saved.name}», ` +
+        `редакция ${saved.revision}. ` +
+        'Несохранённые правки отброшены. Библиотека не изменена.'
+      );
+    } catch (error) {
+      message(
+        `Не удалось вернуть сохранённую версию: ${error.message}`,
+        true
+      );
+    }
+  });
+
+    saveAsNewButton.addEventListener('click', () => {
+    if (locked || importing) return;
+
+    // Кнопка находится вне формы.
+    // Проверяем обязательное название штатным механизмом.
+    if (!form.reportValidity()) return;
+
+    try {
+      ensureSpace();
+
+      // Читаем текущие тексты и прикреплённый снимок,
+      // а не сохранённую версию из библиотеки.
+      const source = readDocument();
+      const prepared = independentCopy(source);
+      const suffix = ' — вариант';
+
+      prepared.name =
+        source.name
+          .slice(0, 120 - suffix.length)
+          .trimEnd() +
+        suffix;
+
+      // Изменённый вариант требует нового авторского теста.
+      // Оригинальный статус при этом не меняется.
+      prepared.status = 'draft';
+
+      if (!validScenario(prepared)) {
+        throw new Error(
+          'Не удалось подготовить новый вариант сценария.'
+        );
+      }
+
+      if (!confirm(
+        `Сохранить «${prepared.name}» как новый сценарий?\n\n` +
+        'Будут использованы текущие тексты и прикреплённый ' +
+        'снимок карты. Исходный сценарий останется прежним.\n\n' +
+        'Новый вариант получит статус «Черновик» ' +
+        'и откроется в редакторе.'
+      )) {
+        return;
+      }
+
+      const next = clone(library);
+      next.scenarios.push(prepared);
+
+      // Сначала успешная запись.
+      // При ошибке текущий ввод остаётся в редакторе.
+      persist(next);
+
+      fill(prepared);
+      renderList();
+
+      message(
+        `Вариант «${prepared.name}» сохранён и открыт. ` +
+        'Исходный сценарий не изменён. ' +
+        'Статус нового варианта — «Черновик».'
+      );
+    } catch (error) {
+      message(
+        `Новый вариант не сохранён: ${error.message}`,
+        true
+      );
+    }
+  });
+
+    openBriefButton.addEventListener('click', () => {
+    if (dom.querySelector('dialog[open]')) return;
+
+    try {
+      // Черновое чтение допускает пустое название,
+      // но проверяет поддерживаемый формат содержимого.
+      const scenario = readDocument({ draft: true });
+
+      const dialog = dom.createElement('dialog');
+      dialog.className = 'ws-scenario-brief-dialog';
+      dialog.setAttribute('aria-label', 'Полная памятка сценария');
+
+      function node(tag, className = '', value = '') {
+        const result = dom.createElement(tag);
+
+        if (className) result.className = className;
+        if (value !== '') result.textContent = value;
+
+        return result;
+      }
+
+      const header = node('div', 'ws-scenario-brief-header');
+      const titleBox = node('div');
+
+      titleBox.append(
+        node('h2', '', scenario.name),
+        node(
+          'p',
+          '',
+          `${statusLabel(scenario.status)} · ` +
+          'текущий ввод редактора · только просмотр'
+        )
+      );
+
+      const closeButton = node(
+        'button',
+        'builder-action-btn',
+        'Закрыть ×'
+      );
+
+      closeButton.type = 'button';
+      closeButton.autofocus = true;
+
+      header.append(titleBox, closeButton);
+
+      const body = node('div', 'ws-scenario-brief-body');
+
+      body.append(
+        node(
+          'p',
+          'ws-scenario-brief-notice',
+          'Открытие памятки не сохраняет изменения. ' +
+          'Правила, эффекты и подсчёт очков игроки применяют вручную.'
+        )
+      );
+
+      if (scenario.map) {
+        body.append(
+          createMapPreview(scenario.map, {
+            // Внутри диалога не открываем второй
+            // модальный просмотр поверх первого.
+            expandable: false,
+            caption:
+              'Прикреплённый снимок сценария. ' +
+              'Исходная карта из библиотеки здесь не подменяется.'
+          })
+        );
+      } else {
+        body.append(
+          node(
+            'p',
+            'ws-scenario-brief-notice',
+            'Карта к сценарию не прикреплена.'
+          )
+        );
+      }
+
+      let filledSections = 0;
+
+      for (const [key, label] of Object.entries(SECTIONS)) {
+        const content = scenario.sections[key];
+
+        if (!content.trim()) continue;
+
+        filledSections += 1;
+
+        const section = node(
+          'section',
+          'ws-scenario-brief-section'
+        );
+
+        section.append(
+          node('h3', '', label),
+          node('p', '', content)
+        );
+
+        body.append(section);
+      }
+
+      if (!filledSections) {
+        body.append(
+          node(
+            'p',
+            'ws-scenario-brief-notice',
+            'Текстовые разделы пока не заполнены.'
+          )
+        );
+      }
+
+      dialog.append(header, body);
+
+      function restoreFocus() {
+        if (
+          openBriefButton.isConnected &&
+          openBriefButton.getClientRects().length > 0
+        ) {
+          openBriefButton.focus({ preventScroll: true });
+        }
+      }
+
+      closeButton.addEventListener('click', () => {
+        dialog.close();
+      });
+
+      // Esc закрывает нативный dialog.
+      dialog.addEventListener('close', () => {
+        dialog.remove();
+        restoreFocus();
+      }, { once: true });
+
+      dom.body.append(dialog);
+
+      try {
+        dialog.showModal();
+      } catch (error) {
+        dialog.remove();
+        restoreFocus();
+        throw error;
+      }
+    } catch (error) {
+      message(
+        `Не удалось открыть памятку: ${error.message}`,
+        true
+      );
+    }
+  });
+
+   form.addEventListener('submit', event => {
     event.preventDefault();
+
+    if (locked) {
+      message(
+        'Сохранение недоступно: запись библиотеки заблокирована. ' +
+        'Текущий ввод остаётся в форме.',
+        true
+      );
+      return;
+    }
+
+    if (importing) {
+      message(
+        'Дождитесь завершения импорта. ' +
+        'Текущий ввод остаётся в форме.'
+      );
+      return;
+    }
+
+    if (current && !dirty) {
+      message(
+        'Нет несохранённых изменений. ' +
+        'Номер редакции и библиотека не изменены.'
+      );
+      return;
+    }
 
     try {
       const scenario = readDocument();
-      const next = clone(library);
 
-      const index = next.scenarios.findIndex(
+      const index = library.scenarios.findIndex(
         item => item.id === scenario.id
       );
 
+      if (
+        index >= 0 &&
+        sameScenarioContent(scenario, library.scenarios[index])
+      ) {
+        // Даже без записи нельзя подтверждать сохранение
+        // относительно устаревшей библиотеки.
+        if (localStorage.getItem(KEY) !== expectedRaw) {
+          lock(
+            'Библиотека сценариев изменена в другой вкладке. ' +
+            'Подтверждение сохранения заблокировано. ' +
+            'Текущий ввод остаётся в форме; ' +
+            'его можно экспортировать в JSON.'
+          );
+
+          throw new Error('Обнаружено внешнее изменение.');
+        }
+
+        const saved = library.scenarios[index];
+
+        clearTimeout(previewTimer);
+        previewTimer = null;
+
+        // Форму и снимок не заменяем.
+        // Снимаем dirty и очищаем только активный черновик.
+        // Ещё не рассмотренный найденный черновик сохраняется.
+        setDirty(false);
+        draftRecovery?.clearActive();
+
+        renderPreview(scenario);
+
+        message(
+          `Содержимое сценария «${saved.name}» ` +
+          'совпадает с сохранённой версией. ' +
+          `Редакция ${saved.revision} не изменена. ` +
+          'Повторная запись не требуется.'
+        );
+
+        return;
+      }
+
       if (index < 0) ensureSpace();
+
+      const next = clone(library);
 
       scenario.revision = index < 0
         ? 1
@@ -822,13 +1436,76 @@ export function initScenarios({ getMaps, validateMap }) {
         next.scenarios[index] = scenario;
       }
 
+      // Форма меняется только после успешной записи.
       persist(next);
+
       fill(scenario);
       renderList();
 
       message(`Сценарий «${scenario.name}» сохранён локально.`);
     } catch (error) {
       message(`Не сохранено: ${error.message}`, true);
+    }
+  });
+
+    undoDeleteButton.addEventListener('click', () => {
+    if (
+      locked ||
+      importing ||
+      !lastDeletedScenario
+    ) {
+      return;
+    }
+
+    try {
+      ensureSpace();
+
+      const restored = clone(lastDeletedScenario);
+
+      // Не перезаписываем существующую запись.
+      if (
+        library.scenarios.some(
+          scenario => scenario.id === restored.id
+        )
+      ) {
+        throw new Error(
+          'Сценарий с таким идентификатором уже существует. ' +
+          'Восстановление не выполнено, чтобы не перезаписать его.'
+        );
+      }
+
+      if (!validScenario(restored)) {
+        throw new Error(
+          'Удалённая копия не прошла проверку.'
+        );
+      }
+
+      const next = clone(library);
+      next.scenarios.push(restored);
+
+      // Штатный persist проверяет внешние изменения,
+      // ограничения и успешность записи.
+      persist(next);
+
+      lastDeletedScenario = null;
+      syncUndoDeleteButton();
+
+      // Форму не заполняем: текущий ввод, dirty
+      // и его временный черновик остаются прежними.
+      renderList();
+
+      message(
+        `Сценарий «${restored.name}» восстановлен ` +
+        'в библиотеке вместе со снимком карты. ' +
+        'Текущая форма не изменена. ' +
+        'Чтобы открыть его, выберите сценарий в библиотеке.'
+      );
+    } catch (error) {
+      // При ошибке копию не удаляем — можно повторить действие.
+      message(
+        `Не удалось восстановить сценарий: ${error.message}`,
+        true
+      );
     }
   });
 
@@ -848,6 +1525,11 @@ export function initScenarios({ getMaps, validateMap }) {
     const action = button.dataset.scenarioAction;
 
     if (action === 'open') {
+      // Текущий документ уже находится в форме.
+      // Повторное открытие не должно сбрасывать ввод,
+      // прикреплённый снимок и временный черновик.
+      if (current?.id === scenario.id) return;
+
       if (!canDiscard()) return;
 
       fill(scenario);
@@ -884,7 +1566,9 @@ export function initScenarios({ getMaps, validateMap }) {
 
     if (!confirm(
       `Удалить сценарий «${scenario.name}»?\n\n` +
-      'Отмена удаления не предусмотрена.' +
+            'Последний удалённый сценарий можно восстановить через ' +
+      '«Документ» до перезагрузки страницы. ' +
+      'Следующее удаление заменит эту возможность.' +
       (current?.id === scenario.id && dirty
         ? '\nНесохранённые изменения этого сценария будут потеряны.'
         : '')
@@ -899,12 +1583,25 @@ export function initScenarios({ getMaps, validateMap }) {
         item => item.id !== scenario.id
       );
 
+      // Подготавливаем копию до записи, но делаем её доступной
+      // для восстановления только после успешного удаления.
+      const removed = clone(scenario);
+
       persist(next);
+
+      lastDeletedScenario = removed;
+      syncUndoDeleteButton();
 
       if (current?.id === scenario.id) fill(null);
 
       renderList();
-      message('Сценарий удалён. Исходная карта не изменена.');
+
+      message(
+        `Сценарий «${scenario.name}» удалён. ` +
+        'Его можно восстановить через «Документ» ' +
+        'до следующего удаления или перезагрузки страницы. ' +
+        'Исходная карта не изменена.'
+      );
     } catch (error) {
       message(`Не удалено: ${error.message}`, true);
     }
@@ -1087,6 +1784,324 @@ export function initScenarios({ getMaps, validateMap }) {
     );
   }
 
+    function createDraftRecovery() {
+    const DRAFT_KEY = 'mt_workshop_scenario_draft_v1';
+
+    // Отдельный технический предел временной копии.
+    // Реальная квота sessionStorage зависит от браузера.
+    const MAX_DRAFT_LENGTH = 4 * 1024 * 1024;
+
+    let timer = null;
+    let pending = null;
+    let unavailable = false;
+
+    const nameField = find('[data-s-name]');
+    const statusField = find('[data-s-status]');
+
+    const sectionFields = Object.fromEntries(
+      Object.keys(SECTIONS).map(key => [
+        key,
+        find(`[data-s-section="${key}"]`)
+      ])
+    );
+
+    const panel = dom.createElement('section');
+    panel.className = 'ws-scenario-draft-recovery';
+    panel.setAttribute('aria-label', 'Восстановление сценария');
+    panel.hidden = true;
+
+    const heading = dom.createElement('strong');
+    heading.textContent = 'Найден несохранённый сценарий';
+
+    const description = dom.createElement('p');
+
+    const actions = dom.createElement('div');
+    actions.className = 'ws-actions';
+
+    const restoreButton = dom.createElement('button');
+    restoreButton.type = 'button';
+    restoreButton.className = 'builder-action-btn primary';
+    restoreButton.textContent = 'Восстановить черновик';
+
+    const discardButton = dom.createElement('button');
+    discardButton.type = 'button';
+    discardButton.className = 'builder-action-btn';
+    discardButton.textContent = 'Удалить черновик';
+
+    actions.append(restoreButton, discardButton);
+    panel.append(heading, description, actions);
+
+    // Панель остаётся в форме после перестройки оболочки.
+    form.prepend(panel);
+
+    function cancelTimer() {
+      clearTimeout(timer);
+      timer = null;
+    }
+
+    function reportUnavailable() {
+      if (unavailable) return;
+
+      unavailable = true;
+
+      message(
+        'Временная копия сценария недоступна или превышает ' +
+        'доступное место. Текущий ввод остаётся в редакторе, ' +
+        'но восстановление после перезагрузки не гарантируется. ' +
+        'Сохраните сценарий в библиотеку или экспортируйте JSON.',
+        true
+      );
+    }
+
+    function validDraft(value) {
+      return Boolean(
+        exactKeys(value, [
+          'format', 'version', 'savedAt', 'base', 'values'
+        ]) &&
+        value.format === 'mt-scenario-draft' &&
+        value.version === 1 &&
+        validDate(value.savedAt) &&
+        (
+          value.base === null ||
+          validScenario(value.base)
+        ) &&
+        exactKeys(value.values, [
+          'name', 'status', 'sections', 'map'
+        ]) &&
+        text(value.values.name, 120) &&
+        ['draft', 'test-ready'].includes(value.values.status) &&
+        exactKeys(
+          value.values.sections,
+          Object.keys(SECTIONS)
+        ) &&
+        Object.keys(SECTIONS).every(key =>
+          text(
+            value.values.sections[key],
+            MAX_SECTION_LENGTH
+          )
+        ) &&
+        (
+          value.values.map === null ||
+          validSnapshot(value.values.map)
+        )
+      );
+    }
+
+    function removeStored() {
+      try {
+        sessionStorage.removeItem(DRAFT_KEY);
+        return true;
+      } catch {
+        reportUnavailable();
+        return false;
+      }
+    }
+
+    function flush() {
+      cancelTimer();
+
+      // Найденный черновик не затираем новым вводом,
+      // пока пользователь не примет решение.
+      if (!dirty || pending || unavailable) return false;
+
+      try {
+        const draft = {
+          format: 'mt-scenario-draft',
+          version: 1,
+          savedAt: new Date().toISOString(),
+
+          // Сохранённая версия нужна для проверки:
+          // можно ли продолжить исходный документ.
+          base: current ? clone(current) : null,
+
+          values: {
+            name: nameField.value,
+            status: statusField.value,
+
+            sections: Object.fromEntries(
+              Object.entries(sectionFields).map(
+                ([key, field]) => [key, field.value]
+              )
+            ),
+
+            // Только уже прикреплённый снимок.
+            // Выбор в списке карт сюда не попадает.
+            map: mapSnapshot ? clone(mapSnapshot) : null
+          }
+        };
+
+        if (!validDraft(draft)) {
+          throw new Error('Некорректный временный черновик.');
+        }
+
+        const raw = JSON.stringify(draft);
+
+        if (raw.length > MAX_DRAFT_LENGTH) {
+          throw new Error('Временный черновик слишком большой.');
+        }
+
+        sessionStorage.setItem(DRAFT_KEY, raw);
+        return true;
+      } catch {
+        reportUnavailable();
+        return false;
+      }
+    }
+
+    function schedule() {
+      cancelTimer();
+
+      if (pending || unavailable) return;
+
+      timer = setTimeout(flush, 400);
+    }
+
+    function clearActive() {
+      cancelTimer();
+
+      // Не удаляем ещё не рассмотренный найденный черновик.
+      if (pending) return;
+
+      removeStored();
+    }
+
+    restoreButton.addEventListener('click', () => {
+      if (!pending || !canDiscard()) return;
+
+      const draft = pending;
+
+      const original = draft.base
+        ? library.scenarios.find(
+            scenario => scenario.id === draft.base.id
+          )
+        : null;
+
+      // Продолжаем старую запись только при точном совпадении
+      // с её сохранённой версией. Иначе создаём новый документ.
+      const sameBase = Boolean(
+        !locked &&
+        original &&
+        JSON.stringify(original) === JSON.stringify(draft.base)
+      );
+
+      const detached = Boolean(draft.base && !sameBase);
+
+      // Пока pending установлен, fill() не удаляет
+      // найденную временную копию.
+      fill(sameBase ? original : null);
+
+      nameField.value = draft.values.name;
+      statusField.value = draft.values.status;
+
+      for (const key of Object.keys(SECTIONS)) {
+        sectionFields[key].value =
+          draft.values.sections[key];
+      }
+
+      mapSnapshot = draft.values.map
+        ? clone(draft.values.map)
+        : null;
+
+      clearTimeout(previewTimer);
+      previewTimer = null;
+
+      generation += 1;
+
+      mapInfo();
+      renderPreview(readDocument({ draft: true }));
+
+      pending = null;
+      panel.hidden = true;
+
+      setDirty(true);
+      flush();
+
+      message(
+        detached
+          ? 'Черновик восстановлен как новый сценарий: ' +
+            'исходная запись изменена, удалена или библиотека ' +
+            'заблокирована. Тексты и прикреплённый снимок ' +
+            'восстановлены; библиотека не изменена.'
+          : 'Черновик сценария восстановлен вместе ' +
+            'с прикреплённым снимком карты. ' +
+            'Для записи в библиотеку нажмите ' +
+            '«Сохранить сценарий».'
+      );
+    });
+
+    discardButton.addEventListener('click', () => {
+      if (!pending) return;
+
+      if (!confirm(
+        'Удалить найденный временный черновик сценария?\n\n' +
+        'Текущая форма, сохранённые сценарии и карты ' +
+        'останутся прежними.'
+      )) {
+        return;
+      }
+
+      if (!removeStored()) return;
+
+      pending = null;
+      panel.hidden = true;
+
+      // Если новая форма уже редактировалась,
+      // начинаем сохранять временную копию именно её.
+      if (dirty) flush();
+
+      message(
+        'Найденный черновик удалён. ' +
+        'Текущая форма и библиотека не изменены.'
+      );
+    });
+
+    try {
+      const raw = sessionStorage.getItem(DRAFT_KEY);
+
+      if (raw !== null) {
+        if (raw.length > MAX_DRAFT_LENGTH) {
+          throw new Error('Превышен размер черновика.');
+        }
+
+        const saved = JSON.parse(raw);
+
+        if (!validDraft(saved)) {
+          throw new Error('Неподдерживаемый черновик.');
+        }
+
+        pending = saved;
+
+        const savedTime = new Date(saved.savedAt)
+          .toLocaleString('ru-RU');
+
+        description.textContent =
+          `Временная копия от ${savedTime}. ` +
+          'Восстанавливаются название, статус, все разделы ' +
+          'и прикреплённый снимок карты. ' +
+          'Пока вы не восстановите или не удалите этот черновик, ' +
+          'новый ввод не заменяет его временную копию.';
+
+        panel.hidden = false;
+      }
+    } catch {
+      // Повреждённую или неизвестную копию не затираем.
+      reportUnavailable();
+    }
+
+    // Подстраховка на случай, если таймер ещё не сработал.
+    window.addEventListener('beforeunload', flush);
+    window.addEventListener('pagehide', flush);
+
+    dom.addEventListener('visibilitychange', () => {
+      if (dom.visibilityState === 'hidden') flush();
+    });
+
+    return {
+      schedule,
+      clearActive
+    };
+  }
+
   fill(null);
   renderList();
   updateButtons();
@@ -1097,4 +2112,8 @@ export function initScenarios({ getMaps, validateMap }) {
       'Сохранение и резервные копии выполняются отдельно от карт.'
     );
   }
+
+  // После стартового fill(), чтобы найденный черновик
+  // не удалился во время инициализации.
+  draftRecovery = createDraftRecovery();
 }

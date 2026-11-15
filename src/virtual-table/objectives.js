@@ -49,6 +49,14 @@ const clone = value => JSON.parse(JSON.stringify(value));
 let initialized = false;
 let importMapObjectives = null;
 
+let readObjectives = null;
+
+// Только независимая копия для отображения.
+// Изменять миссию через этот интерфейс нельзя.
+export function getTableObjectives() {
+  return readObjectives ? readObjectives() : [];
+}
+
 /**
  * Явная замена КТ партии точками карты.
  *
@@ -214,6 +222,14 @@ export function initObjectives() {
   initialized = true;
 
   let data = emptyData();
+
+    readObjectives = () => clone(data.objectives);
+
+  let pointDialog = null;
+  let pointDialogId = null;
+  let pointDialogHeading = null;
+  let pointDialogStatus = null;
+  let pointDialogButtons = [];
 
   // Последняя успешно прочитанная или записанная строка.
   let expectedRaw = null;
@@ -508,24 +524,320 @@ export function initObjectives() {
      Счёт
      ======================================================================== */
 
+  function syncPointDialog() {
+    if (!pointDialog) return;
+
+    const point = data.objectives.find(
+      item => item.id === pointDialogId
+    );
+
+    if (!point) {
+      pointDialog.close();
+      return;
+    }
+
+    pointDialogHeading.textContent =
+      `${point.title} · ${coordinate(point)}`;
+
+    for (const button of pointDialogButtons) {
+      const selected = button.dataset.pointOwner === point.owner;
+
+      button.classList.toggle('primary', selected);
+      button.setAttribute('aria-pressed', String(selected));
+
+      // При ошибке чтения/внешнем конфликте не предлагаем запись.
+      button.disabled = selected || Boolean(loadError);
+    }
+  }
+
+  function openPointDialog(id, trigger) {
+    if (document.querySelector('dialog[open]')) return;
+
+    const point = data.objectives.find(item => item.id === id);
+
+    if (!point) return;
+
+    const dialog = document.createElement('dialog');
+    dialog.className = 'vt-point-control-dialog';
+    dialog.setAttribute('aria-label', 'Контроль точки');
+
+    const heading = document.createElement('h2');
+
+    const explanation = document.createElement('p');
+    explanation.textContent =
+      'Изменение контроля сохраняется сразу. ' +
+      'Счёт не меняется; очки начисляют игроки вручную.';
+
+    const actions = document.createElement('div');
+    actions.className = 'vt-detail-actions';
+
+    const buttons = [];
+
+    for (const [owner, label] of Object.entries(OWNERS)) {
+      const button = document.createElement('button');
+
+      button.type = 'button';
+      button.className = 'builder-action-btn';
+      button.dataset.pointOwner = owner;
+      button.textContent = label;
+
+      button.addEventListener('click', () => {
+        const actual = data.objectives.find(
+          item => item.id === id
+        );
+
+        if (!actual) {
+          dialog.close();
+          return;
+        }
+
+        if (actual.owner === owner) return;
+
+        const saved = save(next => {
+          const target = next.objectives.find(
+            item => item.id === id
+          );
+
+          if (!target) {
+            throw new Error('Контрольная точка больше не найдена.');
+          }
+
+          target.owner = owner;
+        },
+        `Контроль точки «${actual.title}»: ` +
+        `${OWNERS[owner]}. Счёт не изменён.`);
+
+        // При ошибке показываем сообщение и в самом окне,
+        // а не только в скрытой за ним панели миссии.
+        if (pointDialog === dialog) {
+          pointDialogStatus.textContent = saved
+            ? `Контроль: ${OWNERS[owner]}. Счёт не изменён.`
+            : status.textContent;
+
+          syncPointDialog();
+
+          // Выбранная кнопка теперь отключена.
+          // Не оставляем на ней клавиатурный фокус.
+          if (saved) closeButton.focus({ preventScroll: true });
+        }
+      });
+
+      buttons.push(button);
+      actions.append(button);
+    }
+
+    const dialogStatus = document.createElement('p');
+    dialogStatus.setAttribute('role', 'status');
+    dialogStatus.setAttribute('aria-live', 'polite');
+    dialogStatus.textContent = loadError || '';
+
+    const closeButton = document.createElement('button');
+    closeButton.type = 'button';
+    closeButton.className = 'builder-action-btn';
+    closeButton.textContent = 'Закрыть';
+    closeButton.autofocus = true;
+
+    closeButton.addEventListener('click', () => dialog.close());
+
+    dialog.append(
+      heading,
+      explanation,
+      actions,
+      dialogStatus,
+      closeButton
+    );
+
+    const position = { x: point.x, y: point.y };
+
+    pointDialog = dialog;
+    pointDialogId = id;
+    pointDialogHeading = heading;
+    pointDialogStatus = dialogStatus;
+    pointDialogButtons = buttons;
+
+    dialog.addEventListener('close', () => {
+      if (pointDialog === dialog) {
+        pointDialog = null;
+        pointDialogId = null;
+        pointDialogHeading = null;
+        pointDialogStatus = null;
+        pointDialogButtons = [];
+      }
+
+      dialog.remove();
+
+      // Маркер мог быть перестроен после записи.
+      const visibleMarker = [
+        ...document.querySelectorAll('[data-vt-point-open]')
+      ].find(element =>
+        element.dataset.vtPointOpen === id &&
+        element.getClientRects().length > 0
+      );
+
+      const fallbackCell = board.querySelector(
+        `button[data-x="${position.x}"]` +
+        `[data-y="${position.y}"]`
+      );
+
+      const target = trigger?.isConnected &&
+        trigger.getClientRects().length > 0
+          ? trigger
+          : visibleMarker || fallbackCell;
+
+      // У маркера сетки нет отдельного tab-stop:
+      // возвращаем фокус в содержащую его клетку.
+      const focusTarget = target?.closest(
+        'button[data-x][data-y]'
+      ) || target;
+
+      if (
+        focusTarget &&
+        focusTarget.getClientRects().length > 0
+      ) {
+        focusTarget.focus({ preventScroll: true });
+      }
+    }, { once: true });
+
+    document.body.append(dialog);
+    syncPointDialog();
+
+    try {
+      dialog.showModal();
+    } catch (error) {
+      pointDialog = null;
+      pointDialogId = null;
+      pointDialogHeading = null;
+      pointDialogStatus = null;
+      pointDialogButtons = [];
+
+      dialog.remove();
+
+      message(
+        `Не удалось открыть контроль точки: ${error.message}`,
+        true
+      );
+    }
+  }
+
+  function pointTrigger(event) {
+    return event.target instanceof Element
+      ? event.target.closest('[data-vt-point-open]')
+      : null;
+  }
+
+  // Перехватываем только точное нажатие на обозначение КТ
+  // и только в режиме моделей. Остальная клетка работает
+  // как раньше; линейка, маршрут и местность не блокируются.
+  document.addEventListener('click', event => {
+    const trigger = pointTrigger(event);
+
+    if (
+      !trigger ||
+      board.dataset.fieldTool !== 'models' ||
+      !data.objectives.some(
+        point => point.id === trigger.dataset.vtPointOpen
+      )
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+
+    openPointDialog(trigger.dataset.vtPointOpen, trigger);
+  }, true);
+
+  // SVG-маркер доступен с клавиатуры.
+  document.addEventListener('keydown', event => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+
+    const trigger = pointTrigger(event);
+
+    if (
+      !trigger ||
+      !trigger.matches('.vt-iso-objective') ||
+      board.dataset.fieldTool !== 'models'
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+
+    openPointDialog(trigger.dataset.vtPointOpen, trigger);
+  }, true);
+
+  const pointStyle = document.createElement('style');
+
+  pointStyle.textContent = `
+    .vt-point-control-dialog {
+      box-sizing: border-box;
+      width: min(460px, calc(100vw - 24px));
+      max-height: calc(100dvh - 24px);
+      margin: auto;
+      padding: 22px;
+      overflow: auto;
+      color: #e8e2d7;
+      background: #191f24;
+      border: 1px solid #ad9866;
+      border-radius: 6px;
+      box-shadow: 0 16px 60px #0009;
+    }
+
+    .vt-point-control-dialog::backdrop {
+      background: rgb(5 10 7 / 75%);
+    }
+
+    .vt-point-control-dialog h2 {
+      margin: 0 0 14px;
+      color: #d0b477;
+      font-size: 21px;
+      overflow-wrap: anywhere;
+    }
+
+    .vt-point-control-dialog p {
+      line-height: 1.6;
+      overflow-wrap: anywhere;
+    }
+
+    .vt-point-control-dialog .vt-detail-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    #vt-board[data-field-tool="models"]
+      [data-vt-point-open] {
+      cursor: pointer;
+    }
+  `;
+
+  document.head.append(pointStyle);
+     
   function renderScores() {
     scores.replaceChildren();
 
     for (const side of ['a', 'b']) {
+      const sideName = side === 'a'
+        ? 'Игрок А'
+        : 'Игрок Б';
+
       const row = document.createElement('div');
       row.className = 'vt-detail-block';
 
       const label = document.createElement('strong');
+
+      // Эти атрибуты используются существующей панелью партии.
       label.dataset.missionScoreSide = side;
-label.dataset.missionScoreValue = String(data.scores[side]);
+      label.dataset.missionScoreValue = String(data.scores[side]);
 
       label.textContent =
-        `${side === 'a' ? 'Игрок А' : 'Игрок Б'}: ` +
-        data.scores[side];
+        `${sideName}: ${data.scores[side]}`;
 
-      const actions = document.createElement('div');
-      actions.className = 'vt-detail-actions';
+      const quickActions = document.createElement('div');
+      quickActions.className = 'vt-detail-actions';
 
+      // Существующие быстрые действия и их обработчик сохраняем.
       for (const delta of [-1, 1]) {
         const button = document.createElement('button');
 
@@ -534,6 +846,7 @@ label.dataset.missionScoreValue = String(data.scores[side]);
         button.dataset.missionAction = 'score';
         button.dataset.side = side;
         button.dataset.delta = String(delta);
+
         button.textContent =
           delta < 0 ? '−1 очко' : '+1 очко';
 
@@ -541,10 +854,151 @@ label.dataset.missionScoreValue = String(data.scores[side]);
           ? data.scores[side] === 0
           : data.scores[side] === MAX_SCORE;
 
-        actions.append(button);
+        quickActions.append(button);
       }
 
-      row.append(label, actions);
+      const adjustForm = document.createElement('form');
+      adjustForm.setAttribute(
+        'aria-label',
+        `Изменение счёта: ${sideName}`
+      );
+
+      Object.assign(adjustForm.style, {
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'end',
+        gap: '8px',
+        marginTop: '12px'
+      });
+
+      const amountLabel = document.createElement('label');
+      amountLabel.textContent = 'Количество очков';
+
+      Object.assign(amountLabel.style, {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '6px',
+        flex: '0 1 150px',
+        minWidth: '0',
+        fontSize: '0.82rem'
+      });
+
+      const amountInput = document.createElement('input');
+
+      amountInput.type = 'number';
+      amountInput.min = '1';
+      amountInput.max = String(MAX_SCORE);
+      amountInput.step = '1';
+      amountInput.required = true;
+      amountInput.inputMode = 'numeric';
+      amountInput.placeholder = 'Например, 5';
+      amountInput.dataset.missionScoreAmount = side;
+
+      Object.assign(amountInput.style, {
+        boxSizing: 'border-box',
+        width: '100%',
+        minHeight: '40px',
+        padding: '8px',
+        color: '#eeeaf5',
+        background: '#20202d',
+        border: '1px solid #3b3b4d',
+        borderRadius: '6px',
+        font: 'inherit'
+      });
+
+      amountLabel.append(amountInput);
+
+      const addButton = document.createElement('button');
+
+      addButton.type = 'submit';
+      addButton.className = 'builder-action-btn';
+      addButton.dataset.scoreDirection = '1';
+      addButton.textContent = 'Добавить';
+
+      const subtractButton = document.createElement('button');
+
+      subtractButton.type = 'submit';
+      subtractButton.className = 'builder-action-btn';
+      subtractButton.dataset.scoreDirection = '-1';
+      subtractButton.textContent = 'Снять';
+
+      adjustForm.append(
+        amountLabel,
+        addButton,
+        subtractButton
+      );
+
+      adjustForm.addEventListener('submit', event => {
+        event.preventDefault();
+
+        // Не передаём отправку этой формы другим обработчикам.
+        event.stopPropagation();
+
+        const raw = amountInput.value.trim();
+        const amount = Number(raw);
+
+        if (
+          amountInput.validity.badInput ||
+          raw === '' ||
+          !Number.isSafeInteger(amount) ||
+          amount < 1 ||
+          amount > MAX_SCORE
+        ) {
+          message(
+            `Укажите целое количество очков от 1 до ${MAX_SCORE}.`,
+            true
+          );
+
+          amountInput.focus({ preventScroll: true });
+          return;
+        }
+
+        // Enter в числовом поле означает добавление.
+        const direction =
+          event.submitter?.dataset.scoreDirection === '-1'
+            ? -1
+            : 1;
+
+        const delta = direction * amount;
+
+        const saved = save(next => {
+          const result = next.scores[side] + delta;
+
+          // Не обрезаем результат молча:
+          // либо применяем всё изменение, либо ничего.
+          if (
+            !Number.isSafeInteger(result) ||
+            result < 0 ||
+            result > MAX_SCORE
+          ) {
+            throw new Error(
+              direction < 0
+                ? `${sideName}: нельзя снять ${amount} очков. ` +
+                  `Текущий счёт — ${next.scores[side]}.`
+                : `${sideName}: после добавления ${amount} очков ` +
+                  `счёт превысит ${MAX_SCORE}.`
+            );
+          }
+
+          next.scores[side] = result;
+        },
+        `${sideName}: ${direction > 0 ? '+' : '−'}${amount} очков.`);
+
+        if (!saved) {
+          // save() не перестраивает форму при ошибке.
+          // Введённое количество остаётся доступным.
+          amountInput.focus({ preventScroll: true });
+          return;
+        }
+
+        // Успешный save() уже перестроил панель.
+        // Возвращаем фокус в новое поле той же стороны.
+        scores.querySelector(
+          `[data-mission-score-amount="${side}"]`
+        )?.focus({ preventScroll: true });
+      });
+
+      row.append(label, quickActions, adjustForm);
       scores.append(row);
     }
   }
@@ -638,8 +1092,12 @@ label.dataset.missionScoreValue = String(data.scores[side]);
       const marker = document.createElement('span');
 
       marker.dataset.vtObjectiveMarker = point.id;
-      marker.setAttribute('aria-hidden', 'true');
+      marker.dataset.vtPointOpen = point.id;
       marker.textContent = `КТ${index + 1}`;
+
+      marker.title =
+        `${point.title} · ${OWNERS[point.owner]}. ` +
+        'В режиме моделей нажмите для изменения контроля.';
 
       Object.assign(marker.style, {
         position: 'absolute',
@@ -654,7 +1112,7 @@ label.dataset.missionScoreValue = String(data.scores[side]);
         fontSize: 'calc(var(--vt-cell) * 0.17)',
         fontWeight: '800',
         lineHeight: '1.1',
-        pointerEvents: 'none'
+        pointerEvents: 'auto'
       });
 
       cell.append(marker);
@@ -665,6 +1123,11 @@ label.dataset.missionScoreValue = String(data.scores[side]);
     renderScores();
     renderList();
     drawBoardMarkers();
+    syncPointDialog();
+
+    document.dispatchEvent(
+      new Event('vt:objectives-updated')
+    );
   }
 
   /* ========================================================================

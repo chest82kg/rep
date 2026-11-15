@@ -358,10 +358,23 @@ export function initTableScenarios({
       </select>
     </div>
 
+        <button type="button"
+            data-scenario-inspect
+            class="builder-action-btn"
+            aria-haspopup="dialog">
+      Посмотреть сценарий
+    </button>
+
     <button type="button"
             data-scenario-load
             class="builder-action-btn primary">
       Загрузить сценарий
+    </button>
+
+        <button type="button"
+            data-scenario-memo-only
+            class="builder-action-btn">
+      Взять только памятку
     </button>
 
     <button type="button"
@@ -384,11 +397,14 @@ export function initTableScenarios({
   const help = document.createElement('p');
   help.className = 'vt-notice';
 
-  help.textContent =
-    'Загрузка сценария сохраняет памятку вместе с партией. ' +
-    'При наличии карты заменяются местность, зоны и маркеры. ' +
-    'Армии, позиции моделей, игровые отметки и раунд сохраняются. ' +
-    'КТ и счёт этой командой не меняются. ' +
+    help.textContent =
+    '«Загрузить сценарий» сохраняет памятку вместе с партией ' +
+    'и при наличии снимка заменяет местность, зоны и маркеры. ' +
+    '«Взять только памятку» заменяет только документ сценария: ' +
+    'текущее поле и позиции моделей остаются прежними. ' +
+    'Для обеих команд сначала загрузите хотя бы одну армию. ' +
+    'Армии, игровые отметки и раунд не сбрасываются. ' +
+    'КТ и счёт этими командами не меняются. ' +
     'КТ снимка загружаются отдельно в панели памятки.';
 
   panel.after(help);
@@ -426,6 +442,14 @@ export function initTableScenarios({
   const select = panel.querySelector('#vt-scenario-select');
   const loadButton = panel.querySelector('[data-scenario-load]');
 
+    const memoOnlyButton = panel.querySelector(
+    '[data-scenario-memo-only]'
+  );
+
+    const inspectButton = panel.querySelector(
+    '[data-scenario-inspect]'
+  );
+
   let listedRaw = null;
 
   function refresh({ announce = false } = {}) {
@@ -459,9 +483,15 @@ export function initTableScenarios({
         }
       }
 
-      loadButton.disabled = library.scenarios.length === 0;
+      const empty = library.scenarios.length === 0;
 
-      if (announce) message('Список сценариев обновлён.');
+      loadButton.disabled = empty;
+      memoOnlyButton.disabled = empty;
+      inspectButton.disabled = empty;
+
+      if (announce) {
+        message('Список сценариев обновлён.');
+      }
     } catch (error) {
       listedRaw = null;
 
@@ -471,6 +501,9 @@ export function initTableScenarios({
 
       select.replaceChildren(option);
       loadButton.disabled = true;
+
+            memoOnlyButton.disabled = true;
+            inspectButton.disabled = true;
 
       message(
         `Не удалось прочитать сценарии: ${error.message}`,
@@ -483,6 +516,280 @@ export function initTableScenarios({
     .addEventListener('click', () => {
       refresh({ announce: true });
     });
+
+      inspectButton.addEventListener('click', () => {
+    if (document.querySelector('dialog[open]')) return;
+
+    let dialog = null;
+
+    try {
+      const id = select.value;
+      const library = readLibrary();
+
+      if (library.raw !== listedRaw) {
+        refresh();
+
+        throw new Error(
+          'Библиотека изменилась. Список обновлён. ' +
+          'Проверьте выбор и откройте просмотр повторно.'
+        );
+      }
+
+      const source = library.scenarios.find(
+        item => item.id === id
+      );
+
+      if (!source) {
+        throw new Error('Выберите доступный сценарий.');
+      }
+
+      // Просмотр работает с независимой копией.
+      // Партию и библиотеку не меняем.
+      const scenario = clone(source);
+      const inspectedRaw = library.raw;
+
+      function node(tag, className = '', content = '') {
+        const element = document.createElement(tag);
+
+        if (className) element.className = className;
+        element.textContent = content;
+
+        return element;
+      }
+
+      dialog = node('dialog', 'vt-scenario-inspect-dialog');
+      dialog.setAttribute(
+        'aria-label',
+        `Просмотр сценария «${scenario.name}»`
+      );
+
+      const header = node('header', 'vt-scenario-inspect-header');
+      const heading = node('div');
+
+      heading.append(
+        node('h2', '', scenario.name),
+        node(
+          'p',
+          '',
+          `Редакция ${scenario.revision} · ` +
+          (scenario.status === 'test-ready'
+            ? 'Готово к тесту'
+            : 'Черновик')
+        )
+      );
+
+      const closeButton = node(
+        'button',
+        'builder-action-btn',
+        'Закрыть'
+      );
+
+      closeButton.type = 'button';
+      closeButton.autofocus = true;
+
+      header.append(heading, closeButton);
+
+      const body = node('div', 'vt-scenario-inspect-body');
+
+      body.append(
+        node(
+          'p',
+          'vt-scenario-inspect-notice',
+          'Просмотр сохранённого сценария мастерской. ' +
+          'Открытие этого окна не изменяет партию. ' +
+          'Несохранённые правки редактора здесь не показаны.'
+        )
+      );
+
+      if (scenario.map) {
+        body.append(
+          node(
+            'p',
+            'vt-scenario-inspect-notice',
+            `Карта: ${scenario.map.name} · ` +
+            `редакция снимка ${scenario.map.revision} · ` +
+            `КТ: ${scenario.map.layers.objectives.length}`
+          ),
+          createMapPreview(scenario.map, {
+            expandable: false,
+            caption:
+              'Независимый снимок сценария, не текущее поле. ' +
+              'Нажатия на клетки только показывают сведения.'
+          })
+        );
+      } else {
+        body.append(
+          node(
+            'p',
+            'vt-scenario-inspect-notice',
+            'Сценарий без карты. При загрузке будет заменена ' +
+            'только памятка; текущее поле останется прежним.'
+          )
+        );
+      }
+
+      let filledSections = 0;
+
+      for (const [key, label] of Object.entries(SECTION_LABELS)) {
+        const content = scenario.sections[key];
+
+        if (!content.trim()) continue;
+
+        filledSections += 1;
+
+        const section = node(
+          'section',
+          'vt-scenario-inspect-section'
+        );
+
+        section.append(
+          node('h3', '', label),
+          node('p', '', content)
+        );
+
+        body.append(section);
+      }
+
+      if (!filledSections) {
+        body.append(
+          node(
+            'p',
+            'vt-scenario-inspect-notice',
+            'Текстовые разделы не заполнены.'
+          )
+        );
+      }
+
+      const footer = node('footer', 'vt-scenario-inspect-footer');
+      const notice = node(
+        'p',
+        'vt-scenario-inspect-notice',
+        getState()
+          ? 'Выберите действие. «Только памятка» не меняет поле. ' +
+            '«Загрузить сценарий» также применяет снимок карты, ' +
+            'если он есть. Обе команды требуют подтверждения. ' +
+            'КТ и счёт не меняются. Замена карты будет отклонена, ' +
+            'если нарушит опоры моделей.'
+          : 'Сценарий можно прочитать без армии. ' +
+            'Для прикрепления к партии сначала загрузите ' +
+            'хотя бы одну армию на стол.'
+      );
+
+      notice.setAttribute('role', 'status');
+      notice.setAttribute('aria-live', 'polite');
+
+      const applyButton = node(
+        'button',
+        'builder-action-btn primary',
+        'Загрузить этот сценарий…'
+      );
+
+      applyButton.type = 'button';
+      applyButton.disabled = !getState();
+
+      const memoButton = node(
+        'button',
+        'builder-action-btn',
+        'Взять только памятку…'
+      );
+
+      memoButton.type = 'button';
+      memoButton.disabled = !getState();
+
+      const actions = node(
+        'div',
+        'vt-scenario-inspect-actions'
+      );
+
+      actions.append(memoButton, applyButton);
+
+      footer.append(notice, actions);
+      dialog.append(header, body, footer);
+
+      closeButton.addEventListener('click', () => {
+        dialog.close();
+      });
+
+      function runInspectedAction(targetButton) {
+        try {
+          // Обе команды должны работать именно
+          // с просмотренным документом, а не новым выбором.
+          if (
+            select.value !== scenario.id ||
+            localStorage.getItem(KEY) !== inspectedRaw
+          ) {
+            refresh();
+
+            applyButton.disabled = true;
+            memoButton.disabled = true;
+
+            notice.textContent =
+              'Выбор или библиотека изменились. ' +
+              'Закройте окно и откройте сценарий повторно. ' +
+              'Партия не изменена.';
+
+            return;
+          }
+
+          assertWritable();
+
+          if (!getState()) {
+            throw new Error(
+              'Сначала загрузите хотя бы одну армию.'
+            );
+          }
+
+          if (!targetButton.isConnected || targetButton.disabled) {
+            throw new Error(
+              'Команда сейчас недоступна. ' +
+              'Закройте окно и проверьте панель сценариев.'
+            );
+          }
+
+          // Сначала закрываем просмотр, затем запускаем
+          // штатное подтверждение выбранной операции.
+          dialog.close();
+          targetButton.click();
+        } catch (error) {
+          notice.textContent =
+            `Действие недоступно: ${error.message}`;
+        }
+      }
+
+      applyButton.addEventListener('click', () => {
+        runInspectedAction(loadButton);
+      });
+
+      memoButton.addEventListener('click', () => {
+        runInspectedAction(memoOnlyButton);
+      });
+
+      dialog.addEventListener('close', () => {
+        dialog.remove();
+
+        const focusTarget = inspectButton.disabled
+          ? select
+          : inspectButton;
+
+        if (
+          focusTarget.isConnected &&
+          focusTarget.getClientRects().length > 0
+        ) {
+          focusTarget.focus({ preventScroll: true });
+        }
+      }, { once: true });
+
+      document.body.append(dialog);
+      dialog.showModal();
+    } catch (error) {
+      dialog?.remove();
+
+      message(
+        `Не удалось открыть сценарий: ${error.message}`,
+        true
+      );
+    }
+  });
 
   loadButton.addEventListener('click', () => {
     try {
@@ -567,6 +874,108 @@ export function initTableScenarios({
       'Модели, раунд, КТ и счёт сохранены.');
     } catch (error) {
       message(`Сценарий не загружен: ${error.message}`, true);
+    }
+  });
+
+    memoOnlyButton.addEventListener('click', () => {
+    try {
+      assertWritable();
+
+      if (!getState()) {
+        throw new Error(
+          'Сначала загрузите хотя бы одну армию.'
+        );
+      }
+
+      const id = select.value;
+      const library = readLibrary();
+
+      if (library.raw !== listedRaw) {
+        refresh();
+
+        throw new Error(
+          'Библиотека изменилась. Проверьте обновлённый ' +
+          'список и повторите действие.'
+        );
+      }
+
+      const source = library.scenarios.find(
+        item => item.id === id
+      );
+
+      if (!source) {
+        throw new Error('Выберите доступный сценарий.');
+      }
+
+      const scenario = clone(source);
+      const previousScenarioRaw = JSON.stringify(
+        getState().scenario ?? null
+      );
+
+      if (!confirm(
+        `Взять только памятку «${scenario.name}», ` +
+        `редакция ${scenario.revision}?\n\n` +
+        'Текущая памятка сценария будет заменена.\n\n' +
+        'Местность, зоны, маркеры, армии, позиции и опоры ' +
+        'моделей, ХП, активации, фронт, усталость, заметки ' +
+        'и раунд останутся прежними.\n\n' +
+        'КТ, их контроль и счёт не меняются.\n\n' +
+        (scenario.map
+          ? 'Снимок карты останется внутри памятки только ' +
+            'для просмотра. Он может отличаться от текущего поля.\n\n'
+          : 'В сценарии нет снимка карты.\n\n') +
+        'Действие можно отменить общей историей стола.' +
+        (scenario.status === 'draft'
+          ? '\n\nСценарий помечен как черновик.'
+          : '')
+      )) {
+        return;
+      }
+
+      assertWritable();
+
+      if (!getState()) {
+        throw new Error(
+          'Партия больше недоступна. Повторите действие.'
+        );
+      }
+
+      if (localStorage.getItem(KEY) !== library.raw) {
+        refresh();
+
+        throw new Error(
+          'За время подтверждения библиотека изменилась. ' +
+          'Прикрепление отменено.'
+        );
+      }
+
+      if (
+        JSON.stringify(getState().scenario ?? null) !==
+        previousScenarioRaw
+      ) {
+        throw new Error(
+          'Текущая памятка изменилась. ' +
+          'Проверьте её и повторите действие.'
+        );
+      }
+
+      // Не подготавливаем и не применяем слои карты.
+      // Опоры моделей и отдельное хранилище миссии
+      // этим действием не затрагиваются.
+      commit(next => {
+        next.scenario = scenario;
+      },
+      `Прикреплена только памятка «${scenario.name}», ` +
+      `редакция ${scenario.revision}. ` +
+      'Поле, модели, раунд, КТ и счёт не изменены. ' +
+      (scenario.map
+        ? 'Снимок памятки не применялся к полю.'
+        : 'Сценарий без снимка карты.'));
+    } catch (error) {
+      message(
+        `Памятка не прикреплена: ${error.message}`,
+        true
+      );
     }
   });
 
@@ -665,6 +1074,176 @@ export function initTableScenarios({
       refresh();
     }
   });
+
+    if (!document.getElementById('vt-scenario-inspect-styles')) {
+    const style = document.createElement('style');
+    style.id = 'vt-scenario-inspect-styles';
+
+    style.textContent = `
+      .vt-scenario-inspect-dialog {
+        box-sizing: border-box;
+        width: min(1040px, calc(100vw - 32px));
+        height: min(1000px, calc(100dvh - 32px));
+        max-width: none;
+        max-height: none;
+        margin: auto;
+        padding: 0;
+        overflow: hidden;
+        color: #e8e2d7;
+        background: #191f24;
+        border: 1px solid #8d805a;
+        border-radius: 6px;
+        box-shadow: 0 20px 80px #0009;
+      }
+
+      .vt-scenario-inspect-dialog[open] {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .vt-scenario-inspect-dialog::backdrop {
+        background: rgb(5 10 7 / 80%);
+      }
+
+      .vt-scenario-inspect-dialog *,
+      .vt-scenario-inspect-dialog *::before,
+      .vt-scenario-inspect-dialog *::after {
+        box-sizing: border-box;
+      }
+
+      .vt-scenario-inspect-header {
+        display: flex;
+        flex: 0 0 auto;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 18px 22px;
+        background: #252d2a;
+        border-bottom: 1px solid #465044;
+      }
+
+      .vt-scenario-inspect-header > div {
+        min-width: 0;
+      }
+
+      .vt-scenario-inspect-header h2 {
+        margin: 0;
+        color: #d0b477;
+        font-size: 24px;
+        overflow-wrap: anywhere;
+      }
+
+      .vt-scenario-inspect-header p {
+        margin: 6px 0 0;
+        color: #b1b8ac;
+        font-size: 13px;
+      }
+
+      .vt-scenario-inspect-header > button {
+        flex: 0 0 auto;
+      }
+
+      .vt-scenario-inspect-body {
+        flex: 1 1 auto;
+        min-height: 0;
+        padding: 24px 30px;
+        overflow: auto;
+        overscroll-behavior: contain;
+        overflow-wrap: anywhere;
+      }
+
+      .vt-scenario-inspect-notice {
+        margin: 0;
+        color: #b1b8ac;
+        font-size: 13px;
+        line-height: 1.6;
+        overflow-wrap: anywhere;
+      }
+
+      .vt-scenario-inspect-body > .vt-scenario-inspect-notice {
+        margin-bottom: 18px;
+      }
+
+      .vt-scenario-inspect-section {
+        margin-top: 26px;
+        padding-top: 20px;
+        border-top: 1px solid #465044;
+      }
+
+      .vt-scenario-inspect-section h3 {
+        margin: 0 0 12px;
+        color: #d0b477;
+        font-size: 20px;
+      }
+
+      .vt-scenario-inspect-section p {
+        max-width: 78ch;
+        margin: 0;
+        font-size: 16px;
+        line-height: 1.8;
+        white-space: pre-wrap;
+      }
+
+      .vt-scenario-inspect-footer {
+        display: flex;
+        flex: 0 0 auto;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 14px 22px;
+        border-top: 1px solid #465044;
+        background: #202823;
+      }
+
+      .vt-scenario-inspect-footer > button {
+        flex: 0 0 auto;
+      }
+
+            .vt-scenario-inspect-actions {
+        display: flex;
+        flex: 0 0 auto;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 8px;
+        max-width: 100%;
+      }
+
+      .vt-scenario-inspect-actions > button {
+        white-space: normal;
+      }
+
+              .vt-scenario-inspect-actions {
+          flex-direction: column;
+          align-items: stretch;
+          width: 100%;
+        }
+
+      @media (max-width: 600px) {
+        .vt-scenario-inspect-dialog {
+          width: calc(100vw - 12px);
+          height: calc(100dvh - 12px);
+        }
+
+        .vt-scenario-inspect-header,
+        .vt-scenario-inspect-body,
+        .vt-scenario-inspect-footer {
+          padding: 14px;
+        }
+
+        .vt-scenario-inspect-header h2 {
+          font-size: 20px;
+        }
+
+        .vt-scenario-inspect-footer {
+          align-items: stretch;
+          flex-direction: column;
+          gap: 10px;
+        }
+      }
+    `;
+
+    document.head.append(style);
+  }
 
   window.addEventListener('focus', () => refresh());
 

@@ -66,6 +66,133 @@ export let currentUser = null;
 
 let lastSavedDocId = null;
 
+let authWatcherStarted = false;
+let authReady = false;
+let authGeneration = 0;
+
+let saveBusy = false;
+let listActionBusy = false;
+
+let loadModalGeneration = 0;
+
+function renderAuthBadge() {
+  const badge = document.getElementById('builder-user-status');
+
+  if (!badge) return;
+
+  if (!authReady) {
+    badge.textContent = 'Проверяем аккаунт…';
+    badge.style.background = '#2a2a3a';
+    badge.style.color = 'var(--text-muted)';
+    return;
+  }
+
+  if (currentUser) {
+    badge.textContent = `☁️ ${currentUser.email || 'аккаунт'}`;
+    badge.style.background = 'rgba(46,213,115,0.15)';
+    badge.style.color = '#2ed573';
+  } else {
+    badge.textContent = '💻 Гость (локально)';
+    badge.style.background = '#2a2a3a';
+    badge.style.color = 'var(--text-muted)';
+  }
+}
+
+function invalidateLoadModal() {
+  loadModalGeneration += 1;
+
+  const body = document.getElementById('builder-modal-body');
+
+  if (!body?.hasAttribute('data-roster-list-generation')) {
+    return;
+  }
+
+  body.removeAttribute('data-roster-list-generation');
+
+  const notice = document.createElement('p');
+
+  notice.setAttribute('role', 'status');
+  notice.style.marginTop = '12px';
+  notice.textContent =
+    'Аккаунт изменился или его проверка прервалась. ' +
+    'Закройте окно и откройте список ростеров заново.';
+
+  body.replaceChildren(notice);
+}
+
+function captureStorageContext() {
+  initAuthWatcher();
+
+  if (!authReady) {
+    throw new Error(
+      'Дождитесь проверки аккаунта и повторите действие.'
+    );
+  }
+
+  const actual = auth.currentUser;
+
+  const verifiedUid = actual?.emailVerified
+    ? actual.uid
+    : null;
+
+  if ((currentUser?.uid ?? null) !== verifiedUid) {
+    throw new Error(
+      'Аккаунт изменился. Дождитесь обновления его состояния.'
+    );
+  }
+
+  return {
+    generation: authGeneration,
+    uid: currentUser?.uid ?? null,
+
+    // Даже неподтверждённый аккаунт отличаем от полного выхода.
+    authUid: actual?.uid ?? null,
+    verified: actual?.emailVerified === true
+  };
+}
+
+function storageContextIsCurrent(context) {
+  const actual = auth.currentUser;
+
+  return Boolean(
+    authReady &&
+    context.generation === authGeneration &&
+    context.uid === (currentUser?.uid ?? null) &&
+    context.authUid === (actual?.uid ?? null) &&
+    context.verified === (actual?.emailVerified === true)
+  );
+}
+
+function assertStorageContext(context) {
+  if (!storageContextIsCurrent(context)) {
+    throw new Error(
+      'Аккаунт изменился во время операции. ' +
+      'Откройте список или повторите действие заново.'
+    );
+  }
+}
+
+function listViewIsCurrent(view) {
+  return Boolean(
+    storageContextIsCurrent(view.context) &&
+    view.generation === loadModalGeneration &&
+    view.modal.isConnected &&
+    view.body.isConnected &&
+    document.getElementById('builder-modal-body') === view.body &&
+    !view.modal.classList.contains('hidden') &&
+    view.body.dataset.rosterListGeneration ===
+      String(view.generation)
+  );
+}
+
+function assertListView(view) {
+  if (!listViewIsCurrent(view)) {
+    throw new Error(
+      'Этот список ростеров устарел. Откройте его заново.'
+    );
+  }
+}
+
 const ROLE_SORT_ORDER = {
   basic: 1,
   elite: 2,
@@ -301,27 +428,52 @@ function renderUnitCardWithArtifacts(unit, unitIndex) {
    ========================================================================== */
 
 export function initAuthWatcher() {
-  onAuthStateChanged(auth, user => {
-    currentUser = user && user.emailVerified
-      ? user
-      : null;
+  // Повторное открытие билдера обновляет новый badge,
+  // но не создаёт ещё одну подписку Firebase.
+  if (authWatcherStarted) {
+    renderAuthBadge();
+    return;
+  }
 
-    const badge = document.getElementById('builder-user-status');
+  authWatcherStarted = true;
+  renderAuthBadge();
 
-    if (!badge) {
-      return;
+  onAuthStateChanged(
+    auth,
+
+    user => {
+      authGeneration += 1;
+      authReady = true;
+
+      currentUser = user && user.emailVerified
+        ? user
+        : null;
+
+      lastSavedDocId = null;
+
+      invalidateLoadModal();
+      renderAuthBadge();
+    },
+
+    error => {
+      console.error('Builder auth watcher:', error);
+
+      authGeneration += 1;
+      authReady = false;
+      currentUser = null;
+      lastSavedDocId = null;
+
+      invalidateLoadModal();
+      renderAuthBadge();
+
+      showSaveMessage(
+        'Не удалось проверить аккаунт. ' +
+        'Сохранение и список ростеров временно недоступны. ' +
+        'Обновите страницу перед продолжением.',
+        'err'
+      );
     }
-
-    if (currentUser) {
-      badge.textContent = `☁️ ${currentUser.email || 'аккаунт'}`;
-      badge.style.background = 'rgba(46,213,115,0.15)';
-      badge.style.color = '#2ed573';
-    } else {
-      badge.textContent = '💻 Гость (локально)';
-      badge.style.background = '#2a2a3a';
-      badge.style.color = 'var(--text-muted)';
-    }
-  });
+  );
 }
 
 /* ==========================================================================
@@ -329,11 +481,17 @@ export function initAuthWatcher() {
    ========================================================================== */
 
 export async function saveRoster() {
-  showSaveMessage('');
-
-  if (!checkArtifactsBeforeOutput()) {
+  if (saveBusy) {
+    showSaveMessage(
+      'Сохранение уже выполняется. Дождитесь результата.',
+      'err'
+    );
     return;
   }
+
+  showSaveMessage('');
+
+  if (!checkArtifactsBeforeOutput()) return;
 
   if (!roster.clan) {
     showSaveMessage('Сначала выберите клан.', 'err');
@@ -350,26 +508,73 @@ export async function saveRoster() {
     return;
   }
 
-  const payload = buildRosterPayload();
+  let context;
+  let payload;
+
+  try {
+    context = captureStorageContext();
+
+    // После начала сохранения работаем с независимым снимком,
+    // даже если пользователь продолжит менять армию.
+    payload = JSON.parse(
+      JSON.stringify(buildRosterPayload())
+    );
+  } catch (error) {
+    showSaveMessage(
+      error?.message || 'Не удалось подготовить сохранение.',
+      'err'
+    );
+    return;
+  }
+
   const saveButton = document.getElementById('btn-save-roster');
+
+  const previousDisabled = saveButton?.disabled ?? false;
+
+  saveBusy = true;
 
   if (saveButton) {
     saveButton.disabled = true;
   }
 
   try {
-    if (currentUser) {
-      const existing = await getUserRosters(currentUser.uid);
+    assertStorageContext(context);
+
+    if (context.uid !== null) {
+      const existing = await getUserRosters(context.uid);
+
+      assertStorageContext(context);
+
+      if (!Array.isArray(existing)) {
+        throw new Error(
+          'Облако вернуло неподдерживаемый список ростеров.'
+        );
+      }
 
       const sameNameRoster = existing.find(
-        item => item.name === payload.name
+        item => item && item.name === payload.name
       );
 
+      // UID зафиксирован до первого await.
+      // Никогда не подставляем сюда новый currentUser.uid.
       const docId = await saveUserRoster(
-        currentUser.uid,
+        context.uid,
         payload,
         sameNameRoster ? sameNameRoster.id : null
       );
+
+      // Уже отправленный запрос отменить этим guard нельзя.
+      // Но его результат не принимаем за сохранение
+      // текущего нового аккаунта.
+      if (!storageContextIsCurrent(context)) {
+        showSaveMessage(
+          'Аккаунт изменился во время сохранения. ' +
+          'Запрос был адресован исходному аккаунту. ' +
+          'Проверьте его облачный список перед повторным сохранением.',
+          'err'
+        );
+        return;
+      }
 
       lastSavedDocId = docId;
 
@@ -378,6 +583,8 @@ export async function saveRoster() {
         'ok'
       );
     } else {
+      assertStorageContext(context);
+
       saveToLocalStorage(payload);
 
       showSaveMessage(
@@ -389,40 +596,25 @@ export async function saveRoster() {
     console.error('saveRoster error:', error);
 
     showSaveMessage(
-      `Ошибка сохранения: ${error?.message || 'неизвестная ошибка'}`,
+      storageContextIsCurrent(context)
+        ? `Ошибка сохранения: ${
+            error?.message || 'неизвестная ошибка'
+          }`
+        : 'Аккаунт изменился. Результат сохранения не принят ' +
+          'для текущего аккаунта. Проверьте исходный список ' +
+          'ростеров перед повтором.',
       'err'
     );
   } finally {
-    if (saveButton) {
-      saveButton.disabled = false;
+    saveBusy = false;
+
+    if (
+      saveButton?.isConnected &&
+      document.getElementById('btn-save-roster') === saveButton
+    ) {
+      saveButton.disabled = previousDisabled;
     }
   }
-}
-
-function saveToLocalStorage(payload) {
-  const list = loadLocalRosters();
-
-  const index = list.findIndex(
-    item => item.name === payload.name
-  );
-
-  const record = {
-    ...payload,
-    id: `local-${Date.now()}`,
-    updatedAt: new Date().toISOString()
-  };
-
-  if (index >= 0) {
-    record.id = list[index].id;
-    list[index] = record;
-  } else {
-    list.push(record);
-  }
-
-  localStorage.setItem(
-    LS_ROSTERS_KEY,
-    JSON.stringify(list)
-  );
 }
 
 export function loadLocalRosters() {
@@ -440,276 +632,408 @@ export function loadLocalRosters() {
    ========================================================================== */
 
 export async function openLoadModal() {
+  if (listActionBusy) {
+    showSaveMessage(
+      'Дождитесь завершения действия со списком ростеров.',
+      'err'
+    );
+    return;
+  }
+
   showSaveMessage('');
+
+  let context;
+
+  try {
+    context = captureStorageContext();
+  } catch (error) {
+    showSaveMessage(error.message, 'err');
+    return;
+  }
 
   const modal = document.getElementById('builder-display-modal');
   const body = document.getElementById('builder-modal-body');
 
-  if (!modal || !body) {
-    return;
+  if (!modal || !body) return;
+
+  const generation = ++loadModalGeneration;
+
+  const view = {
+    context,
+    generation,
+    modal,
+    body
+  };
+
+  function node(tag, text = '', className = '') {
+    const element = document.createElement(tag);
+
+    element.textContent = text;
+
+    if (className) element.className = className;
+
+    return element;
   }
 
-  body.innerHTML = `
-    <h2 style="
-      color:var(--gold);
-      border-bottom:2px solid var(--border);
-      padding-bottom:8px;
-    ">
-      📂 Загрузить ростер
-    </h2>
+  function heading() {
+    const title = node('h2', '📂 Загрузить ростер');
 
-    <p style="color:var(--text-muted); margin-top:12px;">
-      Загрузка…
-    </p>
-  `;
+    Object.assign(title.style, {
+      color: 'var(--gold)',
+      borderBottom: '2px solid var(--border)',
+      paddingBottom: '8px'
+    });
+
+    return title;
+  }
+
+  const loading = node('p', 'Загрузка…');
+
+  loading.style.marginTop = '12px';
+  loading.setAttribute('role', 'status');
+
+  body.replaceChildren(heading(), loading);
+
+  body.dataset.rosterListGeneration = String(generation);
 
   modal.classList.remove('hidden');
 
-  try {
-    const list = currentUser
-      ? await getUserRosters(currentUser.uid)
-      : loadLocalRosters();
+  let actionBusy = false;
+  let list = [];
 
-    if (!list || list.length === 0) {
-      body.innerHTML = `
-        <h2 style="
-          color:var(--gold);
-          border-bottom:2px solid var(--border);
-          padding-bottom:8px;
-        ">
-          📂 Загрузить ростер
-        </h2>
+  const status = node('p');
 
-        <p style="color:var(--text-muted); margin-top:16px;">
-          ${currentUser
+  status.setAttribute('role', 'status');
+  status.setAttribute('aria-live', 'polite');
+  status.style.marginTop = '12px';
+
+  function notice(text, error = false) {
+    if (!listViewIsCurrent(view)) return;
+
+    status.textContent = text;
+    status.style.color = error ? '#ffadb7' : '';
+
+    if (!body.contains(status)) {
+      body.append(status);
+    }
+  }
+
+  function updateActionButtons() {
+    body.querySelectorAll('button[data-roster-list-action]')
+      .forEach(button => {
+        button.disabled = actionBusy;
+      });
+  }
+
+  function displayDate(value) {
+    if (!value) return '';
+
+    const date = typeof value.toDate === 'function'
+      ? value.toDate()
+      : new Date(value);
+
+    return Number.isFinite(date.getTime())
+      ? date.toLocaleString('ru-RU')
+      : '';
+  }
+
+  function renderList() {
+    assertListView(view);
+
+    const description = node(
+      'p',
+      context.uid !== null
+        ? 'Облачные ростеры аккаунта:'
+        : 'Локальные ростеры этого браузера:'
+    );
+
+    description.style.color = 'var(--text-muted)';
+    description.style.marginTop = '8px';
+
+    body.replaceChildren(heading(), description);
+
+    if (!list.length) {
+      body.append(
+        node(
+          'p',
+          context.uid !== null
             ? 'В облаке пока нет сохранённых ростеров.'
-            : 'Локальных ростеров пока нет.'}
-        </p>
+            : 'Локальных ростеров пока нет.'
+        )
+      );
 
-        <p style="margin-top:16px;">
-          <a href="account.html"
-             class="builder-action-btn"
-             style="text-decoration:none;">
-            👤 Открыть личный кабинет
-          </a>
-        </p>
-      `;
+      const account = node(
+        'a',
+        '👤 Открыть личный кабинет',
+        'builder-action-btn'
+      );
 
+      account.href = 'account.html';
+      account.style.marginTop = '16px';
+
+      body.append(account, status);
       return;
     }
 
-    body.innerHTML = `
-      <h2 style="
-        color:var(--gold);
-        border-bottom:2px solid var(--border);
-        padding-bottom:8px;
-      ">
-        📂 Загрузить ростер
-      </h2>
+    const container = node('div');
 
-      <p style="color:var(--text-muted); margin-top:8px;">
-        ${currentUser
-          ? 'Облачные ростеры аккаунта:'
-          : 'Локальные ростеры этого браузера:'}
-      </p>
+    Object.assign(container.style, {
+      marginTop: '16px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '8px'
+    });
 
-      <div style="
-        margin-top:16px;
-        display:flex;
-        flex-direction:column;
-        gap:8px;
-      ">
-        ${list.map(record => `
-          <div style="
-            background:rgba(255,255,255,0.02);
-            border:1px solid var(--border);
-            padding:12px 14px;
-            border-radius:8px;
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            gap:12px;
-            flex-wrap:wrap;
-          ">
-            <div style="min-width:0; overflow-wrap:anywhere;">
-              <strong style="color:#fff;">
-                ${escapeHtml(String(record.name || 'Без имени'))}
-              </strong>
+    for (const record of list) {
+      const row = node('div');
 
-              <div style="
-                font-size:0.85rem;
-                color:var(--text-muted);
-                margin-top:2px;
-              ">
-                ${escapeHtml(String(record.clan || 'Армия'))}
-                • ${escapeHtml(String(record.units?.length || 0))} моделей
-                • ${escapeHtml(String(record.totalCost || 0))} очков
+      Object.assign(row.style, {
+        background: 'rgba(255,255,255,0.02)',
+        border: '1px solid var(--border)',
+        padding: '12px 14px',
+        borderRadius: '8px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        gap: '12px',
+        flexWrap: 'wrap'
+      });
 
-                ${record.stakesCost ? `
-                  • клятвы:
-                  ${escapeHtml(String(record.stakesCost))} МИ
-                ` : ''}
+      const info = node('div');
 
-                ${record.updatedAt ? `
-                  • ${escapeHtml(
-                    new Date(record.updatedAt).toLocaleString()
-                  )}
-                ` : ''}
-              </div>
-            </div>
+      info.style.minWidth = '0';
+      info.style.overflowWrap = 'anywhere';
 
-            <div style="
-              display:flex;
-              gap:8px;
-              flex-shrink:0;
-            ">
-              <button type="button"
-                      class="builder-action-btn primary"
-                      style="padding:6px 12px; font-size:0.85rem;"
-                      data-action="load"
-                      data-id="${escapeHtml(String(record.id))}">
-                Загрузить
-              </button>
+      const title = node(
+        'strong',
+        String(record.name || 'Без имени')
+      );
 
-              <button type="button"
-                      class="builder-action-btn"
-                      style="
-                        padding:6px 12px;
-                        font-size:0.85rem;
-                        background:rgba(255,71,87,0.15);
-                        border-color:#ff4757;
-                        color:#ff4757;
-                      "
-                      data-action="delete"
-                      data-id="${escapeHtml(String(record.id))}">
-                Удалить
-              </button>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-    `;
+      title.style.color = '#fff';
 
-    body.querySelectorAll('button[data-action]').forEach(button => {
-      button.addEventListener('click', async () => {
-        const action = button.dataset.action;
-        const id = button.dataset.id;
+      const metadata = [
+        String(record.clan || 'Армия'),
+        `${record.units?.length || 0} моделей`,
+        `${record.totalCost || 0} очков`
+      ];
 
-        if (action === 'load') {
-          await loadRosterById(id, list);
-        }
+      if (record.stakesCost) {
+        metadata.push(`клятвы: ${record.stakesCost} МИ`);
+      }
 
-        if (action === 'delete') {
-          await removeRosterById(id);
-          await openLoadModal();
+      const date = displayDate(record.updatedAt);
+
+      if (date) metadata.push(date);
+
+      const details = node('p', metadata.join(' • '));
+
+      Object.assign(details.style, {
+        fontSize: '0.85rem',
+        color: 'var(--text-muted)',
+        marginTop: '2px'
+      });
+
+      info.append(title, details);
+
+      const actions = node('div');
+
+      Object.assign(actions.style, {
+        display: 'flex',
+        gap: '8px',
+        flexShrink: '0'
+      });
+
+      const load = node(
+        'button',
+        'Загрузить',
+        'builder-action-btn primary'
+      );
+
+      const remove = node(
+        'button',
+        'Удалить',
+        'builder-action-btn'
+      );
+
+      for (const button of [load, remove]) {
+        button.type = 'button';
+        button.dataset.rosterListAction = '';
+        button.style.padding = '6px 12px';
+        button.style.fontSize = '0.85rem';
+      }
+
+      Object.assign(remove.style, {
+        background: 'rgba(255,71,87,0.15)',
+        borderColor: '#ff4757',
+        color: '#ff4757'
+      });
+
+      load.addEventListener('click', () => {
+        if (actionBusy || listActionBusy) return;
+
+        try {
+          assertListView(view);
+
+          loadRosterFromPayload(record);
+
+          // Загрузка синхронная; только после её успеха
+          // закрываем именно этот список.
+          if (listViewIsCurrent(view)) {
+            modal.classList.add('hidden');
+            body.removeAttribute('data-roster-list-generation');
+            loadModalGeneration += 1;
+          }
+
+          showSaveMessage(
+            `Ростер «${roster.name}» загружен.`,
+            'ok'
+          );
+        } catch (error) {
+          console.error('Roster list load:', error);
+
+          notice(
+            error?.message || 'Не удалось загрузить ростер.',
+            true
+          );
         }
       });
-    });
+
+      remove.addEventListener('click', async () => {
+        if (actionBusy || listActionBusy) return;
+
+        let requestStarted = false;
+
+        try {
+          assertListView(view);
+
+          if (!confirm(
+            `Удалить ростер «${record.name || 'Без имени'}»?`
+          )) {
+            return;
+          }
+
+          // Подтверждение не является гарантией,
+          // что контекст аккаунта всё ещё актуален.
+          assertListView(view);
+
+          actionBusy = true;
+          listActionBusy = true;
+          updateActionButtons();
+
+          const id = String(record.id);
+
+          if (context.uid !== null) {
+            requestStarted = true;
+
+            // Удаление всегда адресовано исходному UID.
+            await deleteUserRoster(context.uid, id);
+
+            if (!listViewIsCurrent(view)) return;
+          } else {
+            assertStorageContext(context);
+
+            const actualList = loadLocalRosters();
+
+            if (!Array.isArray(actualList)) {
+              throw new Error(
+                'Локальный список имеет неподдерживаемый формат.'
+              );
+            }
+
+            const filtered = actualList.filter(
+              item => String(item.id) !== id
+            );
+
+            localStorage.setItem(
+              LS_ROSTERS_KEY,
+              JSON.stringify(filtered)
+            );
+          }
+
+          assertListView(view);
+
+          list = list.filter(
+            item => String(item.id) !== id
+          );
+
+          renderList();
+
+          notice(
+            context.uid !== null
+              ? 'Ростер удалён из облака.'
+              : 'Локальный ростер удалён.'
+          );
+        } catch (error) {
+          console.error('Roster list delete:', error);
+
+          if (listViewIsCurrent(view)) {
+            notice(
+              `Ошибка удаления: ${
+                error?.message || 'неизвестная ошибка'
+              }` +
+              (requestStarted
+                ? ' Перед повтором обновите список.'
+                : ''),
+              true
+            );
+          }
+        } finally {
+          actionBusy = false;
+          listActionBusy = false;
+
+          if (listViewIsCurrent(view)) {
+            updateActionButtons();
+          }
+        }
+      });
+
+      actions.append(load, remove);
+      row.append(info, actions);
+      container.append(row);
+    }
+
+    body.append(container, status);
+    updateActionButtons();
+  }
+
+  try {
+    const received = context.uid !== null
+      ? await getUserRosters(context.uid)
+      : loadLocalRosters();
+
+    // Старый запрос не должен заменить содержимое
+    // нового окна или список другого аккаунта.
+    if (!listViewIsCurrent(view)) return;
+
+    if (
+      !Array.isArray(received) ||
+      received.some(record =>
+        !record ||
+        typeof record !== 'object' ||
+        Array.isArray(record) ||
+        !['string', 'number'].includes(typeof record.id)
+      )
+    ) {
+      throw new Error(
+        'Список ростеров имеет неподдерживаемый формат.'
+      );
+    }
+
+    list = received;
+
+    renderList();
   } catch (error) {
     console.error('openLoadModal error:', error);
 
-    body.innerHTML = `
-      <h2 style="color:var(--gold);">
-        📂 Загрузить ростер
-      </h2>
+    if (!listViewIsCurrent(view)) return;
 
-      <p style="color:#ff4757; margin-top:16px;">
-        Ошибка загрузки:
-        ${escapeHtml(error?.message || 'неизвестная ошибка')}
-      </p>
-    `;
-  }
-}
+    body.replaceChildren(heading(), status);
 
-async function loadRosterById(id, list) {
-  const record = list.find(
-    item => String(item.id) === String(id)
-  );
-
-  if (!record) {
-    showSaveMessage('Ростер не найден в списке.', 'err');
-    return;
-  }
-
-  try {
-    loadRosterFromPayload(record);
-
-    document
-      .getElementById('builder-display-modal')
-      .classList
-      .add('hidden');
-
-    showSaveMessage(
-      `Ростер «${roster.name}» загружен.`,
-      'ok'
-    );
-  } catch (error) {
-    console.error('loadRosterById error:', error);
-
-    const text =
-      error?.message || 'Не удалось загрузить ростер.';
-
-    showSaveMessage(text, 'err');
-
-    // Сообщение видно и в открытом модальном окне.
-    const body = document.getElementById('builder-modal-body');
-
-    if (body) {
-      let notice = body.querySelector(
-        '[data-roster-load-error]'
-      );
-
-      if (!notice) {
-        notice = document.createElement('p');
-        notice.dataset.rosterLoadError = '';
-        notice.setAttribute('role', 'alert');
-        notice.style.color = '#ffadb7';
-        notice.style.marginTop = '12px';
-
-        body.prepend(notice);
-      }
-
-      notice.textContent = text;
-    }
-  }
-}
-
-async function removeRosterById(id) {
-  if (!confirm('Удалить этот ростер?')) {
-    return;
-  }
-
-  try {
-    if (currentUser) {
-      await deleteUserRoster(currentUser.uid, id);
-
-      showSaveMessage(
-        'Ростер удалён из облака.',
-        'ok'
-      );
-    } else {
-      const list = loadLocalRosters();
-
-      const filtered = list.filter(
-        item => String(item.id) !== String(id)
-      );
-
-      localStorage.setItem(
-        LS_ROSTERS_KEY,
-        JSON.stringify(filtered)
-      );
-
-      showSaveMessage(
-        'Локальный ростер удалён.',
-        'ok'
-      );
-    }
-  } catch (error) {
-    console.error('removeRosterById error:', error);
-
-    showSaveMessage(
-      `Ошибка удаления: ${error?.message || 'неизвестная ошибка'}`,
-      'err'
+    notice(
+      `Ошибка загрузки: ${
+        error?.message || 'неизвестная ошибка'
+      }`,
+      true
     );
   }
 }

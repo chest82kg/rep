@@ -14,11 +14,11 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   sendEmailVerification
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+} from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 
 import {
   getDocFromServer
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+} from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
 import { humanizeAuthError } from '../utils/errors.js';
 import { escapeHtml } from '../utils/escape.js';
@@ -39,6 +39,11 @@ let initialized = false;
 let authBusy = false;
 let resendBusy = false;
 let pendingUserId = null;
+
+// Каждая начатая Auth-операция получает собственный номер.
+// Результат старой операции не может обновить интерфейс после
+// запуска новой операции или смены пользователя.
+let authOperationGeneration = 0;
 
 function readPendingUserId() {
   try {
@@ -74,6 +79,34 @@ function clearPending(userId) {
   } catch {
     // Не влияет на уже сохранённое подтверждение.
   }
+}
+
+function beginAuthOperation() {
+  authOperationGeneration += 1;
+  return authOperationGeneration;
+}
+
+function isCurrentAuthOperation(
+  operationGeneration,
+  expectedUserId = null
+) {
+  if (operationGeneration !== authOperationGeneration) {
+    return false;
+  }
+
+  if (!expectedUserId) {
+    return true;
+  }
+
+  return auth.currentUser?.uid === expectedUserId;
+}
+
+function finishAuthOperation(operationGeneration) {
+  if (!isCurrentAuthOperation(operationGeneration)) {
+    return;
+  }
+
+  setAuthBusy(false);
 }
 
 export function registrationNeedsCompletion(user) {
@@ -338,25 +371,43 @@ export function initAuthUI() {
 
       showMessage(authMessage, '');
 
-      const error = validateCredentials(email, pass);
+      const validationError = validateCredentials(email, pass);
 
-      if (error) {
-        showMessage(authMessage, error);
+      if (validationError) {
+        showMessage(authMessage, validationError);
         return;
       }
+
+      const operationGeneration = beginAuthOperation();
 
       setAuthBusy(true);
 
       try {
-        await signInWithEmailAndPassword(auth, email, pass);
+        const credential = await signInWithEmailAndPassword(
+          auth,
+          email,
+          pass
+        );
+
+        if (!isCurrentAuthOperation(
+          operationGeneration,
+          credential.user.uid
+        )) {
+          return;
+        }
+
         document.getElementById('password').value = '';
       } catch (error) {
+        if (!isCurrentAuthOperation(operationGeneration)) {
+          return;
+        }
+
         showMessage(
           authMessage,
           'Ошибка входа: ' + humanizeAuthError(error)
         );
       } finally {
-        setAuthBusy(false);
+        finishAuthOperation(operationGeneration);
       }
     }
   );
@@ -394,13 +445,19 @@ export function initAuthUI() {
           return;
         }
       } else {
-        const error = validateCredentials(email, pass, true);
+        const validationError = validateCredentials(
+          email,
+          pass,
+          true
+        );
 
-        if (error) {
-          showMessage(authMessage, error);
+        if (validationError) {
+          showMessage(authMessage, validationError);
           return;
         }
       }
+
+      const operationGeneration = beginAuthOperation();
 
       setAuthBusy(true);
 
@@ -408,18 +465,32 @@ export function initAuthUI() {
 
       try {
         if (!user) {
-          const cred = await createUserWithEmailAndPassword(
+          const credential = await createUserWithEmailAndPassword(
             auth,
             email,
             pass
           );
 
-          user = cred.user;
+          user = credential.user;
+        }
+
+        if (!isCurrentAuthOperation(
+          operationGeneration,
+          user.uid
+        )) {
+          return;
         }
 
         rememberPending(user.uid);
 
         await saveRegistrationConfirmation(user.uid);
+
+        if (!isCurrentAuthOperation(
+          operationGeneration,
+          user.uid
+        )) {
+          return;
+        }
 
         clearPending(user.uid);
         resetLegalChecks();
@@ -438,6 +509,13 @@ export function initAuthUI() {
         try {
           await sendEmailVerification(user);
 
+          if (!isCurrentAuthOperation(
+            operationGeneration,
+            user.uid
+          )) {
+            return;
+          }
+
           showMessage(
             verifyMessage,
             'Подтверждения сохранены. На вашу почту отправлено ' +
@@ -447,6 +525,13 @@ export function initAuthUI() {
             'info'
           );
         } catch (error) {
+          if (!isCurrentAuthOperation(
+            operationGeneration,
+            user.uid
+          )) {
+            return;
+          }
+
           showMessage(
             verifyMessage,
             'Аккаунт создан, подтверждения сохранены, ' +
@@ -456,6 +541,13 @@ export function initAuthUI() {
           );
         }
       } catch (error) {
+        if (!isCurrentAuthOperation(
+          operationGeneration,
+          user?.uid || null
+        )) {
+          return;
+        }
+
         if (user) {
           // Аккаунт не удаляем: ошибка записи может быть временной.
           // Не объявляем регистрацию успешно завершённой.
@@ -490,7 +582,7 @@ export function initAuthUI() {
           );
         }
       } finally {
-        setAuthBusy(false);
+        finishAuthOperation(operationGeneration);
       }
     }
   );
@@ -509,11 +601,21 @@ export function initAuthUI() {
         return;
       }
 
+      const userId = user.uid;
+      const operationGeneration = beginAuthOperation();
+
       setAuthBusy(true);
 
       try {
-        if (await hasSavedConfirmation(user.uid)) {
-          clearPending(user.uid);
+        if (await hasSavedConfirmation(userId)) {
+          if (!isCurrentAuthOperation(
+            operationGeneration,
+            userId
+          )) {
+            return;
+          }
+
+          clearPending(userId);
 
           showMessage(
             verifyMessage,
@@ -525,17 +627,31 @@ export function initAuthUI() {
           return;
         }
 
-        rememberPending(user.uid);
+        if (!isCurrentAuthOperation(
+          operationGeneration,
+          userId
+        )) {
+          return;
+        }
+
+        rememberPending(userId);
         showRegistrationCompletion(user);
         document.getElementById('register-terms').focus();
       } catch (error) {
+        if (!isCurrentAuthOperation(
+          operationGeneration,
+          userId
+        )) {
+          return;
+        }
+
         showMessage(
           verifyMessage,
           'Не удалось проверить подтверждения: ' +
           errorText(error)
         );
       } finally {
-        setAuthBusy(false);
+        finishAuthOperation(operationGeneration);
       }
     });
 
@@ -554,14 +670,30 @@ export function initAuthUI() {
         return;
       }
 
+      const userId = user.uid;
+      const operationGeneration = beginAuthOperation();
+
       resendBusy = true;
-      const button = document.getElementById('btn-resend-verify');
-      button.disabled = true;
+
+      const button = document.getElementById(
+        'btn-resend-verify'
+      );
+
+      if (button) {
+        button.disabled = true;
+      }
 
       showMessage(verifyMessage, '');
 
       try {
         await sendEmailVerification(user);
+
+        if (!isCurrentAuthOperation(
+          operationGeneration,
+          userId
+        )) {
+          return;
+        }
 
         showMessage(
           verifyMessage,
@@ -570,13 +702,29 @@ export function initAuthUI() {
           'info'
         );
       } catch (error) {
+        if (!isCurrentAuthOperation(
+          operationGeneration,
+          userId
+        )) {
+          return;
+        }
+
         showMessage(
           verifyMessage,
           'Ошибка отправки: ' + humanizeAuthError(error)
         );
       } finally {
         resendBusy = false;
-        button.disabled = authBusy;
+
+        if (
+          isCurrentAuthOperation(
+            operationGeneration,
+            userId
+          ) &&
+          button?.isConnected
+        ) {
+          button.disabled = authBusy;
+        }
       }
     }
   );
@@ -587,19 +735,39 @@ export function initAuthUI() {
       async () => {
         if (authBusy || resendBusy) return;
 
+        const userId = auth.currentUser?.uid || null;
+        const operationGeneration = beginAuthOperation();
+
         setAuthBusy(true);
 
         try {
           await signOut(auth);
 
+          // После выхода не очищаем форму, если за время запроса
+          // уже возникла новая сессия.
+          if (
+            !isCurrentAuthOperation(operationGeneration) ||
+            auth.currentUser
+          ) {
+            return;
+          }
+
           resetLegalChecks();
           document.getElementById('password').value = '';
         } catch (error) {
+          // Сообщение относится только к всё ещё той же сессии.
+          if (
+            !isCurrentAuthOperation(operationGeneration) ||
+            (userId && auth.currentUser?.uid !== userId)
+          ) {
+            return;
+          }
+
           showCurrentMessage(
             'Не удалось выйти: ' + humanizeAuthError(error)
           );
         } finally {
-          setAuthBusy(false);
+          finishAuthOperation(operationGeneration);
         }
       }
     );

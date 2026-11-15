@@ -6,6 +6,11 @@
 
 import { ARTIFACTS_LIST } from '../content/artifacts.js';
 import { escapeHtml } from '../utils/escape.js';
+import {
+  renderIsometricTable,
+  focusIsometricUnit
+} from './isometric.js';
+import { renderSelectedHUD } from './selected-hud.js';
 
 import {
   initModelDice,
@@ -17,7 +22,11 @@ import {
   renderTerrainEditor,
   handleTerrainClick,
   terrainCellView,
-  validateTerrain
+  validateTerrain,
+  terrainAt,
+  tileCells,
+  TERRAIN_TYPES,
+  createTerrainSurfaceReader
 } from './terrain.js';
 
 import {
@@ -65,6 +74,18 @@ import {
   validateBackupTable
 } from './backup-validation.js';
 
+
+import {
+  initLocalRoute,
+  refreshLocalRoute
+} from './local-route.js';
+
+import {
+  getModelVisualRole,
+  modelVisualIconHTML,
+  installModelVisualStyles
+} from './model-visuals.js';
+
 const SIZE = 14;
 const LETTERS = 'ABCDEFGHIJKLMN';
 
@@ -78,10 +99,10 @@ const SIDE_NAMES = {
 };
 
 const FACINGS = {
-  n: { name: 'Вверх', arrow: '↑' },
-  e: { name: 'Вправо', arrow: '→' },
-  s: { name: 'Вниз', arrow: '↓' },
-  w: { name: 'Влево', arrow: '←' }
+  n: { name: 'К строке 1', arrow: '↑' },
+  e: { name: 'К столбцу N', arrow: '→' },
+  s: { name: 'К строке 14', arrow: '↓' },
+  w: { name: 'К столбцу A', arrow: '←' }
 };
 
 const FACING_ORDER = ['n', 'e', 's', 'w'];
@@ -311,6 +332,13 @@ function sideRoster(side) {
 
 function selectedUnit() {
   return state?.units.find(unit => unit.id === selectedId) || null;
+}
+
+function visualRoleForUnit(unit) {
+  const source = sideRoster(unitSide(unit))
+    ?.units?.[unit.rosterIndex];
+
+  return getModelVisualRole(unit, source);
 }
 
 function locationLabel(unit) {
@@ -641,6 +669,85 @@ function validPosition(position) {
   );
 }
 
+// Отсутствующее поле означает старую позицию:
+// опора ещё не назначена явно.
+//
+// null означает явно назначенную клетку без тайла.
+// Строка означает идентификатор конкретного тайла.
+function validUnitSupport(position, terrain) {
+  if (position === null) return true;
+
+  if (!Object.hasOwn(position, 'supportTileId')) {
+    return true;
+  }
+
+  const supportId = position.supportTileId;
+
+  if (supportId === null) {
+    return terrainAt(
+      terrain,
+      position.x,
+      position.y
+    ) === null;
+  }
+
+  if (typeof supportId !== 'string' || !supportId) {
+    return false;
+  }
+
+  const support = (terrain || []).find(
+    tile => tile.id === supportId
+  );
+
+  if (!support) return false;
+
+  const coversPosition = tileCells(support).some(cell =>
+    cell.x === position.x &&
+    cell.y === position.y
+  );
+
+  if (!coversPosition) return false;
+
+  // Пока нет механики нахождения модели под верхним тайлом:
+  // назначенная опора должна оставаться верхней.
+  return terrainAt(
+    terrain,
+    position.x,
+    position.y
+  )?.id === supportId;
+}
+
+function modelSupportLabel(unit) {
+  if (!unit.position) return 'Резерв';
+
+  if (!Object.hasOwn(unit.position, 'supportTileId')) {
+    return 'Не назначена — старая позиция';
+  }
+
+  const supportId = unit.position.supportTileId;
+
+  if (supportId === null) {
+    return 'Без тайла';
+  }
+
+  const tile = (state?.terrain || []).find(
+    item => item.id === supportId
+  );
+
+  if (!tile) return 'Опорный тайл не найден';
+
+  const coordinate =
+    `${LETTERS[tile.x]}${tile.y + 1}`;
+
+  return `${TERRAIN_TYPES[tile.type].name} · ` +
+    `начало тайла ${coordinate}` +
+    (
+      Number.isSafeInteger(tile.layer)
+        ? ` · слой ${tile.layer}`
+        : ''
+    );
+}
+
 function validStats(stats, requirePositiveHp = false) {
   if (!stats || typeof stats !== 'object') return false;
 
@@ -711,7 +818,8 @@ function validateState(record) {
       !unit.weapons.every(item => item && typeof item === 'object') ||
       !Array.isArray(unit.abilities) ||
       !unit.abilities.every(item => item && typeof item === 'object') ||
-      !validPosition(unit.position)
+      !validPosition(unit.position) ||
+      !validUnitSupport(unit.position, record.terrain)
     ) {
       return false;
     }
@@ -765,7 +873,22 @@ function commit(change, successText) {
     const previous = state;
     const next = clone(state);
 
-    change(next);
+       change(next);
+
+    const brokenSupport = (next.units || []).find(unit =>
+      validPosition(unit.position) &&
+      !validUnitSupport(unit.position, next.terrain)
+    );
+
+        if (brokenSupport) {
+      throw new Error(
+        `Изменение нарушает опору модели ${unitNumber(brokenSupport)}. ` +
+        'Для переноса используйте инструмент ландшафта: ' +
+        'тайл переместится вместе с привязанными моделями. ' +
+        'Перед удалением, поворотом тайла или заменой карты ' +
+        'сначала переместите модель либо верните её в резерв.'
+      );
+    }
 
     if (!validateState(next)) {
       throw new Error('Получено некорректное состояние стола.');
@@ -844,6 +967,8 @@ function updateModelContext() {
 
   board.dataset.modelHint = modelActionHint();
 
+    refreshLocalRoute();
+
   document.dispatchEvent(
     new Event('vt:model-context')
   );
@@ -892,6 +1017,154 @@ function showModelPreview(cell) {
 
   previewCell = cell;
 }
+
+/* ==========================================================================
+   Найти модель на поле
+
+   Только представление: без выбора модели, игровых нажатий,
+   изменения инструмента, сохранения и истории.
+   ========================================================================== */
+
+function locateUnitOnBoard(id) {
+  const unit = state?.units.find(item => item.id === id);
+
+  if (!unit) {
+    message('Модель больше не найдена в текущей партии.', true);
+    return false;
+  }
+
+  if (!unit.position) {
+    message(
+      `${unitNumber(unit)}: модель находится в резерве.`,
+      true
+    );
+    return false;
+  }
+
+  const board = $('vt-board');
+  const isoVisible = board.classList.contains('vt-iso-grid-hidden');
+
+  if (isoVisible) {
+    if (!focusIsometricUnit(id)) {
+      message(
+        'Не удалось найти модель в изометрии. ' +
+        'Переключите вид карты и повторите поиск.',
+        true
+      );
+
+      return false;
+    }
+
+    document.querySelector('.vt-iso-scene')?.scrollIntoView({
+      block: 'nearest',
+      inline: 'nearest',
+      behavior: 'instant'
+    });
+  } else {
+    const cell = board.querySelector(
+      `button[data-x="${unit.position.x}"]` +
+      `[data-y="${unit.position.y}"]`
+    );
+
+    if (!cell) {
+      message('Клетка модели не найдена.', true);
+      return false;
+    }
+
+    board.querySelectorAll('.vt-cell.is-located')
+      .forEach(element => {
+        element.classList.remove('is-located');
+      });
+
+    cell.classList.remove('is-located');
+
+    // Повторное нажатие запускает подсветку заново.
+    void cell.getBoundingClientRect();
+
+    cell.classList.add('is-located');
+
+    const token = {};
+    cell._vtLocateToken = token;
+
+    window.setTimeout(() => {
+      if (cell._vtLocateToken !== token) return;
+
+      cell.classList.remove('is-located');
+      delete cell._vtLocateToken;
+    }, 2200);
+
+    // Прокручиваем контейнеры, но не передаём фокус клетке
+    // и не вызываем её игровой обработчик.
+    cell.scrollIntoView({
+      block: 'center',
+      inline: 'center',
+      behavior: 'instant'
+    });
+  }
+
+  // Поиск завершён успешно. Оболочка может освободить карту
+  // от оверлеев, не вмешиваясь в игровой выбор и инструменты.
+  document.dispatchEvent(
+    new Event('vt:unit-located')
+  );
+
+  message(
+    `${unitNumber(unit)} · ${unit.uniqueKey}: ` +
+    `${locationLabel(unit)}. Выбор модели не изменён.`
+  );
+
+  return true;
+}
+
+const locateStyle = document.createElement('style');
+
+locateStyle.textContent = `
+  #vt-unit-list .vt-unit-list-row {
+    margin-bottom: 8px;
+  }
+
+  #vt-unit-list .vt-unit-list-row > .vt-unit {
+    box-sizing: border-box;
+    width: 100%;
+    margin-bottom: 0;
+  }
+
+  #vt-unit-list .vt-unit-locate-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 4px;
+  }
+
+  #vt-unit-list .vt-unit-locate {
+    min-height: 32px;
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+
+  #vt-board .vt-cell.is-located {
+    outline: 3px solid #fff0b0;
+    outline-offset: -4px;
+    animation: vt-grid-locate-pulse 450ms ease-in-out 4 alternate;
+  }
+
+  @keyframes vt-grid-locate-pulse {
+    from {
+      outline-color: #fff0b0;
+    }
+
+    to {
+      outline-color: #c89442;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #vt-board .vt-cell.is-located {
+      animation: none;
+    }
+  }
+`;
+
+document.head.append(locateStyle);
 
 /* ==========================================================================
    Поиск и фильтры списка моделей
@@ -958,9 +1231,21 @@ function renderUnitList() {
   const previousScroll = list.scrollTop;
   const focused = document.activeElement;
 
-  const focusedId = list.contains(focused)
-    ? focused?.closest('[data-unit]')?.dataset.unit
+  const focusedControl =
+    focused instanceof Element && list.contains(focused)
+      ? focused.closest('[data-unit], [data-locate-unit]')
+      : null;
+
+  const focusedId = focusedControl
+    ? focusedControl.dataset.locateUnit ||
+      focusedControl.dataset.unit
     : null;
+
+  const focusedKind = focusedControl?.hasAttribute(
+    'data-locate-unit'
+  )
+    ? 'locate'
+    : 'select';
 
   if ($('vt-unit-search').value !== filters.query) {
     $('vt-unit-search').value = filters.query;
@@ -1021,7 +1306,8 @@ function renderUnitList() {
       unit.note ? 'Есть сохранённая заметка' : ''
     ].filter(Boolean).join(', ');
 
-    return `
+        return `
+      <div class="vt-unit-list-row">
       <button type="button"
         class="vt-unit vt-unit-compact
           ${unit.id === selectedId ? 'is-selected' : ''}
@@ -1058,6 +1344,24 @@ function renderUnitList() {
           </span>
         ` : ''}
       </button>
+
+      <div class="vt-unit-locate-actions">
+        <button type="button"
+          class="builder-action-btn vt-unit-locate"
+          data-locate-unit="${escape(unit.id)}"
+          aria-label="${escape(
+            unit.position
+              ? `Найти на поле: ${unitNumber(unit)} ${unit.uniqueKey}`
+              : `${unitNumber(unit)} ${unit.uniqueKey}: модель в резерве`
+          )}"
+          title="${unit.position
+            ? 'Показать модель, не меняя текущий выбор и инструмент'
+            : 'Модель в резерве'}"
+          ${unit.position ? '' : 'disabled'}>
+          ${unit.position ? 'На поле' : 'Модель в резерве'}
+        </button>
+      </div>
+      </div>
     `;
   }
 
@@ -1114,11 +1418,21 @@ function renderUnitList() {
     : '';
 
   if (focusedId) {
-    const replacement = [
-      ...list.querySelectorAll('[data-unit]')
-    ].find(button => button.dataset.unit === focusedId);
+    const selector = focusedKind === 'locate'
+      ? '[data-locate-unit]'
+      : '[data-unit]';
 
-    if (replacement) {
+    const replacement = [
+      ...list.querySelectorAll(selector)
+    ].find(button =>
+      (
+        focusedKind === 'locate'
+          ? button.dataset.locateUnit
+          : button.dataset.unit
+      ) === focusedId
+    );
+
+    if (replacement && !replacement.disabled) {
       replacement.focus({ preventScroll: true });
     } else {
       $('vt-unit-search').focus({ preventScroll: true });
@@ -1182,6 +1496,15 @@ function render() {
   renderRounds();
   renderTableScenario(state?.scenario);
   updateModelContext();
+
+   renderIsometricTable({
+    state,
+    selectedId
+  });
+
+  renderSelectedHUD({
+    unit: selectedUnit()
+  });
 }
 
 /* ==========================================================================
@@ -1279,6 +1602,7 @@ aria-label="${escape(description)}"
               ${modelMarkerHTML(unit)}
 
               <strong>
+                ${modelVisualIconHTML(visualRoleForUnit(unit))}
                 ${unit.currentHp === 0 ? '×' : ''}${unitNumber(unit)}
               </strong>
 
@@ -1415,6 +1739,32 @@ function renderSelectedModelPanel() {
   const reserve = originalActions?.querySelector(
     '[data-action="reserve"]'
   );
+
+    const support = originalActions?.querySelector(
+    '[data-action="support"]'
+  );
+
+  if (support && unit.position) {
+    const top = terrainAt(
+      state.terrain,
+      unit.position.x,
+      unit.position.y
+    );
+
+    const alreadyAssigned =
+      Object.hasOwn(unit.position, 'supportTileId') &&
+      unit.position.supportTileId === (top?.id ?? null);
+
+    support.textContent = top
+      ? 'Поставить на верхний тайл'
+      : 'Назначить опору: без тайла';
+
+    support.disabled = alreadyAssigned;
+
+    support.title = alreadyAssigned
+      ? 'Текущая опора уже назначена.'
+      : 'Назначить опору без изменения координат модели.';
+  }
 
   const markers = container.querySelector('#vt-model-markers');
 
@@ -1571,8 +1921,12 @@ function renderSelectedModelPanel() {
     );
   }
 
-  if (reserve) {
-    fold('more', 'Дополнительные действия', [reserve]);
+  if (reserve || support) {
+    fold(
+      'more',
+      'Дополнительные действия',
+      [support, reserve]
+    );
   }
 
   /* ======================================================================
@@ -1672,8 +2026,12 @@ function renderDetails() {
     <p class="vt-muted">${SIDE_NAMES[unitSide(unit)]}</p>
     <p class="vt-muted">${escape(unit.role)}</p>
 
-    <p class="vt-muted">
+      <p class="vt-muted">
       ${locationLabel(unit)} · ${statusLabel(unit)}
+    </p>
+
+    <p class="vt-muted">
+      Опора: ${escape(modelSupportLabel(unit))}
     </p>
 
     <section class="vt-facing-panel">
@@ -1724,10 +2082,12 @@ function renderDetails() {
         </button>
       </div>
 
-      <p class="vt-muted">
-        Направления указаны относительно экрана.
-        Вверх — к первой строке, вправо — к столбцу N.
-        Действия и ресурсы за поворот автоматически не списываются.
+        <p class="vt-muted">
+        Направления привязаны к координатам поля,
+        а не к экрану. Стрелки этих кнопок соответствуют
+        обычной сетке; в изометрии ориентируйтесь
+        на указатель у основания модели.
+        Повороты выполняются вручную, ресурсы не списываются.
       </p>
     </section>
 
@@ -1770,6 +2130,13 @@ function renderDetails() {
         data-action="reserve"
         ${unit.position ? '' : 'disabled'}>
         Вернуть в резерв
+      </button>
+
+            <button type="button"
+        class="builder-action-btn"
+        data-action="support"
+        ${unit.position ? '' : 'disabled'}>
+        Поставить на верхний тайл
       </button>
     </div>
 
@@ -1953,7 +2320,25 @@ $('vt-unit-filter-reset').addEventListener('click', () => {
    ========================================================================== */
 
 $('vt-unit-list').addEventListener('click', event => {
-  const button = event.target.closest('[data-unit]');
+  const target = event.target instanceof Element
+    ? event.target
+    : null;
+
+  if (!target) return;
+
+  const locateButton = target.closest('[data-locate-unit]');
+
+  if (locateButton) {
+    if (locateButton.disabled) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    locateUnitOnBoard(locateButton.dataset.locateUnit);
+    return;
+  }
+
+  const button = target.closest('[data-unit]');
 
   if (button) {
     selectUnit(button.dataset.unit);
@@ -2005,10 +2390,13 @@ $('vt-board').addEventListener('click', event => {
   commit(next => {
     const target = next.units.find(item => item.id === id);
 
+       const support = terrainAt(next.terrain, x, y);
+
     target.position = {
       x,
       y,
-      surfaceId: 'ground'
+      surfaceId: 'ground',
+      supportTileId: support?.id ?? null
     };
   }, `Модель ${unitNumber(unit)}: ${LETTERS[x]}${y + 1}.`);
 });
@@ -2060,6 +2448,7 @@ $('vt-board').addEventListener('focusout', () => {
 
 document.addEventListener('vt:terrain-mode', clearModelPreview);
 document.addEventListener('vt:ruler-mode', clearModelPreview);
+document.addEventListener('vt:route-mode', clearModelPreview);
 
 /* ==========================================================================
    Esc: снять выбор только при работе с моделями
@@ -2130,10 +2519,11 @@ $('vt-details').addEventListener('click', event => {
   const id = unit.id;
   const action = button.dataset.action;
 
-  if (![
+   if (![
     'hp',
     'activate',
     'reserve',
+    'support',
     'facing',
     'rotate',
     'facing-clear'
@@ -2177,6 +2567,22 @@ $('vt-details').addEventListener('click', event => {
 
     if (action === 'reserve') {
       target.position = null;
+    }
+
+        if (action === 'support') {
+      if (!target.position) {
+        throw new Error(
+          'Для назначения опоры сначала разместите модель на поле.'
+        );
+      }
+
+      const support = terrainAt(
+        next.terrain,
+        target.position.x,
+        target.position.y
+      );
+
+      target.position.supportTileId = support?.id ?? null;
     }
 
     if (action === 'facing') {
@@ -2489,8 +2895,52 @@ try {
   );
 }
 
+installModelVisualStyles();
+
 restoreSide();
 applyZoom();
+
+initLocalRoute({
+  getContext() {
+    const unit = selectedUnit();
+
+    if (!state || !unit || !unit.position) {
+      return null;
+    }
+
+      // Читаем поверхность текущей локальной партии.
+    // Для слоёв высота — точная сумма в конкретной клетке.
+    // Отсутствие тайла не превращается в нулевую высоту.
+    const getSurface = createTerrainSurfaceReader(
+      state.terrain
+    );
+
+    return {
+      key: JSON.stringify([state.id, unit.id]),
+
+      label: `${unitNumber(unit)} · ${unit.uniqueKey}`,
+
+      position: {
+        x: unit.position.x,
+        y: unit.position.y
+      },
+
+          facing: unit.facing || null,
+      facingText: facingLabel(unit),
+
+      // Итоговая характеристика с постоянными бонусами.
+      // null не превращается в ноль.
+      movement:
+        Number.isFinite(unit.stats.move) &&
+        unit.stats.move >= 0
+          ? unit.stats.move
+          : null,
+
+      getSurface
+    };
+  }
+});
+
 render();
 
 initTableBackup({

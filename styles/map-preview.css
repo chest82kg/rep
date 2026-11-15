@@ -219,3 +219,362 @@
     padding: 8px;
   }
 }
+
+/* Заголовок и открытие крупного просмотра */
+
+.mt-map-preview-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.mt-map-preview-title {
+  min-width: 0;
+}
+
+.mt-map-preview-heading h4 {
+  margin: 0;
+}
+
+.mt-map-preview .mt-map-preview-revision {
+  margin: 5px 0 0;
+  color: var(--text-muted, #a5ad9e);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.mt-map-preview-expand,
+.mt-map-dialog-close {
+  min-height: 40px;
+  padding: 9px 12px;
+
+  border: 1px solid #8d805a;
+  border-radius: 3px;
+  background: #35412f;
+  color: #f0dfb4;
+
+  font: 14px/1.3 sans-serif;
+  cursor: pointer;
+}
+
+.mt-map-preview-expand:hover,
+.mt-map-dialog-close:hover {
+  background: #465338;
+}
+
+.mt-map-preview-expand:focus-visible,
+.mt-map-dialog-close:focus-visible {
+  outline: 2px solid #d0b477;
+  outline-offset: 3px;
+}
+
+/* Модальное окно не зависит от переменных родителя:
+   оно добавляется непосредственно в body. */
+
+.mt-map-dialog {
+  --bg: #141c17;
+  --bg-panel: #202822;
+  --border: #465044;
+  --gold: #d0b477;
+  --text: #e6e5d9;
+  --text-muted: #a5ad9e;
+
+  box-sizing: border-box;
+  width: min(1400px, calc(100vw - 32px));
+  height: min(1000px, calc(100dvh - 32px));
+  max-width: none;
+  max-height: none;
+  margin: auto;
+  padding: 0;
+  overflow: hidden;
+
+  border: 1px solid #8d805a;
+  border-radius: 5px;
+  background: var(--bg);
+  color: var(--text);
+  box-shadow: 0 20px 80px #0009;
+}
+
+.mt-map-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.mt-map-dialog::backdrop {
+  background: rgb(5 10 7 / 80%);
+}
+
+.mt-map-dialog-header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+
+  border-bottom: 1px solid var(--border);
+  background: #252d25;
+}
+
+.mt-map-dialog-title {
+  min-width: 0;
+}
+
+.mt-map-dialog-title h2 {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--gold);
+  font-size: 23px;
+}
+
+.mt-map-dialog-title p {
+  margin: 6px 0 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.mt-map-dialog-close {
+  flex: 0 0 auto;
+}
+
+.mt-map-dialog-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 16px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.mt-map-dialog .mt-map-preview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 290px;
+  align-items: start;
+  gap: 12px 18px;
+
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.mt-map-dialog .mt-map-preview-heading,
+.mt-map-dialog .mt-map-preview > .mt-map-preview-caption {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.mt-map-dialog .mt-map-preview-scroll {
+  grid-column: 1;
+  min-width: 0;
+  width: 100%;
+  margin: 0;
+  padding: 6px 6px 14px;
+}
+
+.mt-map-dialog .mt-map-preview-board {
+  grid-template-columns: 26px repeat(14, 44px);
+  grid-template-rows: 26px repeat(14, 44px);
+  margin-inline: auto;
+}
+
+.mt-map-dialog .mt-map-preview-cell {
+  width: 44px;
+  height: 44px;
+}
+
+.mt-map-dialog .mt-map-preview-symbol {
+  font-size: 24px;
+}
+
+.mt-map-dialog .mt-map-preview-objective,
+.mt-map-dialog .mt-map-preview-marker {
+  font-size: 10px;
+}
+
+.mt-map-dialog .mt-map-preview-height,
+.mt-map-dialog .mt-map-preview-zone {
+  font-size: 12px;
+}
+
+.mt-map-dialog .mt-map-preview-inspector {
+  grid-column: 2;
+  min-width: 0;
+  padding: 16px;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.mt-map-dialog .mt-map-preview-inspector > strong {
+  color: var(--gold);
+  font-size: 22px;
+}
+
+@media (max-width: 1000px) {
+  .mt-map-dialog .mt-map-preview {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mt-map-dialog .mt-map-preview-inspector {
+    grid-column: 1;
+  }
+}
+
+@media (max-width: 600px) {
+  .mt-map-dialog {
+    width: calc(100vw - 12px);
+    height: calc(100dvh - 12px);
+  }
+
+  .mt-map-dialog-header {
+    padding: 12px;
+  }
+
+  .mt-map-dialog-title h2 {
+    font-size: 19px;
+  }
+
+  .mt-map-dialog-content {
+    padding: 10px;
+  }
+}
+
+/* Переключатели обозначений: только отображение снимка. */
+
+.mt-map-preview-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  min-width: 0;
+  margin: 12px 0 0;
+  padding: 10px;
+
+  border: 1px solid var(--border, #465044);
+  border-radius: 4px;
+}
+
+.mt-map-preview-options legend {
+  padding: 0 6px;
+  color: var(--text-muted, #b4b0c0);
+  font-size: 12px;
+}
+
+.mt-map-preview .mt-map-preview-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  min-height: 40px;
+  margin: 0;
+  padding: 8px 10px;
+
+  border: 1px solid var(--border, #465044);
+  border-radius: 3px;
+  background: var(--bg, #171722);
+  color: var(--text, #eeeaf5);
+
+  font-size: 13px;
+  line-height: 1.3;
+  cursor: pointer;
+}
+
+.mt-map-preview .mt-map-preview-option input {
+  flex: 0 0 auto;
+  width: 17px;
+  height: 17px;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  accent-color: #c5ad73;
+  cursor: pointer;
+}
+
+.mt-map-preview-option:focus-within {
+  outline: 2px solid #c5ad73;
+  outline-offset: 2px;
+}
+
+/* Не затрагиваем текст инспектора и доступные имена клеток. */
+
+.mt-map-preview[data-hide-zones]
+.mt-map-preview-cell[data-preview-zone] {
+  background-image: none;
+}
+
+.mt-map-preview[data-hide-zones]
+.mt-map-preview-zone,
+.mt-map-preview[data-hide-objectives]
+.mt-map-preview-objective,
+.mt-map-preview[data-hide-markers]
+.mt-map-preview-marker,
+.mt-map-preview[data-hide-heights]
+.mt-map-preview-height {
+  display: none;
+}
+
+/* Панель занимает всю ширину крупного окна. */
+
+.mt-map-dialog .mt-map-preview-options {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+/* Быстрый поиск КТ и маркеров на снимке. */
+
+.mt-map-preview-navigation {
+  min-width: 0;
+  margin: 12px 0;
+  padding: 12px;
+
+  background: var(--bg, #171722);
+  border: 1px solid var(--border, #465044);
+  border-radius: 4px;
+}
+
+.mt-map-preview .mt-map-preview-navigation-label {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+
+  color: var(--text, #eeeaf5);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.mt-map-preview .mt-map-preview-target-select {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  margin: 0;
+  padding: 9px 10px;
+
+  color: var(--text, #eeeaf5);
+  background: var(--bg-panel, #202822);
+  border: 1px solid var(--border, #465044);
+  border-radius: 3px;
+
+  font: 14px/1.4 sans-serif;
+}
+
+.mt-map-preview-target-select:focus-visible {
+  outline: 2px solid #c5ad73;
+  outline-offset: 2px;
+}
+
+.mt-map-preview .mt-map-preview-navigation-hint {
+  margin: 8px 0 0;
+
+  color: var(--text-muted, #b4b0c0);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.mt-map-dialog .mt-map-preview-navigation {
+  grid-column: 1 / -1;
+  margin: 0;
+}

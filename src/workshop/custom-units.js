@@ -151,6 +151,45 @@ function validLibrary(value) {
   });
 }
 
+// Сравниваем сохраняемое содержимое без ID, редакции и дат.
+// Порядок оружия и способностей имеет значение.
+function sameUnitContent(left, right) {
+  function content(unit) {
+    return {
+      name: unit.name,
+      role: unit.role,
+      traits: unit.traits,
+      cost: unit.cost,
+      costSource: unit.costSource,
+
+      stats: {
+        hp: unit.stats.hp,
+        move: unit.stats.move,
+        armor: unit.stats.armor
+      },
+
+      weaponMode: unit.weaponMode,
+
+      weapons: unit.weapons.map(weapon => ({
+        name: weapon.name,
+        type: weapon.type,
+        range: weapon.range,
+        threshold: weapon.threshold,
+        damage: weapon.damage,
+        tags: weapon.tags
+      })),
+
+      abilities: unit.abilities.map(ability => ({
+        title: ability.title,
+        text: ability.text
+      }))
+    };
+  }
+
+  return JSON.stringify(content(left)) ===
+    JSON.stringify(content(right));
+}
+
 function fileName(name) {
   const slug = name
     .normalize('NFKC')
@@ -183,6 +222,7 @@ export function initCustomUnits() {
   let current = null;
   let dirty = false;
   let importing = false;
+    let draftRecovery = null;
 
   // Позволяет обнаружить изменение формы, пока файл читается.
   let editorGeneration = 0;
@@ -195,7 +235,7 @@ export function initCustomUnits() {
         <div class="ws-form-grid">
           <label>
             Название
-            <input data-w-name maxlength="120">
+            <input data-w-name maxlength="120" required>
           </label>
 
           <label>
@@ -214,13 +254,14 @@ export function initCustomUnits() {
 
           <label>
             Порог — текст, например 3+
-            <input data-w-threshold maxlength="30">
+            <input data-w-threshold maxlength="30" required>
           </label>
 
           <label>
             Урон
             <input data-w-damage
-                   type="number" min="0" max="99999" step="1">
+       type="number" min="0" max="99999" step="1"
+       required>
           </label>
 
           <label>
@@ -426,6 +467,66 @@ export function initCustomUnits() {
   const importButton = find('[data-custom-import]');
   const fileInput = find('[data-custom-file]');
 
+    const saveAsNewButton = document.createElement('button');
+
+  saveAsNewButton.type = 'button';
+  saveAsNewButton.className = 'builder-action-btn';
+  saveAsNewButton.textContent = 'Сохранить как новую модель';
+  saveAsNewButton.dataset.customSaveAsNew = '';
+
+  const transferActions = find('.ws-transfer .ws-actions');
+
+  if (transferActions) {
+    transferActions.prepend(saveAsNewButton);
+  }
+
+    const revertButton = document.createElement('button');
+
+  revertButton.type = 'button';
+  revertButton.className = 'builder-action-btn';
+  revertButton.dataset.customRevert = '';
+  revertButton.textContent = 'Вернуть сохранённую версию';
+  revertButton.disabled = true;
+
+  if (transferActions) {
+    saveAsNewButton.after(revertButton);
+  }
+
+    // Только последнее успешное удаление в текущей странице.
+  // Это не постоянная корзина: после перезагрузки копия исчезнет.
+  let lastDeletedUnit = null;
+
+  const undoDeleteButton = document.createElement('button');
+
+  undoDeleteButton.type = 'button';
+  undoDeleteButton.className = 'builder-action-btn';
+  undoDeleteButton.dataset.customUndoDelete = '';
+  undoDeleteButton.textContent = 'Восстановить удалённую модель';
+  undoDeleteButton.disabled = true;
+
+  if (transferActions) {
+    transferActions.append(undoDeleteButton);
+  }
+
+  function syncUndoDeleteButton() {
+    undoDeleteButton.disabled =
+      locked ||
+      importing ||
+      !lastDeletedUnit;
+
+    undoDeleteButton.title = lastDeletedUnit
+      ? `Восстановить: ${lastDeletedUnit.name}`
+      : 'В текущем сеансе нет удалённой модели';
+  }
+
+  function syncRevertButton() {
+    revertButton.disabled =
+      locked ||
+      importing ||
+      !current ||
+      !dirty;
+  }
+
   function message(value, error = false) {
     status.textContent = value;
     status.classList.toggle('is-error', error);
@@ -434,14 +535,37 @@ export function initCustomUnits() {
   function setDirty(value) {
     dirty = value;
 
-    find('[data-custom-dirty]').textContent = dirty
+       const indicator = find('[data-custom-dirty]');
+
+    indicator.textContent = dirty
       ? 'Есть несохранённые изменения'
-      : '';
+      : current
+        ? 'Изменения сохранены'
+        : 'Новая модель · ещё не сохранена';
+
+    indicator.classList.toggle('has-unsaved-changes', dirty);
+
+    syncTransferState();
+
+    if (dirty) draftRecovery?.schedule();
   }
 
   function syncTransferState() {
     importButton.disabled = locked || importing;
-    saveButton.disabled = locked;
+
+    saveButton.disabled =
+      locked ||
+      importing ||
+      Boolean(current && !dirty);
+
+    saveButton.title = current && !dirty
+      ? 'Нет несохранённых изменений.'
+      : '';
+
+    saveAsNewButton.disabled = locked || importing;
+
+    syncRevertButton();
+    syncUndoDeleteButton();
   }
 
   function lock(value) {
@@ -618,11 +742,182 @@ export function initCustomUnits() {
     );
   }
 
+    // Черновой предпросмотр читает только форму.
+  // Не создаёт документ, не назначает ID и не меняет библиотеку.
+  // Проверки сохранения и экспорта остаются в readDocument().
+  function renderDraftPreview() {
+    const value = (selector, fallback = '—') => {
+      const input = find(selector);
+
+      if (!input || input.validity?.badInput) return fallback;
+
+      return input.value.trim() || fallback;
+    };
+
+    const mode = find('[data-u-mode]').value;
+    const count = mode === 'single' ? 1 : 2;
+
+    const weapons = Array.from({ length: count }, (_, index) => {
+      const field = find(`[data-custom-weapon="${index}"]`);
+
+      const weaponValue = (selector, fallback = '—') => {
+        const input = field.querySelector(selector);
+
+        if (!input || input.validity?.badInput) return fallback;
+
+        return input.value.trim() || fallback;
+      };
+
+      const rangeInput = field.querySelector('[data-w-range]');
+
+      const range = rangeInput.validity.badInput
+        ? '—'
+        : rangeInput.value.trim() || null;
+
+      return {
+        name: weaponValue('[data-w-name]', `Оружие ${index + 1}`),
+        type: field.querySelector('[data-w-type]').value,
+        range,
+        threshold: weaponValue('[data-w-threshold]'),
+        damage: weaponValue('[data-w-damage]'),
+        tags: weaponValue('[data-w-tags]', '')
+      };
+    });
+
+    const abilities = [];
+
+    host.querySelectorAll('[data-custom-ability]').forEach(field => {
+      const title = field.querySelector('[data-a-title]').value.trim();
+      const description = field.querySelector('[data-a-text]')
+        .value.trim();
+
+      if (!title && !description) return;
+
+      abilities.push({
+        title: title || 'Способность без названия',
+        text: description || 'Описание ещё не заполнено.'
+      });
+    });
+
+    renderPreview({
+      name: value('[data-u-name]', 'Новая модель'),
+      role: find('[data-u-role]').value,
+      traits: value('[data-u-traits]', ''),
+      cost: value('[data-u-cost]'),
+      stats: {
+        hp: value('[data-u-hp]'),
+        move: value('[data-u-move]'),
+        armor: value('[data-u-armor]')
+      },
+      weaponMode: mode,
+      weapons,
+      abilities
+    });
+  }
+
+  function syncOpenedUnit() {
+    list.querySelectorAll('.ws-library-card').forEach(item => {
+      const openButton = item.querySelector(
+        '[data-custom-action="open"]'
+      );
+
+      const opened = Boolean(
+        current && openButton?.dataset.id === current.id
+      );
+
+      item.classList.toggle('is-open-document', opened);
+
+      if (!openButton) return;
+
+      openButton.textContent = opened ? 'Открыта' : 'Открыть';
+      openButton.disabled = opened;
+
+      if (opened) {
+        openButton.setAttribute('aria-current', 'true');
+        openButton.title =
+          'Эта модель уже открыта в редакторе. ' +
+          'Для отмены правок используйте ' +
+          '«Документ → Вернуть сохранённую версию».';
+      } else {
+        openButton.removeAttribute('aria-current');
+        openButton.removeAttribute('title');
+      }
+    });
+  }
+
+    // Дополняет браузерную проверку формы.
+  // readDocument() остаётся окончательной проверкой документа,
+  // в том числе при экспорте.
+  function syncFieldValidity() {
+    const name = find('[data-u-name]');
+
+    name.setCustomValidity(
+      name.value && !name.value.trim()
+        ? 'Введите название модели, а не только пробелы.'
+        : ''
+    );
+
+    host.querySelectorAll('[data-custom-weapon]').forEach(field => {
+      const weaponName = field.querySelector('[data-w-name]');
+      const threshold = field.querySelector('[data-w-threshold]');
+
+      weaponName.setCustomValidity(
+        weaponName.value && !weaponName.value.trim()
+          ? 'Введите название оружия, а не только пробелы.'
+          : ''
+      );
+
+      threshold.setCustomValidity(
+        threshold.value && !threshold.value.trim()
+          ? 'Укажите порог, например 3+.'
+          : ''
+      );
+    });
+
+    host.querySelectorAll('[data-custom-ability]').forEach(field => {
+      const title = field.querySelector('[data-a-title]');
+      const description = field.querySelector('[data-a-text]');
+
+      const hasTitle = Boolean(title.value.trim());
+      const hasDescription = Boolean(description.value.trim());
+
+      title.setCustomValidity(
+        hasDescription && !hasTitle
+          ? 'Укажите название способности или очистите её описание.'
+          : ''
+      );
+
+      description.setCustomValidity(
+        hasTitle && !hasDescription
+          ? 'Добавьте описание способности или очистите её название.'
+          : ''
+      );
+    });
+  }
+
+  // Эти обработчики только обновляют сообщения проверки.
+  // Dirty, поколения редактора и предпросмотр обслуживаются
+  // существующими обработчиками формы.
+  form.addEventListener('input', syncFieldValidity);
+  form.addEventListener('change', syncFieldValidity);
+
   function fill(unit) {
+    // fill() вызывается после подтверждения перехода
+    // либо после успешной записи библиотеки.
+    // Ещё не рассмотренный найденный черновик не удаляем.
+    draftRecovery?.clearActive();
+
     editorGeneration += 1;
 
     form.reset();
     current = unit ? clone(unit) : null;
+
+        syncOpenedUnit();
+
+    // При открытии или создании документа показываем начало формы.
+    const editorScroll = host.querySelector('.ws-unit-editor-scroll');
+
+    if (editorScroll) editorScroll.scrollTop = 0;
 
     const values = {
       name: unit?.name || '',
@@ -672,10 +967,15 @@ export function initCustomUnits() {
     );
 
     syncWeaponMode();
+    syncFieldValidity();
     setDirty(false);
     card.replaceChildren();
 
-    if (unit) renderPreview(unit);
+      if (unit) {
+      renderPreview(unit);
+    } else {
+      renderDraftPreview();
+    }
   }
 
   function canDiscard() {
@@ -747,8 +1047,9 @@ export function initCustomUnits() {
       const actions = document.createElement('div');
       actions.className = 'ws-actions';
 
-      for (const [action, label] of [
+           for (const [action, label] of [
         ['open', 'Открыть'],
+        ['copy', 'Создать копию'],
         ['delete', 'Удалить']
       ]) {
         const button = document.createElement('button');
@@ -760,7 +1061,7 @@ export function initCustomUnits() {
         button.dataset.customAction = action;
         button.dataset.id = unit.id;
         button.textContent = label;
-        button.disabled = locked && action === 'delete';
+         button.disabled = locked && action !== 'open';
 
         actions.append(button);
       }
@@ -768,6 +1069,7 @@ export function initCustomUnits() {
       item.append(title, meta, actions);
       list.append(item);
     });
+        syncOpenedUnit();
   }
 
   function exportCurrentUnit() {
@@ -955,15 +1257,35 @@ export function initCustomUnits() {
     }
   }
 
+   let draftPreviewTimer = null;
+
+  function scheduleDraftPreview() {
+    clearTimeout(draftPreviewTimer);
+
+    const scheduledGeneration = editorGeneration;
+
+    draftPreviewTimer = setTimeout(() => {
+      draftPreviewTimer = null;
+
+      // Если за время ожидания открыли, сохранили или создали
+      // другую модель, отложенное обновление больше не нужно.
+      if (scheduledGeneration !== editorGeneration) return;
+
+      renderDraftPreview();
+    }, 180);
+  }
+
   form.addEventListener('input', () => {
     editorGeneration += 1;
     setDirty(true);
+    scheduleDraftPreview();
   });
 
   form.addEventListener('change', () => {
     editorGeneration += 1;
     syncWeaponMode();
     setDirty(true);
+    scheduleDraftPreview();
   });
 
   find('[data-custom-new]').addEventListener('click', () => {
@@ -984,16 +1306,16 @@ export function initCustomUnits() {
   });
 
   find('[data-custom-preview]').addEventListener('click', () => {
-    try {
-      renderPreview(readDocument());
+    clearTimeout(draftPreviewTimer);
+    draftPreviewTimer = null;
 
-      message(
-        'Предпросмотр обновлён. ' +
-        'Это не сохраняет модель в библиотеку.'
-      );
-    } catch (error) {
-      message(error.message, true);
-    }
+    renderDraftPreview();
+
+    message(
+      'Черновая карточка обновлена. ' +
+      'Проверка обязательных полей выполняется при сохранении ' +
+      'или экспорте. Библиотека не изменена.'
+    );
   });
 
   find('[data-custom-export]').addEventListener(
@@ -1017,8 +1339,256 @@ export function initCustomUnits() {
     void importUnitFile(file);
   });
 
+    revertButton.addEventListener('click', () => {
+    if (
+      locked ||
+      importing ||
+      !current ||
+      !dirty
+    ) {
+      return;
+    }
+
+    try {
+      // Проверяем внешний конфликт до изменения формы.
+      if (localStorage.getItem(KEY) !== expectedRaw) {
+        lock(
+          'Библиотека авторских моделей изменена в другой вкладке. ' +
+          'Возврат сохранённой версии заблокирован. ' +
+          'Текущий ввод остаётся в форме; ' +
+          'заполненную модель можно экспортировать в JSON.'
+        );
+
+        return;
+      }
+
+      const saved = library.units.find(
+        unit => unit.id === current.id
+      );
+
+      if (!saved) {
+        throw new Error(
+          'Сохранённая модель не найдена. ' +
+          'Текущий ввод оставлен без изменений.'
+        );
+      }
+
+      if (!confirm(
+        `Вернуть сохранённую версию «${saved.name}»?\n\n` +
+        'Несохранённые изменения названия, класса, стоимости, ' +
+        'характеристик, оружия и способностей будут отброшены.\n\n' +
+        'Библиотека останется прежней.'
+      )) {
+        return;
+      }
+
+      // Убираем отложенный предпросмотр старого ввода.
+      clearTimeout(draftPreviewTimer);
+      draftPreviewTimer = null;
+
+      // Штатное заполнение восстанавливает поля,
+      // проверки, режим оружия и карточку.
+      // Активная временная копия очищается внутри fill().
+      fill(saved);
+
+      const documentMenu = revertButton.closest('details');
+
+      if (documentMenu) {
+        documentMenu.open = false;
+
+        documentMenu.querySelector('summary')
+          ?.focus({ preventScroll: true });
+      }
+
+      message(
+        `Восстановлена сохранённая версия «${saved.name}», ` +
+        `редакция ${saved.revision}. ` +
+        'Несохранённые правки отброшены. Библиотека не изменена.'
+      );
+    } catch (error) {
+      message(
+        `Не удалось вернуть сохранённую версию: ${error.message}`,
+        true
+      );
+    }
+  });
+
+    undoDeleteButton.addEventListener('click', () => {
+    if (locked || importing || !lastDeletedUnit) return;
+
+    try {
+      if (library.units.length >= MAX_UNITS) {
+        throw new Error(
+          'Достигнут предел: 200 авторских моделей. ' +
+          'Удалённая копия пока остаётся доступной ' +
+          'для восстановления в этой странице.'
+        );
+      }
+
+      const restored = clone(lastDeletedUnit);
+
+      // Восстановление не должно перезаписывать существующую модель.
+      if (
+        library.units.some(unit => unit.id === restored.id)
+      ) {
+        throw new Error(
+          'Модель с таким идентификатором уже существует. ' +
+          'Восстановление отменено, чтобы не перезаписать её.'
+        );
+      }
+
+      if (!validCustomUnit(restored)) {
+        throw new Error(
+          'Удалённая копия не прошла проверку.'
+        );
+      }
+
+      const next = clone(library);
+      next.units.push(restored);
+
+      // Сначала успешная запись через штатные проверки.
+      // При ошибке lastDeletedUnit остаётся для повторной попытки.
+      persist(next);
+
+      lastDeletedUnit = null;
+      syncUndoDeleteButton();
+
+      // Не вызываем fill():
+      // current, dirty, поколение редактора и черновик
+      // открытой формы остаются прежними.
+      renderList();
+
+      const documentMenu = undoDeleteButton.closest('details');
+
+      if (documentMenu) {
+        documentMenu.open = false;
+
+        documentMenu.querySelector('summary')
+          ?.focus({ preventScroll: true });
+      }
+
+      message(
+        `Модель «${restored.name}» восстановлена в библиотеке, ` +
+        `редакция ${restored.revision}. ` +
+        'Характеристики, вооружение и способности сохранены. ' +
+        'Текущая форма не изменена. ' +
+        'Чтобы открыть модель, выберите её в библиотеке.'
+      );
+    } catch (error) {
+      message(
+        `Не удалось восстановить модель: ${error.message}`,
+        true
+      );
+    }
+  });
+
+    saveAsNewButton.addEventListener('click', () => {
+    if (locked || importing) return;
+
+    // Кнопка находится вне формы, поэтому явно запускаем
+    // ту же браузерную проверку обязательных полей.
+    syncWeaponMode();
+    syncFieldValidity();
+
+    if (!form.reportValidity()) return;
+
+    try {
+      if (library.units.length >= MAX_UNITS) {
+        throw new Error(
+          'Достигнут предел: 200 авторских моделей.'
+        );
+      }
+
+      // Читаем именно текущий ввод, а не сохранённый
+      // документ из библиотеки. Финальная проверка —
+      // штатный readDocument().
+      const prepared = readDocument();
+      const now = new Date().toISOString();
+      const suffix = ' — копия';
+
+      prepared.id = crypto.randomUUID();
+      prepared.revision = 1;
+      prepared.createdAt = now;
+      prepared.updatedAt = now;
+
+      prepared.name =
+        prepared.name
+          .slice(0, 120 - suffix.length)
+          .trimEnd() +
+        suffix;
+
+      if (
+        library.units.some(unit => unit.id === prepared.id)
+      ) {
+        throw new Error(
+          'Совпадение идентификаторов. Повторите операцию.'
+        );
+      }
+
+      if (!validCustomUnit(prepared)) {
+        throw new Error(
+          'Не удалось подготовить новую модель.'
+        );
+      }
+
+      if (!confirm(
+        `Сохранить «${prepared.name}» как новую модель?\n\n` +
+        'Будет использован текущий ввод формы. ' +
+        'Исходная сохранённая модель останется без изменений. ' +
+        'После сохранения откроется новая модель.'
+      )) {
+        return;
+      }
+
+      const next = clone(library);
+      next.units.push(prepared);
+
+      // Сначала успешная запись.
+      // При ошибке текущая форма и её dirty сохраняются.
+      persist(next);
+
+      fill(prepared);
+      renderList();
+
+      message(
+        `Новая модель «${prepared.name}» сохранена и открыта. ` +
+        'Исходная модель не изменена.'
+      );
+    } catch (error) {
+      message(
+        `Новая модель не сохранена: ${error.message}`,
+        true
+      );
+    }
+  });
+
   form.addEventListener('submit', event => {
     event.preventDefault();
+
+    if (locked) {
+      message(
+        'Сохранение недоступно: запись библиотеки заблокирована. ' +
+        'Текущий ввод остаётся в форме.',
+        true
+      );
+      return;
+    }
+
+    if (importing) {
+      message(
+        'Дождитесь завершения импорта. ' +
+        'Текущий ввод остаётся в форме.'
+      );
+      return;
+    }
+
+    if (current && !dirty) {
+      message(
+        'Нет несохранённых изменений. ' +
+        'Номер редакции и библиотека не изменены.'
+      );
+      return;
+    }
 
     try {
       const unit = readDocument();
@@ -1026,6 +1596,43 @@ export function initCustomUnits() {
       const index = next.units.findIndex(
         item => item.id === unit.id
       );
+
+            if (
+        index >= 0 &&
+        sameUnitContent(unit, next.units[index])
+      ) {
+        // Даже без записи проверяем актуальность библиотеки.
+        // При внешнем изменении не снимаем dirty и не очищаем
+        // временный черновик текущего ввода.
+        if (localStorage.getItem(KEY) !== expectedRaw) {
+          lock(
+            'Библиотека авторских моделей изменена в другой вкладке. ' +
+            'Подтверждение сохранения заблокировано. ' +
+            'Текущий ввод остаётся в форме; ' +
+            'заполненную модель можно экспортировать в JSON.'
+          );
+
+          throw new Error('Обнаружено внешнее изменение.');
+        }
+
+        clearTimeout(draftPreviewTimer);
+        draftPreviewTimer = null;
+
+        // Не вызываем fill(): сохраняем положение формы
+        // и текущий ввод, включая неиспользуемые поля.
+        setDirty(false);
+        draftRecovery?.clearActive();
+        renderDraftPreview();
+
+        message(
+          `Содержимое модели «${next.units[index].name}» ` +
+          'совпадает с сохранённой версией. ' +
+          `Редакция ${next.units[index].revision} не изменена. ` +
+          'Повторная запись не требуется.'
+        );
+
+        return;
+      }
 
       if (index < 0 && next.units.length >= MAX_UNITS) {
         throw new Error('Достигнут предел: 200 авторских моделей.');
@@ -1064,6 +1671,10 @@ export function initCustomUnits() {
     if (!unit) return;
 
     if (button.dataset.customAction === 'open') {
+      // Повторное открытие того же документа не должно
+      // сбрасывать текущий ввод и временный черновик.
+      if (current?.id === unit.id) return;
+
       if (!canDiscard()) return;
 
       fill(unit);
@@ -1071,13 +1682,69 @@ export function initCustomUnits() {
       return;
     }
 
+        if (button.dataset.customAction === 'copy') {
+      try {
+        if (library.units.length >= MAX_UNITS) {
+          throw new Error(
+            'Достигнут предел: 200 авторских моделей.'
+          );
+        }
+
+        const copy = clone(unit);
+        const now = new Date().toISOString();
+        const suffix = ' — копия';
+
+        copy.id = crypto.randomUUID();
+        copy.name =
+          unit.name.slice(0, 120 - suffix.length).trimEnd() +
+          suffix;
+
+        copy.revision = 1;
+        copy.createdAt = now;
+        copy.updatedAt = now;
+
+        if (library.units.some(item => item.id === copy.id)) {
+          throw new Error(
+            'Совпадение идентификаторов. Повторите операцию.'
+          );
+        }
+
+        if (!validCustomUnit(copy)) {
+          throw new Error(
+            'Не удалось подготовить независимую копию модели.'
+          );
+        }
+
+        const next = clone(library);
+        next.units.push(copy);
+
+        // Сначала проверяем и записываем библиотеку.
+        // Текущий редактор и dirty не меняем.
+        persist(next);
+        renderList();
+
+        message(
+          `Копия «${copy.name}» сохранена в библиотеку. ` +
+          'Текущая форма не изменена. ' +
+          'Чтобы редактировать копию, нажмите возле неё «Открыть».'
+        );
+      } catch (error) {
+        message(`Копия не создана: ${error.message}`, true);
+      }
+
+      return;
+    }
+
     if (button.dataset.customAction !== 'delete') return;
 
     if (!confirm(
       `Удалить авторскую модель «${unit.name}»?\n\n` +
-      'Отмена удаления пока не предусмотрена.' +
-      (current?.id === unit.id
-        ? '\nНесохранённые изменения этой модели также будут потеряны.'
+      'Последнюю удалённую модель можно восстановить через ' +
+      '«Документ» до перезагрузки страницы. ' +
+      'Следующее успешное удаление заменит эту возможность.' +
+      (current?.id === unit.id && dirty
+        ? '\n\nНесохранённые изменения этой модели будут ' +
+          'отброшены. Восстановить можно только сохранённую версию.'
         : '')
     )) {
       return;
@@ -1090,12 +1757,26 @@ export function initCustomUnits() {
         item => item.id !== unit.id
       );
 
+      // Подготавливаем независимую копию до записи.
+      // Предыдущее восстановление пока не заменяем.
+      const removed = clone(unit);
+
       persist(next);
+
+      // Удаление успешно: теперь можно заменить страховочную копию.
+      lastDeletedUnit = removed;
+      syncUndoDeleteButton();
 
       if (current?.id === unit.id) fill(null);
 
       renderList();
-      message('Авторская модель удалена.');
+
+      message(
+        `Авторская модель «${unit.name}» удалена. ` +
+        'Её сохранённую версию можно восстановить через ' +
+        '«Документ» до следующего успешного удаления ' +
+        'или перезагрузки страницы.'
+      );
     } catch (error) {
       message(`Не удалено: ${error.message}`, true);
     }
@@ -1160,6 +1841,335 @@ export function initCustomUnits() {
     );
   }
 
+    function createDraftRecovery() {
+    const DRAFT_KEY = 'mt_workshop_custom_unit_draft_v1';
+    const MAX_DRAFT_LENGTH = 128 * 1024;
+
+    let timer = null;
+    let pending = null;
+    let unavailable = false;
+
+    // Фиксированный набор полей. Не читаем произвольные
+    // селекторы или HTML из сохранённого черновика.
+    const fields = [];
+
+    function register(scope, selector, maxLength) {
+      const input = scope.querySelector(selector);
+
+      if (!input) {
+        throw new Error(
+          `Не найдено поле черновика: ${selector}`
+        );
+      }
+
+      fields.push({ input, maxLength });
+    }
+
+    register(form, '[data-u-name]', 120);
+    register(form, '[data-u-role]', 20);
+    register(form, '[data-u-traits]', 200);
+    register(form, '[data-u-cost]', 40);
+    register(form, '[data-u-hp]', 40);
+    register(form, '[data-u-move]', 40);
+    register(form, '[data-u-armor]', 40);
+    register(form, '[data-u-mode]', 20);
+
+    for (const index of [0, 1]) {
+      const weapon = form.querySelector(
+        `[data-custom-weapon="${index}"]`
+      );
+
+      if (!weapon) {
+        throw new Error('Не найден блок оружия для черновика.');
+      }
+
+      register(weapon, '[data-w-name]', 120);
+      register(weapon, '[data-w-type]', 20);
+      register(weapon, '[data-w-range]', 40);
+      register(weapon, '[data-w-threshold]', 30);
+      register(weapon, '[data-w-damage]', 40);
+      register(weapon, '[data-w-tags]', 500);
+    }
+
+    for (const index of [0, 1]) {
+      const ability = form.querySelector(
+        `[data-custom-ability="${index}"]`
+      );
+
+      if (!ability) {
+        throw new Error(
+          'Не найден блок способности для черновика.'
+        );
+      }
+
+      register(ability, '[data-a-title]', 120);
+      register(ability, '[data-a-text]', 4000);
+    }
+
+    const panel = document.createElement('section');
+    panel.className = 'ws-unit-draft-recovery';
+    panel.setAttribute('aria-label', 'Восстановление черновика');
+    panel.hidden = true;
+
+    const heading = document.createElement('strong');
+    heading.textContent = 'Найден несохранённый черновик';
+
+    const description = document.createElement('p');
+
+    const actions = document.createElement('div');
+    actions.className = 'ws-actions';
+
+    const restoreButton = document.createElement('button');
+    restoreButton.type = 'button';
+    restoreButton.className = 'builder-action-btn primary';
+    restoreButton.textContent = 'Восстановить черновик';
+
+    const discardButton = document.createElement('button');
+    discardButton.type = 'button';
+    discardButton.className = 'builder-action-btn';
+    discardButton.textContent = 'Удалить черновик';
+
+    actions.append(restoreButton, discardButton);
+    panel.append(heading, description, actions);
+
+    // Панель остаётся частью редактора при перестройке
+    // DOM в units-workspace.js.
+    form.prepend(panel);
+
+    function cancelTimer() {
+      clearTimeout(timer);
+      timer = null;
+    }
+
+    function reportUnavailable() {
+      if (unavailable) return;
+
+      unavailable = true;
+
+      message(
+        'Временный черновик недоступен. ' +
+        'Ввод остаётся в форме, но восстановление после ' +
+        'перезагрузки не гарантируется. ' +
+        'Сохранение модели в библиотеку работает отдельно.',
+        true
+      );
+    }
+
+    function validDraft(value) {
+      if (
+        !exactKeys(value, [
+          'format', 'version', 'savedAt', 'base', 'values'
+        ]) ||
+        value.format !== 'mt-custom-unit-draft' ||
+        value.version !== 1 ||
+        !date(value.savedAt) ||
+        !(
+          value.base === null ||
+          validCustomUnit(value.base)
+        ) ||
+        !Array.isArray(value.values) ||
+        value.values.length !== fields.length
+      ) {
+        return false;
+      }
+
+      return value.values.every((value, index) => {
+        const { input, maxLength } = fields[index];
+
+        if (!text(value, maxLength)) return false;
+
+        if (input instanceof HTMLSelectElement) {
+          return [...input.options].some(
+            option => option.value === value
+          );
+        }
+
+        return true;
+      });
+    }
+
+    function removeStored() {
+      try {
+        sessionStorage.removeItem(DRAFT_KEY);
+        return true;
+      } catch {
+        reportUnavailable();
+        return false;
+      }
+    }
+
+    function flush() {
+      cancelTimer();
+
+      // Не перезаписываем найденный черновик до решения
+      // пользователя о восстановлении или удалении.
+      if (!dirty || pending || unavailable) return false;
+
+      try {
+        const draft = {
+          format: 'mt-custom-unit-draft',
+          version: 1,
+          savedAt: new Date().toISOString(),
+          base: current ? clone(current) : null,
+          values: fields.map(({ input }) => input.value)
+        };
+
+        if (!validDraft(draft)) {
+          throw new Error('Некорректное содержимое черновика.');
+        }
+
+        const raw = JSON.stringify(draft);
+
+        if (raw.length > MAX_DRAFT_LENGTH) {
+          throw new Error('Черновик слишком большой.');
+        }
+
+        sessionStorage.setItem(DRAFT_KEY, raw);
+        return true;
+      } catch {
+        reportUnavailable();
+        return false;
+      }
+    }
+
+    function schedule() {
+      cancelTimer();
+
+      if (pending || unavailable) return;
+
+      timer = setTimeout(flush, 300);
+    }
+
+    function clearActive() {
+      cancelTimer();
+
+      // Например, пользователь пока не восстановил старый
+      // черновик, но открыл другую сохранённую модель.
+      if (pending) return;
+
+      removeStored();
+    }
+
+    restoreButton.addEventListener('click', () => {
+      if (!pending || !canDiscard()) return;
+
+      const draft = pending;
+
+      // Продолжаем исходную модель только при точном
+      // совпадении её сохранённой версии.
+      const original = draft.base
+        ? library.units.find(unit => unit.id === draft.base.id)
+        : null;
+
+      const sameBase = Boolean(
+        !locked &&
+        original &&
+        JSON.stringify(original) === JSON.stringify(draft.base)
+      );
+
+      const detached = Boolean(draft.base && !sameBase);
+
+      pending = null;
+      panel.hidden = true;
+
+      // При изменении/удалении исходника восстанавливаем
+      // как новую модель, без его ID.
+      fill(sameBase ? original : null);
+
+      fields.forEach(({ input }, index) => {
+        input.value = draft.values[index];
+      });
+
+      editorGeneration += 1;
+
+      syncWeaponMode();
+      syncFieldValidity();
+      setDirty(true);
+      renderDraftPreview();
+
+      flush();
+
+      message(
+        detached
+          ? 'Черновик восстановлен как новая модель: исходная ' +
+            'запись изменена, удалена или библиотека заблокирована. ' +
+            'Сохранённая библиотека не изменена.'
+          : 'Черновик восстановлен в редактор. ' +
+            'Для записи в библиотеку нажмите «Сохранить модель».'
+      );
+    });
+
+    discardButton.addEventListener('click', () => {
+      if (!pending) return;
+
+      if (!confirm(
+        'Удалить найденный временный черновик?\n\n' +
+        'Текущая форма и сохранённые модели останутся прежними.'
+      )) {
+        return;
+      }
+
+      if (!removeStored()) return;
+
+      pending = null;
+      panel.hidden = true;
+
+      // Если пользователь уже редактировал новую форму,
+      // начинаем защищать именно текущий ввод.
+      if (dirty) flush();
+
+      message(
+        'Найденный черновик удалён. ' +
+        'Текущая форма и библиотека не изменены.'
+      );
+    });
+
+    try {
+      const raw = sessionStorage.getItem(DRAFT_KEY);
+
+      if (raw !== null) {
+        if (raw.length > MAX_DRAFT_LENGTH) {
+          throw new Error('Превышен размер черновика.');
+        }
+
+        const saved = JSON.parse(raw);
+
+        if (!validDraft(saved)) {
+          throw new Error('Неподдерживаемый черновик.');
+        }
+
+        pending = saved;
+
+        const savedTime = new Date(saved.savedAt)
+          .toLocaleString('ru-RU');
+
+        description.textContent =
+          `Временная копия формы от ${savedTime}. ` +
+          'Восстановление не записывает модель в библиотеку. ' +
+          'Пока вы не восстановите или не удалите этот черновик, ' +
+          'новый ввод не заменяет его временную копию.';
+
+        panel.hidden = false;
+      }
+    } catch {
+      // Не затираем неизвестное/повреждённое содержимое.
+      reportUnavailable();
+    }
+
+    // Таймер может не успеть сработать перед уходом со страницы.
+    window.addEventListener('beforeunload', flush);
+    window.addEventListener('pagehide', flush);
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') flush();
+    });
+
+    return {
+      schedule,
+      clearActive
+    };
+  }
+
   fill(null);
   renderList();
   syncTransferState();
@@ -1170,4 +2180,8 @@ export function initCustomUnits() {
       'Для резервного копирования используйте экспорт JSON.'
     );
   }
+
+  // Только после стартового fill(): найденный черновик
+  // не должен удалиться при инициализации редактора.
+  draftRecovery = createDraftRecovery();
 }

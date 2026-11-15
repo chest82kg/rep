@@ -46,6 +46,22 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
+function getDateTime(value) {
+  if (!value) return 0;
+
+  if (typeof value.toMillis === 'function') {
+    return value.toMillis();
+  }
+
+  if (typeof value.toDate === 'function') {
+    return value.toDate().getTime();
+  }
+
+  const time = new Date(value).getTime();
+
+  return Number.isFinite(time) ? time : 0;
+}
+
 // --- Хелперы Firestore ---
 
 export async function saveUserRoster(userId, rosterData, docId = null) {
@@ -75,15 +91,27 @@ export async function saveUserRoster(userId, rosterData, docId = null) {
 }
 
 export async function getUserRosters(userId) {
-  if (!userId) throw new Error('getUserRosters: userId обязателен');
-  const snap = await getDocs(collection(db, 'users', userId, 'rosters'));
-  const rosters = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-  // Сортируем на клиенте: сначала свежие обновления
+  if (!userId) {
+    throw new Error('getUserRosters: userId обязателен');
+  }
+
+  const snap = await getDocs(
+    collection(db, 'users', userId, 'rosters')
+  );
+
+  const rosters = snap.docs.map(item => ({
+    id: item.id,
+    ...item.data()
+  }));
+
+  // Сначала свежие; поддерживаются ISO-строки и Firestore Timestamp.
   rosters.sort((a, b) => {
-    const dateA = new Date(a.updatedAt || a.createdAt || 0).getTime();
-    const dateB = new Date(b.updatedAt || b.createdAt || 0).getTime();
+    const dateA = getDateTime(a.updatedAt || a.createdAt);
+    const dateB = getDateTime(b.updatedAt || b.createdAt);
+
     return dateB - dateA;
   });
+
   return rosters;
 }
 
@@ -101,6 +129,56 @@ export async function saveUserMatch(userId, matchData) {
   return ref.id;
 }
 
+/**
+ * Идемпотентно переносит один локальный матч в облако.
+ *
+ * localMatchId генерируется и сохраняется в localStorage до запроса.
+ * Повторная отправка того же матча пишет в тот же документ Firestore,
+ * а не создаёт дубликат через addDoc().
+ */
+export async function saveMigratedLocalMatch(
+  userId,
+  localMatchId,
+  matchData
+) {
+  if (!userId) {
+    throw new Error(
+      'saveMigratedLocalMatch: userId обязателен'
+    );
+  }
+
+  if (
+    typeof localMatchId !== 'string' ||
+    !/^local-[A-Za-z0-9_-]{8,128}$/.test(localMatchId)
+  ) {
+    throw new Error(
+      'saveMigratedLocalMatch: некорректный localMatchId'
+    );
+  }
+
+  const { id, localMatchId: ignoredLocalId, ...data } =
+    matchData || {};
+
+  const ref = doc(
+    db,
+    'users',
+    userId,
+    'matches',
+    localMatchId
+  );
+
+  await setDoc(ref, {
+    ...data,
+    migratedFromLocal: true,
+    localMatchId,
+    migratedAt: new Date().toISOString()
+  }, {
+    merge: true
+  });
+
+  return localMatchId;
+}
+
 export async function getUserMatches(userId) {
   if (!userId) throw new Error('getUserMatches: userId обязателен');
   try {
@@ -116,7 +194,9 @@ export async function getUserMatches(userId) {
       );
       const snap = await getDocs(collection(db, 'users', userId, 'matches'));
       const matches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      matches.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+      matches.sort(
+  (a, b) => getDateTime(b.date) - getDateTime(a.date)
+);
       return matches;
     }
     throw err;

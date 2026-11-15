@@ -68,7 +68,10 @@ function element(tag, className = '', content = '') {
   return node;
 }
 
-export function createMapPreview(map, { caption = '' } = {}) {
+export function createMapPreview(
+  map,
+  { caption = '', expandable = true } = {}
+) {
   const root = element('section', 'mt-map-preview');
   root.setAttribute('aria-label', 'Просмотр снимка карты');
 
@@ -83,8 +86,47 @@ export function createMapPreview(map, { caption = '' } = {}) {
 
     return root;
   }
+  const heading = element('div', 'mt-map-preview-heading');
+  const titleBox = element('div', 'mt-map-preview-title');
 
-  root.append(element('h4', '', `Снимок карты: ${map.name}`));
+  titleBox.append(
+    element('h4', '', `Снимок карты: ${map.name}`)
+  );
+
+  if (Number.isSafeInteger(map.revision) && map.revision >= 1) {
+    titleBox.append(
+      element(
+        'p',
+        'mt-map-preview-revision',
+        `Редакция снимка: ${map.revision}`
+      )
+    );
+  }
+
+  heading.append(titleBox);
+
+  if (expandable) {
+    // Крупный просмотр получает именно этот снимок,
+    // а не актуальную карту из библиотеки.
+    const snapshot = JSON.parse(JSON.stringify(map));
+    const expandButton = element(
+      'button',
+      'mt-map-preview-expand',
+      'Открыть крупно'
+    );
+
+    expandButton.type = 'button';
+    expandButton.setAttribute('aria-haspopup', 'dialog');
+
+    expandButton.addEventListener('click', () => {
+      openMapPreviewDialog(snapshot, expandButton);
+    });
+
+    heading.append(expandButton);
+  }
+
+  root.append(heading);
+
 
   if (caption) {
     root.append(element('p', 'mt-map-preview-caption', caption));
@@ -95,6 +137,8 @@ export function createMapPreview(map, { caption = '' } = {}) {
       'p',
       'mt-map-preview-caption',
       'Только просмотр. Нажмите клетку, чтобы прочитать её состав. ' +
+      'С клавиатуры: Tab — вход и выход из поля, ' +
+      'стрелки — выбор клетки, Home/End — края строки. ' +
       'А/Б — зоны расстановки; КТ — контрольные точки; ' +
       'М — маркеры. Число справа внизу — высота местности.'
     )
@@ -188,7 +232,14 @@ export function createMapPreview(map, { caption = '' } = {}) {
       selectedButton.setAttribute('aria-pressed', 'false');
     }
 
+    board.querySelectorAll(
+      '.mt-map-preview-cell[tabindex="0"]'
+    ).forEach(cell => {
+      cell.tabIndex = -1;
+    });
+
     selectedButton = button;
+    button.tabIndex = 0;
     button.classList.add('is-selected');
     button.setAttribute('aria-pressed', 'true');
 
@@ -280,6 +331,9 @@ export function createMapPreview(map, { caption = '' } = {}) {
       const button = element('button', 'mt-map-preview-cell');
 
       button.type = 'button';
+      button.dataset.previewX = String(x);
+      button.dataset.previewY = String(y);
+      button.tabIndex = x === 0 && y === 0 ? 0 : -1;
       button.dataset.previewTerrain = entry?.tile.type || 'empty';
       button.setAttribute('aria-pressed', 'false');
 
@@ -364,8 +418,329 @@ export function createMapPreview(map, { caption = '' } = {}) {
     }
   }
 
+    board.addEventListener('keydown', event => {
+    if (
+      !(event.target instanceof Element) ||
+      event.altKey ||
+      event.metaKey ||
+      event.shiftKey
+    ) {
+      return;
+    }
+
+    const current = event.target.closest('.mt-map-preview-cell');
+
+    if (!current || !board.contains(current)) return;
+
+    let x = Number(current.dataset.previewX);
+    let y = Number(current.dataset.previewY);
+
+    // Ctrl используем только для первой/последней клетки.
+    if (
+      event.ctrlKey &&
+      event.key !== 'Home' &&
+      event.key !== 'End'
+    ) {
+      return;
+    }
+
+    switch (event.key) {
+      case 'ArrowLeft':
+        x = Math.max(0, x - 1);
+        break;
+
+      case 'ArrowRight':
+        x = Math.min(SIZE - 1, x + 1);
+        break;
+
+      case 'ArrowUp':
+        y = Math.max(0, y - 1);
+        break;
+
+      case 'ArrowDown':
+        y = Math.min(SIZE - 1, y + 1);
+        break;
+
+      case 'Home':
+        x = 0;
+        if (event.ctrlKey) y = 0;
+        break;
+
+      case 'End':
+        x = SIZE - 1;
+        if (event.ctrlKey) y = SIZE - 1;
+        break;
+
+      default:
+        return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const next = board.querySelector(
+      `.mt-map-preview-cell` +
+      `[data-preview-x="${x}"]` +
+      `[data-preview-y="${y}"]`
+    );
+
+    if (!next) return;
+
+    showCell(x, y, next);
+    next.focus({ preventScroll: true });
+
+    next.scrollIntoView({
+      block: 'nearest',
+      inline: 'nearest'
+    });
+  });
+
+  const displayOptions = element(
+    'fieldset',
+    'mt-map-preview-options'
+  );
+
+  displayOptions.append(
+    element('legend', '', 'Показать на поле')
+  );
+
+  const options = [
+    {
+      label: 'Зоны',
+      attribute: 'data-hide-zones'
+    },
+    {
+      label: 'КТ',
+      attribute: 'data-hide-objectives'
+    },
+    {
+      label: 'Маркеры',
+      attribute: 'data-hide-markers'
+    },
+    {
+      label: 'Высоты',
+      attribute: 'data-hide-heights'
+    }
+  ];
+
+  options.forEach(({ label, attribute }) => {
+    const control = element(
+      'label',
+      'mt-map-preview-option'
+    );
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = true;
+
+    checkbox.addEventListener('change', () => {
+      // Только отображение текущего просмотра.
+      // Данные снимка и содержимое инспектора не меняются.
+      root.toggleAttribute(attribute, !checkbox.checked);
+    });
+
+    control.append(
+      checkbox,
+      element('span', '', label)
+    );
+
+    displayOptions.append(control);
+  });
+
+  const displayHint = element(
+    'p',
+    'mt-map-preview-caption mt-map-preview-display-hint',
+    'Переключатели скрывают только обозначения на поле. ' +
+    'Сведения о выбранной клетке всегда показываются полностью.'
+  );
+
+  const navigation = element(
+    'div',
+    'mt-map-preview-navigation'
+  );
+
+  const targets = new Map();
+
+  function addTargets(select, title, entries, prefix) {
+    if (!entries.length) return;
+
+    const group = document.createElement('optgroup');
+    group.label = title;
+
+    entries.forEach((entry, index) => {
+      const value = `${prefix}-${index}`;
+      const option = document.createElement('option');
+
+      option.value = value;
+      option.textContent =
+        `${prefix}${index + 1} · ${coordinate(entry.x, entry.y)}` +
+        ` · ${entry.title}`;
+
+      targets.set(value, {
+        x: entry.x,
+        y: entry.y
+      });
+
+      group.append(option);
+    });
+
+    select.append(group);
+  }
+
+  if (
+    map.layers.objectives.length ||
+    map.layers.markers.length
+  ) {
+    const label = element(
+      'label',
+      'mt-map-preview-navigation-label'
+    );
+
+    label.append(
+      element('span', '', 'Найти на карте')
+    );
+
+    const select = document.createElement('select');
+    select.className = 'mt-map-preview-target-select';
+
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = 'Выберите КТ или маркер…';
+
+    select.append(placeholder);
+
+    addTargets(
+      select,
+      'Контрольные точки',
+      map.layers.objectives,
+      'КТ'
+    );
+
+    addTargets(
+      select,
+      'Маркеры',
+      map.layers.markers,
+      'М'
+    );
+
+    select.addEventListener('change', () => {
+      const target = targets.get(select.value);
+      if (!target) return;
+
+      const button = board.querySelector(
+        `.mt-map-preview-cell` +
+        `[data-preview-x="${target.x}"]` +
+        `[data-preview-y="${target.y}"]`
+      );
+
+      if (!button) return;
+
+      showCell(target.x, target.y, button);
+
+      // Оставляем фокус в списке: можно сразу выбрать
+      // следующую точку, не возвращаясь к нему через Tab.
+      button.scrollIntoView({
+        block: 'nearest',
+        inline: 'nearest'
+      });
+    });
+
+    label.append(select);
+
+    navigation.append(
+      label,
+      element(
+        'p',
+        'mt-map-preview-navigation-hint',
+        'Выбор выделяет клетку и показывает её состав. ' +
+        'Скрытые обозначения при этом остаются скрытыми.'
+      )
+    );
+  }
+
   scroll.append(board);
+  root.append(displayOptions, displayHint);
+
+  if (navigation.childElementCount) {
+    root.append(navigation);
+  }
+
   root.append(scroll, inspector);
 
   return root;
+}
+
+function openMapPreviewDialog(snapshot, opener) {
+  // Одновременно открываем только один крупный просмотр.
+  if (document.querySelector('dialog.mt-map-dialog[open]')) return;
+
+  const dialog = element('dialog', 'mt-map-dialog');
+  dialog.setAttribute('aria-label', `Снимок карты: ${snapshot.name}`);
+
+  const header = element('div', 'mt-map-dialog-header');
+  const titleBox = element('div', 'mt-map-dialog-title');
+
+  titleBox.append(
+    element('h2', '', snapshot.name),
+    element(
+      'p',
+      '',
+      'Независимый снимок · только просмотр' +
+      (
+        Number.isSafeInteger(snapshot.revision) &&
+        snapshot.revision >= 1
+          ? ` · редакция ${snapshot.revision}`
+          : ''
+      )
+    )
+  );
+
+  const closeButton = element(
+    'button',
+    'mt-map-dialog-close',
+    'Закрыть ×'
+  );
+
+  closeButton.type = 'button';
+  closeButton.autofocus = true;
+
+  header.append(titleBox, closeButton);
+
+  const content = element('div', 'mt-map-dialog-content');
+
+  content.append(
+    createMapPreview(snapshot, {
+      expandable: false,
+      caption:
+        'Нажмите клетку, чтобы увидеть её местность, зону, ' +
+        'контрольную точку и заметки. Исходная карта не изменяется.'
+    })
+  );
+
+  dialog.append(header, content);
+
+  function cleanup() {
+    dialog.remove();
+
+    if (opener.isConnected) {
+      opener.focus({ preventScroll: true });
+    }
+  }
+
+  closeButton.addEventListener('click', () => {
+    dialog.close();
+  });
+
+  // Esc обрабатывается нативным dialog:
+  // браузер закрывает окно и вызывает close.
+  dialog.addEventListener('close', cleanup, { once: true });
+
+  document.body.append(dialog);
+
+  try {
+    dialog.showModal();
+  } catch (error) {
+    cleanup();
+    console.error('Не удалось открыть крупный просмотр карты:', error);
+  }
 }

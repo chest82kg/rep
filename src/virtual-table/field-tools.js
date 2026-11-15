@@ -17,6 +17,11 @@ import {
   setRulerEnabled
 } from './ruler.js';
 
+import {
+  isLocalRouteEnabled,
+  setLocalRouteEnabled
+} from './local-route.js';
+
 let initialized = false;
 
 export function initFieldTools() {
@@ -57,6 +62,12 @@ export function initFieldTools() {
       Линейка
     </button>
 
+        <button type="button"
+      class="builder-action-btn"
+      data-field-tool="route">
+      Маршрут
+    </button>
+
     <span id="vt-field-tool-hint"
       role="status"
       aria-live="polite"></span>
@@ -85,6 +96,7 @@ export function initFieldTools() {
   };
 
   function activeTool() {
+    if (isLocalRouteEnabled()) return 'route';
     if (isRulerEnabled()) return 'ruler';
 
     return getTerrainMode() === 'models'
@@ -108,12 +120,15 @@ export function initFieldTools() {
       board.dataset.fieldTool = active;
     }
 
-    hint.textContent = active === 'ruler'
-      ? 'Линейка · выберите две клетки. Модели и тайлы не изменяются.'
-      : active === 'models'
-        ? board?.dataset.modelHint || hints.models
-        : hints[getTerrainMode()] ||
-          'Выберите действие с ландшафтом.';
+        hint.textContent = active === 'route'
+      ? 'Маршрут · нажимайте клетки по порядку. ' +
+        'Escape — завершить. Модель не перемещается.'
+      : active === 'ruler'
+        ? 'Линейка · выберите две клетки. Модели и тайлы не изменяются.'
+        : active === 'models'
+          ? board?.dataset.modelHint || hints.models
+          : hints[getTerrainMode()] ||
+            'Выберите действие с ландшафтом.';
   }
 
   function choose(tool) {
@@ -123,11 +138,13 @@ export function initFieldTools() {
 
     try {
       if (tool === 'models') {
+        setLocalRouteEnabled(false);
         setRulerEnabled(false);
         setTerrainMode('models');
       }
 
       if (tool === 'terrain') {
+        setLocalRouteEnabled(false);
         setRulerEnabled(false);
 
         // Повторное нажатие не сбрасывает добавление или перенос.
@@ -137,13 +154,25 @@ export function initFieldTools() {
       }
 
       if (tool === 'ruler') {
-        // Редактор перестаёт обрабатывать клетки как ландшафт.
+        setLocalRouteEnabled(false);
         setTerrainMode('models');
         setRulerEnabled(true);
+      }
+
+      if (tool === 'route') {
+        setRulerEnabled(false);
+        setTerrainMode('models');
+        setLocalRouteEnabled(true);
       }
     } finally {
       switching = false;
       render();
+    }
+
+    if (tool === 'route' && !isLocalRouteEnabled()) {
+      hint.textContent =
+        'Для маршрута выберите модель, размещённую на поле, ' +
+        'затем снова нажмите «Маршрут».';
     }
   }
 
@@ -155,38 +184,62 @@ export function initFieldTools() {
     }
   });
 
-  // Явный выбор инструмента в панели ландшафта
-  // отключает линейку. Обычное открытие вкладки — нет.
+   // Выбор действия с ландшафтом отключает оба измерителя.
   document.addEventListener('vt:terrain-mode', () => {
     if (switching) return;
 
-    if (getTerrainMode() !== 'models' && isRulerEnabled()) {
-      switching = true;
+    switching = true;
 
-      try {
+    try {
+      if (getTerrainMode() !== 'models') {
         setRulerEnabled(false);
-      } finally {
-        switching = false;
+        setLocalRouteEnabled(false);
       }
+    } finally {
+      switching = false;
+      render();
     }
-
-    render();
   });
 
+  // Линейка исключает маршрут и редактирование ландшафта.
   document.addEventListener('vt:ruler-mode', () => {
     if (switching) return;
 
-    if (isRulerEnabled() && getTerrainMode() !== 'models') {
-      switching = true;
+    switching = true;
 
-      try {
-        setTerrainMode('models');
-      } finally {
-        switching = false;
+    try {
+      if (isRulerEnabled()) {
+        setLocalRouteEnabled(false);
+
+        if (getTerrainMode() !== 'models') {
+          setTerrainMode('models');
+        }
       }
+    } finally {
+      switching = false;
+      render();
     }
+  });
 
-    render();
+  // Маршрут исключает линейку и редактирование ландшафта.
+  // Событие приходит также при Escape или сбросе контекста.
+  document.addEventListener('vt:route-mode', () => {
+    if (switching) return;
+
+    switching = true;
+
+    try {
+      if (isLocalRouteEnabled()) {
+        setRulerEnabled(false);
+
+        if (getTerrainMode() !== 'models') {
+          setTerrainMode('models');
+        }
+      }
+    } finally {
+      switching = false;
+      render();
+    }
   });
 
   // Обновляем старые подсказки после построения раскладки.

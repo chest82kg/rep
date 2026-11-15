@@ -1260,3 +1260,186 @@ body.vt-interface {
     animation: none;
   }
 }
+
+/* ==========================================================================
+   Подготовительное подключение комнаты
+   ========================================================================== */
+
+.vt-room-connection {
+  margin: 0 0 10px;
+  padding: 12px 14px;
+  color: #e8dfd0;
+  background: #1b1821;
+  border: 1px solid #65513c;
+  border-left: 3px solid #c1a06d;
+  border-radius: 6px;
+}
+
+.vt-room-connection-status {
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.vt-room-connection[data-status="connected"] {
+  border-left-color: #97c7a8;
+}
+
+.vt-room-connection[data-status="error"] {
+  border-left-color: #e09494;
+}
+
+.vt-room-connection[data-status="error"]
+  .vt-room-connection-status {
+  color: #f1b7b7;
+}
+
+.vt-room-connection-help {
+  margin: 7px 0 0;
+  color: #b8adbe;
+  font-size: 0.75rem;
+  line-height: 1.6;
+}
+
+.vt-room-connection-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.vt-room-connection-actions .builder-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  box-sizing: border-box;
+  text-decoration: none;
+}
+
+.vt-room-connection-actions [hidden] {
+  display: none !important;
+}
+
+/* ==========================================================================
+   Онлайн-броски комнаты
+   ========================================================================== */
+
+.vt-online-dice {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #514354;
+}
+
+.vt-online-dice h3 {
+  margin: 0 0 6px;
+  color: #e4c89d;
+  font-size: 1rem;
+}
+
+.vt-online-dice-help {
+  margin: 0 0 12px;
+  color: #b8adbe;
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+.vt-online-dice-controls {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.vt-online-dice-controls label {
+  display: grid;
+  flex: 1 1 280px;
+  gap: 6px;
+  min-width: 0;
+  color: #d6c6b0;
+  font-size: 0.76rem;
+}
+
+.vt-online-dice-controls select {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 8px;
+  color: #eee4d6;
+  background: #24202b;
+  border: 1px solid #65536c;
+  border-radius: 5px;
+}
+
+.vt-online-dice-controls .builder-action-btn {
+  min-height: 44px;
+  padding: 9px 16px;
+  color: #fff0d8;
+  background: linear-gradient(#71413b, #482b2a);
+  border-color: #ad7561;
+}
+
+.vt-online-dice-controls .builder-action-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.vt-online-dice-status {
+  margin: 10px 0;
+  color: #e7d1af;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.vt-online-dice h4 {
+  margin: 14px 0 8px;
+  color: #b8adbe;
+  font-size: 0.76rem;
+}
+
+.vt-online-dice-log {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+  max-height: 260px;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  list-style: none;
+}
+
+.vt-online-dice-log > li {
+  min-width: 0;
+  padding: 10px;
+  color: #e7d9c8;
+  background: #15131b;
+  border: 1px solid #4c4052;
+  border-radius: 5px;
+}
+
+.vt-online-dice-log strong {
+  font-size: 0.8rem;
+}
+
+.vt-online-dice-faces {
+  margin: 5px 0;
+  color: #ecd6ad;
+  font-size: 1.65rem;
+  line-height: 1.3;
+}
+
+.vt-online-dice-numbers {
+  color: #f1dfc4;
+  font-size: 0.83rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.vt-online-dice-log small {
+  display: block;
+  margin-top: 7px;
+  color: #aaa0b1;
+  font-size: 0.7rem;
+}

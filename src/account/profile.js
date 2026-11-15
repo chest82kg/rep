@@ -1,10 +1,74 @@
 // src/account/profile.js
-import { db, getUserMatches } from '../core/firebase.js';
-import { collection, getDocs, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import {
+  getUserMatches,
+  deleteUserMatch,
+  getUserRosters,
+  deleteUserRoster
+} from '../core/firebase.js';
+
 import { escapeHtml } from '../utils/escape.js';
 
 let loadGeneration = 0;
 let currentUserCache = null;
+
+const pendingActions = new Set();
+
+function isCurrentUser(uid, generation = loadGeneration) {
+  return Boolean(
+    currentUserCache &&
+    currentUserCache.uid === uid &&
+    generation === loadGeneration
+  );
+}
+
+function getDateTime(value) {
+  if (!value) return 0;
+
+  if (typeof value.toMillis === 'function') {
+    return value.toMillis();
+  }
+
+  if (typeof value.toDate === 'function') {
+    return value.toDate().getTime();
+  }
+
+  const time = new Date(value).getTime();
+
+  return Number.isFinite(time) ? time : 0;
+}
+
+function formatDate(value) {
+  const time = getDateTime(value);
+
+  return time
+    ? new Date(time).toLocaleDateString('ru-RU')
+    : '';
+}
+
+function beginAction(key) {
+  if (pendingActions.has(key)) {
+    return false;
+  }
+
+  pendingActions.add(key);
+
+  return true;
+}
+
+function endAction(key) {
+  pendingActions.delete(key);
+}
+
+function setActionButtonsDisabled(selector, id, disabled) {
+  document
+    .querySelectorAll(selector)
+    .forEach(button => {
+      if (String(button.dataset.rosterId || button.dataset.matchId) ===
+          String(id)) {
+        button.disabled = disabled;
+      }
+    });
+}
 
 export function setCurrentUser(user) {
   currentUserCache = user;
@@ -23,27 +87,55 @@ export function getGeneration() {
 }
 
 export async function loadUserData(uid, generation) {
+  if (!uid || generation !== loadGeneration) {
+    return;
+  }
+
   try {
     const matches = await getUserMatches(uid);
 
-    if (generation !== loadGeneration) return;
+    if (!isCurrentUser(uid, generation)) {
+      return;
+    }
 
-    renderStats(matches);
-    renderMatchHistory(matches);
+    renderStats(Array.isArray(matches) ? matches : []);
+    renderMatchHistory(Array.isArray(matches) ? matches : []);
 
-    const rostersSnap = await getDocs(collection(db, "users", uid, "rosters"));
-    const rosters = rostersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const rosters = await getUserRosters(uid);
 
-    if (generation !== loadGeneration) return;
+    if (!isCurrentUser(uid, generation)) {
+      return;
+    }
 
-    renderRosters(rosters);
+    renderRosters(Array.isArray(rosters) ? rosters : []);
   } catch (err) {
     console.error('Ошибка загрузки данных:', err);
-    if (generation === loadGeneration) {
-      const el = document.getElementById('match-history-list');
-      if (el) {
-        el.innerHTML = '<p style="color: #ff4757;">Не удалось загрузить данные: ' + escapeHtml(err?.message || 'ошибка') + '</p>';
-      }
+
+    if (!isCurrentUser(uid, generation)) {
+      return;
+    }
+
+    const message = (
+      'Не удалось загрузить данные: ' +
+      escapeHtml(err?.message || 'ошибка')
+    );
+
+    const matchesElement = document.getElementById(
+      'match-history-list'
+    );
+
+    if (matchesElement) {
+      matchesElement.innerHTML =
+        `<p style="color:#ff4757;">${message}</p>`;
+    }
+
+    const rostersElement = document.getElementById(
+      'cloud-rosters-list'
+    );
+
+    if (rostersElement) {
+      rostersElement.innerHTML =
+        `<p style="color:#ff4757;">${message}</p>`;
     }
   }
 }
@@ -132,7 +224,7 @@ function renderMatchHistory(matches) {
           ${m.battleLog ? `<details style="margin-top:6px;"><summary style="font-size:0.82rem; color: var(--accent); cursor:pointer;">📜 Лог боя</summary><pre style="font-size:0.78rem; color:var(--text-muted); white-space:pre-wrap; margin-top:6px; padding:8px; background:rgba(0,0,0,0.2); border-radius:6px;">${escapeHtml(m.battleLog)}</pre></details>` : ''}
         </div>
         <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0;">
-          <span style="font-size: 0.8rem; color: var(--accent);">${m.date ? new Date(m.date).toLocaleDateString() : ''}</span>
+          <span style="font-size: 0.8rem; color: var(--accent);">${formatDate(m.date)}</span>
           <button class="danger" data-match-id="${escapeHtml(m.id)}" style="background:none; border:none; color:#ff4757; cursor:pointer; font-weight:bold; font-size:0.8rem; padding:4px 8px; border-radius:6px;">🗑 Удалить</button>
         </div>
       </div>
@@ -145,13 +237,63 @@ function renderMatchHistory(matches) {
 }
 
 export async function deleteMatch(matchId) {
-  if (!confirm('Удалить этот матч из истории? Это повлияет на статистику.')) return;
-  if (!currentUserCache) return;
+  const uid = currentUserCache?.uid;
+  const generation = loadGeneration;
+  const actionKey = `match:${uid || 'none'}:${matchId}`;
+
+  if (!uid || !isCurrentUser(uid, generation)) {
+    return;
+  }
+
+  if (!confirm(
+    'Удалить этот матч из истории? Это повлияет на статистику.'
+  )) {
+    return;
+  }
+
+  // За время окна confirm аккаунт также мог измениться.
+  if (!isCurrentUser(uid, generation)) {
+    return;
+  }
+
+  if (!beginAction(actionKey)) {
+    return;
+  }
+
+  setActionButtonsDisabled(
+    'button[data-match-id]',
+    matchId,
+    true
+  );
+
   try {
-    await deleteDoc(doc(db, "users", currentUserCache.uid, "matches", matchId));
-    await loadUserData(currentUserCache.uid, nextGeneration());
+    // Запрос адресован UID, зафиксированному до await.
+    await deleteUserMatch(uid, matchId);
+
+    if (!isCurrentUser(uid, generation)) {
+      return;
+    }
+
+    await loadUserData(uid, nextGeneration());
   } catch (err) {
-    alert('Ошибка удаления: ' + (err?.message || 'неизвестная ошибка'));
+    console.error('deleteMatch error:', err);
+
+    if (isCurrentUser(uid, generation)) {
+      alert(
+        'Ошибка удаления: ' +
+        (err?.message || 'неизвестная ошибка')
+      );
+    }
+  } finally {
+    endAction(actionKey);
+
+    if (isCurrentUser(uid)) {
+      setActionButtonsDisabled(
+        'button[data-match-id]',
+        matchId,
+        false
+      );
+    }
   }
 }
 
@@ -192,13 +334,63 @@ export function renderRosters(rosters) {
 }
 
 export async function deleteRoster(rosterId) {
-  if (!confirm('Удалить этот ростер из облака?')) return;
-  if (!currentUserCache) return;
+  const uid = currentUserCache?.uid;
+  const generation = loadGeneration;
+  const actionKey = `roster:${uid || 'none'}:${rosterId}`;
+
+  if (!uid || !isCurrentUser(uid, generation)) {
+    return;
+  }
+
+  if (!confirm('Удалить этот ростер из облака?')) {
+    return;
+  }
+
+  // Не начинаем запрос от имени устаревшего состояния кабинета.
+  if (!isCurrentUser(uid, generation)) {
+    return;
+  }
+
+  if (!beginAction(actionKey)) {
+    return;
+  }
+
+  setActionButtonsDisabled(
+    'button[data-roster-id]',
+    rosterId,
+    true
+  );
+
   try {
-    await deleteDoc(doc(db, "users", currentUserCache.uid, "rosters", rosterId));
-    await loadUserData(currentUserCache.uid, nextGeneration());
+    // UID не берётся повторно из изменяемого currentUserCache.
+    await deleteUserRoster(uid, rosterId);
+
+    if (!isCurrentUser(uid, generation)) {
+      return;
+    }
+
+    closeRosterPreview();
+
+    await loadUserData(uid, nextGeneration());
   } catch (err) {
-    alert('Ошибка удаления: ' + (err?.message || 'неизвестная ошибка'));
+    console.error('deleteRoster error:', err);
+
+    if (isCurrentUser(uid, generation)) {
+      alert(
+        'Ошибка удаления: ' +
+        (err?.message || 'неизвестная ошибка')
+      );
+    }
+  } finally {
+    endAction(actionKey);
+
+    if (isCurrentUser(uid)) {
+      setActionButtonsDisabled(
+        'button[data-roster-id]',
+        rosterId,
+        false
+      );
+    }
   }
 }
 

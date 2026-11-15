@@ -1,20 +1,19 @@
 // src/virtual-table/session.js
 //
-// Команды подготовки новой локальной партии.
-// Не являются игровыми действиями.
+// Подготовка новой локальной партии.
 //
-// Сохранённые ростеры билдера, activeRoster и библиотеки
-// мастерской не изменяются.
+// Переигровка сохраняет армии, местность, зоны, маркеры
+// и памятку сценария. Сбрасывает модели, раунд, КТ и счёт.
 //
-// Переигровка:
-// — сохраняет армии, местность, зоны и маркеры;
-// — сохраняет памятку сценария с её снимком карты;
-// — сбрасывает модели, раунд, КТ и счёт.
+// Полная очистка удаляет партию, КТ, счёт и черновики
+// текущей вкладки.
 //
-// Полная очистка:
-// — удаляет основное состояние стола, включая памятку сценария;
-// — удаляет КТ, счёт и черновики текущей вкладки;
-// — не удаляет документы мастерской.
+// Ростеры билдера и библиотеки мастерской не изменяются.
+//
+// Хранилища браузера не поддерживают общую транзакцию.
+// Сравнение исходных строк защищает от обычной записи
+// из устаревшей вкладки, но не обеспечивает атомарность
+// при одновременном редактировании или сбое браузера.
 
 const TABLE_KEY = 'mt_virtual_table_local_v1';
 const OBJECTIVES_KEY = 'mt_virtual_table_objectives_v1';
@@ -23,11 +22,230 @@ const BUILDER_SIDE_KEY = 'mt_virtual_table_builder_side';
 
 let initialized = false;
 
+function readSnapshot() {
+  return [
+    {
+      storage: localStorage,
+      key: TABLE_KEY,
+      label: 'Основная партия',
+      previous: localStorage.getItem(TABLE_KEY)
+    },
+    {
+      storage: localStorage,
+      key: OBJECTIVES_KEY,
+      label: 'Контрольные точки и счёт',
+      previous: localStorage.getItem(OBJECTIVES_KEY)
+    },
+    {
+      storage: sessionStorage,
+      key: DRAFTS_KEY,
+      label: 'Черновики заметок',
+      previous: sessionStorage.getItem(DRAFTS_KEY)
+    },
+    {
+      storage: sessionStorage,
+      key: BUILDER_SIDE_KEY,
+      label: 'Маркер перехода в билдер',
+      previous: sessionStorage.getItem(BUILDER_SIDE_KEY)
+    }
+  ];
+}
+
+function assertSnapshot(snapshot) {
+  for (const item of snapshot) {
+    if (item.storage.getItem(item.key) !== item.previous) {
+      throw new Error(
+        `«${item.label}»: данные изменились после начала операции. ` +
+        'Сброс остановлен. Проверьте актуальную партию ' +
+        'и повторите действие.'
+      );
+    }
+  }
+}
+
+function writeValue(storage, key, value) {
+  if (value === null) {
+    storage.removeItem(key);
+  } else {
+    storage.setItem(key, value);
+  }
+}
+
+function replaceSessionData(nextState, snapshot) {
+  // Сериализация выполняется до первой записи.
+  const tableRaw = nextState === null
+    ? null
+    : JSON.stringify(nextState);
+
+  const operations = snapshot.map(item => ({
+    ...item,
+    value: item.key === TABLE_KEY ? tableRaw : null
+  }));
+
+  // Проверяем весь набор до изменения первого ключа.
+  assertSnapshot(snapshot);
+
+  const written = [];
+
+  try {
+    for (const operation of operations) {
+      if (
+        operation.storage.getItem(operation.key) !==
+        operation.previous
+      ) {
+        throw new Error(
+          `«${operation.label}»: обнаружено внешнее изменение.`
+        );
+      }
+
+      writeValue(
+        operation.storage,
+        operation.key,
+        operation.value
+      );
+
+      written.push(operation);
+    }
+
+    // Не объявляем успех, если другой контекст уже успел
+    // изменить одно из записанных значений.
+    for (const operation of operations) {
+      if (
+        operation.storage.getItem(operation.key) !==
+        operation.value
+      ) {
+        throw new Error(
+          `«${operation.label}»: данные изменились во время сброса.`
+        );
+      }
+    }
+  } catch (error) {
+    let restored = true;
+
+    for (const operation of [...written].reverse()) {
+      try {
+        const actual = operation.storage.getItem(
+          operation.key
+        );
+
+        // Не затираем значение, которое уже отличается
+        // от записанного этой операцией.
+        if (actual !== operation.value) {
+          restored = false;
+          continue;
+        }
+
+        writeValue(
+          operation.storage,
+          operation.key,
+          operation.previous
+        );
+
+        if (
+          operation.storage.getItem(operation.key) !==
+          operation.previous
+        ) {
+          restored = false;
+        }
+      } catch {
+        restored = false;
+      }
+    }
+
+    throw new Error(
+      restored
+        ? 'Сброс остановлен. Выполненные записи отменены. ' +
+          `Причина: ${error.message}`
+        : 'Сброс не завершён, полный откат не подтверждён. ' +
+          'Не закрывайте и не перезагружайте страницу: ' +
+          'текущее состояние стола пока остаётся в памяти, ' +
+          'но сохранения могли измениться. ' +
+          `Причина: ${error.message}`
+    );
+  }
+}
+
+function replayQuestion() {
+  return (
+    'Начать новую партию теми же армиями?\n\n' +
+
+    'Сохранятся:\n' +
+    '• обе загруженные армии и их артефакты;\n' +
+    '• ландшафт, зоны расстановки и маркеры карты;\n' +
+    '• памятка сценария и её снимок карты.\n\n' +
+
+    'Будут сброшены:\n' +
+    '• позиции — все модели вернутся в резерв;\n' +
+    '• ХП — восстановятся до максимума;\n' +
+    '• раунд — станет 1;\n' +
+    '• активации, усталость и направления фронта;\n' +
+    '• заметки моделей и черновики текущей вкладки;\n' +
+    '• контрольные точки и счёт;\n' +
+    '• история отмены и измерения.\n\n' +
+
+    'КТ снимка сценария автоматически не восстанавливаются. ' +
+    'При необходимости загрузите их отдельной кнопкой ' +
+    'после сброса.\n\n' +
+
+    'Страница перезагрузится. Отменить сброс нельзя.'
+  );
+}
+
+function clearQuestion() {
+  return (
+    'Полностью очистить виртуальный стол?\n\n' +
+
+    'Будут удалены:\n' +
+    '• обе армии с текущего стола;\n' +
+    '• ландшафт, зоны расстановки и маркеры карты;\n' +
+    '• памятка сценария на столе;\n' +
+    '• раунд и все отметки моделей;\n' +
+    '• заметки и черновики текущей вкладки;\n' +
+    '• контрольные точки и счёт;\n' +
+    '• история отмены и измерения.\n\n' +
+
+    'Сохранённые ростеры билдера и активный ростер останутся. ' +
+    'Карты, авторские модели и сценарии мастерской ' +
+    'также останутся.\n\n' +
+
+    'Страница перезагрузится. Отменить очистку нельзя.'
+  );
+}
+
+function prepareReplay(current, validateState) {
+  const next = JSON.parse(JSON.stringify(current));
+
+  next.id = crypto.randomUUID();
+  next.round = 1;
+
+  next.units.forEach(unit => {
+    unit.position = null;
+    unit.currentHp = unit.stats.hp;
+    unit.activated = false;
+    unit.fatigued = false;
+    unit.facing = null;
+    unit.note = '';
+  });
+
+  if (!validateState(next)) {
+    throw new Error(
+      'Не удалось подготовить корректное состояние новой партии.'
+    );
+  }
+
+  return next;
+}
+
 export function initSessionControls(options) {
   if (initialized) return;
 
-  const fieldPanel = document.querySelector('.vt-field-panel');
-  const boardScroll = fieldPanel?.querySelector('.vt-board-scroll');
+  const fieldPanel = document.querySelector(
+    '.vt-field-panel'
+  );
+
+  const boardScroll = fieldPanel?.querySelector(
+    '.vt-board-scroll'
+  );
 
   if (!fieldPanel || !boardScroll) {
     console.error(
@@ -41,7 +259,7 @@ export function initSessionControls(options) {
     validateState,
     assertWritable,
     message
-  } = options;
+  } = options || {};
 
   if (
     typeof getState !== 'function' ||
@@ -57,6 +275,7 @@ export function initSessionControls(options) {
   initialized = true;
 
   const panel = document.createElement('section');
+
   panel.className = 'vt-field-toolbar';
   panel.setAttribute('aria-label', 'Начало новой партии');
 
@@ -81,8 +300,18 @@ export function initSessionControls(options) {
 
   let busy = false;
 
+  function setBusy(value) {
+    busy = value;
+
+    panel.querySelectorAll('button').forEach(button => {
+      button.disabled = value;
+    });
+  }
+
   panel.addEventListener('click', event => {
-    const button = event.target.closest('[data-session-action]');
+    const button = event.target instanceof Element
+      ? event.target.closest('[data-session-action]')
+      : null;
 
     if (!button || button.disabled || busy) return;
 
@@ -90,232 +319,76 @@ export function initSessionControls(options) {
 
     if (!['replay', 'clear'].includes(action)) return;
 
+    setBusy(true);
+
+    let completed = false;
+
     try {
       assertWritable();
-    } catch (error) {
-      message(error.message, true);
-      return;
-    }
 
-    let nextState = null;
+      // Фиксируем все затрагиваемые значения до подтверждения.
+      const snapshot = readSnapshot();
 
-    if (action === 'replay') {
-      const current = getState();
+      // Повторная проверка основного сохранения после чтения.
+      assertWritable();
 
-      if (!current || !current.units?.length) {
-        message(
-          'Сначала загрузите хотя бы одну армию. ' +
-          'Для пустого стола доступна полная очистка.',
-          true
-        );
-        return;
-      }
+      let nextState = null;
 
-      if (!confirm(
-        'Начать новую партию теми же армиями?\n\n' +
+      if (action === 'replay') {
+        const current = getState();
 
-        'Сохранятся:\n' +
-        '• обе загруженные армии и их артефакты;\n' +
-        '• ландшафт, зоны расстановки и маркеры карты;\n' +
-        '• памятка сценария и прикреплённый к ней снимок карты, ' +
-        'если сценарий загружен.\n\n' +
-
-        'Будут сброшены:\n' +
-        '• позиции — все модели вернутся в резерв;\n' +
-        '• ХП — восстановятся до максимума;\n' +
-        '• раунд — станет 1;\n' +
-        '• активации, усталость и направления фронта;\n' +
-        '• заметки моделей и их черновики текущей вкладки;\n' +
-        '• контрольные точки и счёт;\n' +
-        '• история отмены и измерение линейки.\n\n' +
-
-        'КТ снимка сценария автоматически не восстанавливаются. ' +
-        'При необходимости загрузите их отдельной кнопкой ' +
-        'после сброса.\n\n' +
-
-        'Страница перезагрузится. Отменить сброс нельзя.'
-      )) {
-        return;
-      }
-
-      try {
-        // Копируем всё состояние, включая scenario.
-        // Сохранённый снимок сценария не применяется к полю повторно:
-        // текущие местность, зоны и маркеры сохраняются как есть.
-        nextState = JSON.parse(JSON.stringify(current));
-
-        nextState.id = crypto.randomUUID();
-        nextState.round = 1;
-
-        nextState.units.forEach(unit => {
-          unit.position = null;
-          unit.currentHp = unit.stats.hp;
-          unit.activated = false;
-          unit.fatigued = false;
-          unit.facing = null;
-          unit.note = '';
-        });
-
-        if (!validateState(nextState)) {
+        if (!current || !current.units?.length) {
           throw new Error(
-            'Не удалось подготовить корректное состояние новой партии.'
+            'Сначала загрузите хотя бы одну армию. ' +
+            'Для пустого стола доступна полная очистка.'
           );
         }
-      } catch (error) {
-        message(
-          `Партия не сброшена: ${error.message}`,
-          true
-        );
-        return;
+
+        if (!validateState(current)) {
+          throw new Error(
+            'Текущая партия не прошла проверку. ' +
+            'Сброс не выполнен.'
+          );
+        }
+
+        nextState = prepareReplay(current, validateState);
       }
-    }
 
-    if (action === 'clear') {
-      if (!confirm(
-        'Полностью очистить виртуальный стол?\n\n' +
-
-        'Будут удалены:\n' +
-        '• обе армии с текущего стола;\n' +
-        '• ландшафт, зоны расстановки и маркеры карты;\n' +
-        '• памятка сценария на столе;\n' +
-        '• раунд и все отметки моделей;\n' +
-        '• заметки и черновики текущей вкладки;\n' +
-        '• контрольные точки и счёт;\n' +
-        '• история отмены и измерение линейки.\n\n' +
-
-        'Сохранённые ростеры в билдере и активный ростер останутся. ' +
-        'Карты, авторские модели и сценарии в мастерской ' +
-        'также останутся.\n\n' +
-
-        'Страница перезагрузится. Отменить очистку нельзя.'
-      )) {
-        return;
-      }
-    }
-
-    busy = true;
-
-    panel.querySelectorAll('button').forEach(item => {
-      item.disabled = true;
-    });
-
-    try {
-      // Повторная проверка после подтверждения:
-      // другая вкладка могла изменить основное сохранение.
-      assertWritable();
-
-      replaceSessionData(nextState);
-    } catch (error) {
-      busy = false;
-
-      panel.querySelectorAll('button').forEach(item => {
-        item.disabled = false;
-      });
-
-      message(error.message, true);
-      return;
-    }
-
-    message(
-      action === 'replay'
-        ? 'Новая партия подготовлена. Перезагрузка…'
-        : 'Стол очищен. Перезагрузка…'
-    );
-
-    // Перезагрузка синхронизирует существующие модули:
-    // основное состояние, миссию, историю, линейку,
-    // памятку сценария и черновики.
-    window.location.reload();
-  });
-}
-
-/**
- * Обновляет связанные ключи сохранения.
- *
- * Браузерные хранилища не поддерживают общую транзакцию.
- * Перед записью сохраняем исходные значения.
- * При ошибке пытаемся восстановить затронутые ключи.
- *
- * Это не гарантирует атомарность при сбое браузера
- * или одновременной работе нескольких вкладок.
- */
-function replaceSessionData(nextState) {
-  const operations = [
-    {
-      storage: localStorage,
-      key: TABLE_KEY,
-      value: nextState === null
-        ? null
-        : JSON.stringify(nextState)
-    },
-    {
-      storage: localStorage,
-      key: OBJECTIVES_KEY,
-      value: null
-    },
-    {
-      storage: sessionStorage,
-      key: DRAFTS_KEY,
-      value: null
-    },
-    {
-      storage: sessionStorage,
-      key: BUILDER_SIDE_KEY,
-      value: null
-    }
-  ];
-
-  // Сначала читаем все исходные значения.
-  // Если чтение недоступно, ничего не изменяем.
-  const backups = operations.map(operation => ({
-    ...operation,
-    previous: operation.storage.getItem(operation.key)
-  }));
-
-  const attempted = [];
-
-  try {
-    for (const operation of backups) {
-      attempted.push(operation);
-
-      writeValue(
-        operation.storage,
-        operation.key,
-        operation.value
+      const confirmed = window.confirm(
+        action === 'replay'
+          ? replayQuestion()
+          : clearQuestion()
       );
-    }
-  } catch (error) {
-    let restored = true;
 
-    for (const operation of attempted.reverse()) {
-      try {
-        writeValue(
-          operation.storage,
-          operation.key,
-          operation.previous
-        );
-      } catch {
-        restored = false;
+      if (!confirmed) return;
+
+      // За время подтверждения могли измениться
+      // как основная партия, так и отдельное сохранение миссии.
+      assertWritable();
+      assertSnapshot(snapshot);
+
+      replaceSessionData(nextState, snapshot);
+
+      completed = true;
+
+      message(
+        action === 'replay'
+          ? 'Новая партия подготовлена. Перезагрузка…'
+          : 'Стол очищен. Перезагрузка…'
+      );
+
+      window.location.reload();
+    } catch (error) {
+      console.error('Сброс локальной партии:', error);
+
+      message(
+        `Операция не завершена: ${error.message}`,
+        true
+      );
+    } finally {
+      if (!completed) {
+        setBusy(false);
       }
     }
-
-    throw new Error(
-      restored
-        ? 'Не удалось обновить сохранение. ' +
-          'Исходные данные восстановлены. ' +
-          `Причина: ${error.message}`
-        : 'Ошибка хранилища: не удалось полностью восстановить данные. ' +
-          'Не закрывайте страницу. ' +
-          'Текущее состояние армий пока остаётся в памяти, ' +
-          'но сохранение на диске могло измениться.'
-    );
-  }
-}
-
-function writeValue(storage, key, value) {
-  if (value === null) {
-    storage.removeItem(key);
-  } else {
-    storage.setItem(key, value);
-  }
+  });
 }

@@ -6,6 +6,7 @@ import { renderDashboard } from './render.js';
 import { getLogAsText } from './notes.js';
 import { escapeHtml } from '../utils/escape.js';
 import { getSelectedStakes } from './stakes-utils.js';
+let finishModalGeneration = 0;
 
 export function initFinishMatch() {
   const finishBtn = document.getElementById('btn-finish-match');
@@ -54,6 +55,8 @@ function computeStakesSummary() {
 }
 
 export function openFinishModal() {
+  const modalGeneration = ++finishModalGeneration;
+
   const modal = document.getElementById('finish-modal');
   const body = document.getElementById('finish-modal-body');
   if (!modal || !body || !gameState) return;
@@ -150,6 +153,29 @@ export function openFinishModal() {
   `;
 
   let selectedResult = autoResult;
+
+    let saveBusy = false;
+
+  function isCurrentModal() {
+    return (
+      finishModalGeneration === modalGeneration &&
+      !modal.classList.contains('hidden')
+    );
+  }
+
+  function setSaveBusy(busy) {
+    const saveButton = document.getElementById('fm-save');
+    const clearButton = document.getElementById('fm-save-and-clear');
+
+    [saveButton, clearButton].forEach(button => {
+      if (!button) return;
+
+      button.disabled = busy;
+      button.style.opacity = busy ? '0.6' : '';
+      button.style.cursor = busy ? 'wait' : '';
+    });
+  }
+
   body.querySelectorAll('#fm-result-buttons button').forEach(btn => {
     btn.addEventListener('click', () => {
       body.querySelectorAll('#fm-result-buttons button').forEach(b => b.classList.remove('active'));
@@ -159,25 +185,33 @@ export function openFinishModal() {
   });
 
   async function doSave(clearAfter) {
-    const opponent = document.getElementById('fm-opponent').value.trim();
-    const rank = document.getElementById('fm-rank').value.trim();
-    const faction = document.getElementById('fm-faction').value.trim();
-    const vpOwn = parseInt(document.getElementById('fm-vp-own').value, 10) || 0;
-    const vpOpp = parseInt(document.getElementById('fm-vp-opp').value, 10) || 0;
-    const round = parseInt(document.getElementById('fm-round').value, 10) || 1;
-    const notes = document.getElementById('fm-notes').value.trim();
+    if (saveBusy || !isCurrentModal() || !gameState) return;
+
+    const opponent = document.getElementById('fm-opponent')?.value.trim() || '';
+    const rank = document.getElementById('fm-rank')?.value.trim() || '';
+    const faction = document.getElementById('fm-faction')?.value.trim() || '';
+    const vpOwn = parseInt(document.getElementById('fm-vp-own')?.value, 10) || 0;
+    const vpOpp = parseInt(document.getElementById('fm-vp-opp')?.value, 10) || 0;
+    const round = parseInt(document.getElementById('fm-round')?.value, 10) || 1;
+    const notes = document.getElementById('fm-notes')?.value.trim() || '';
     const msgEl = document.getElementById('fm-message');
 
     if (!opponent) {
-      msgEl.innerHTML = '<div class="form-error">Введите имя оппонента.</div>';
+      if (isCurrentModal() && msgEl) {
+        msgEl.innerHTML = '<div class="form-error">Введите имя оппонента.</div>';
+      }
       return;
     }
 
+    // Фиксируем контекст до первого await.
+    const uidAtStart = currentUser?.uid || null;
+    const stateAtStart = gameState;
+
     const payload = {
       playerName: getPlayerName(),
-      myRosterName: gameState.name,
-      myClan: gameState.clan,
-      myFaction: getFactionFromClan(gameState.clan) || 'Неизвестно',
+      myRosterName: stateAtStart.name,
+      myClan: stateAtStart.clan,
+      myFaction: getFactionFromClan(stateAtStart.clan) || 'Неизвестно',
       opponent,
       rank: rank || 'Новичок',
       faction: faction || 'Не указана',
@@ -196,28 +230,77 @@ export function openFinishModal() {
       date: new Date().toISOString()
     };
 
+    saveBusy = true;
+    setSaveBusy(true);
+
     try {
-      if (currentUser) {
-        await saveUserMatch(currentUser.uid, payload);
-        msgEl.innerHTML = '<div class="form-info">Матч сохранён в облако ✅</div>';
+      if (uidAtStart) {
+        await saveUserMatch(uidAtStart, payload);
+
+        // Запрос мог закончиться уже после выхода или входа в другой аккаунт.
+        if (
+          !isCurrentModal() ||
+          currentUser?.uid !== uidAtStart ||
+          gameState !== stateAtStart
+        ) {
+          return;
+        }
+
+        if (msgEl) {
+          msgEl.innerHTML =
+            '<div class="form-info">Матч сохранён в облако ✅</div>';
+        }
       } else {
         saveLocalMatch(payload);
-        msgEl.innerHTML = '<div class="form-info">Матч сохранён локально ✅ (войдите в аккаунт, чтобы хранить в облаке)</div>';
+
+        // Пользователь мог войти в аккаунт, пока выполнялся сценарий.
+        if (
+          !isCurrentModal() ||
+          currentUser ||
+          gameState !== stateAtStart
+        ) {
+          return;
+        }
+
+        if (msgEl) {
+          msgEl.innerHTML =
+            '<div class="form-info">Матч сохранён локально ✅ (войдите в аккаунт, чтобы хранить в облаке)</div>';
+        }
       }
 
-      if (clearAfter) {
-        localStorage.removeItem(getStorageKey());
-        setTimeout(() => {
+      window.setTimeout(() => {
+        if (
+          !isCurrentModal() ||
+          gameState !== stateAtStart ||
+          (uidAtStart
+            ? currentUser?.uid !== uidAtStart
+            : Boolean(currentUser))
+        ) {
+          return;
+        }
+
+        if (clearAfter) {
+          localStorage.removeItem(getStorageKey());
           closeFinishModal();
           initGameState();
           renderDashboard();
-        }, 700);
-      } else {
-        setTimeout(() => closeFinishModal(), 700);
-      }
+        } else {
+          closeFinishModal();
+        }
+      }, 700);
     } catch (err) {
       console.error('save match error:', err);
-      msgEl.innerHTML = `<div class="form-error">Ошибка сохранения: ${escapeHtml(err?.message || 'неизвестная')}</div>`;
+
+      if (isCurrentModal() && msgEl) {
+        msgEl.innerHTML =
+          `<div class="form-error">Ошибка сохранения: ${escapeHtml(err?.message || 'неизвестная')}</div>`;
+      }
+    } finally {
+      // Не трогаем элементы уже заново открытой модалки.
+      if (isCurrentModal()) {
+        saveBusy = false;
+        setSaveBusy(false);
+      }
     }
   }
 
@@ -228,5 +311,6 @@ export function openFinishModal() {
 }
 
 export function closeFinishModal() {
+  finishModalGeneration += 1;
   document.getElementById('finish-modal')?.classList.add('hidden');
 }

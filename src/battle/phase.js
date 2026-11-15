@@ -1,5 +1,10 @@
 // src/battle/phase.js
-import { gameState, saveGameStateNow } from './state.js';
+import {
+  gameState,
+  saveGameStateNow,
+  battleMode,
+  activeRoomRole
+} from './state.js';
 import { renderDashboard } from './render.js';
 import { tickResourcesAtRoundStart } from './resources.js';
 
@@ -38,6 +43,10 @@ const PHASES = [
   }
 ];
 
+function canEndRound() {
+  return battleMode !== 'room' || activeRoomRole === 'host';
+}
+
 function getChecklistKey() {
   const name = gameState?.name || 'default';
   return `wargame_phase_checklist_${name}_${window.location.search}`;
@@ -66,6 +75,7 @@ export function openPhaseModal() {
   if (!modal || !body) return;
 
   const checklist = loadChecklist();
+  const mayEndRound = canEndRound();
 
   body.innerHTML = `
     <h2 style="color:var(--gold); border-bottom:2px solid var(--border); padding-bottom:8px;">⚙️ Фазы раунда ${gameState.round}</h2>
@@ -93,9 +103,25 @@ export function openPhaseModal() {
       `).join('')}
     </div>
 
+    ${!mayEndRound ? `
+      <p style="margin-top:16px; color:var(--text-muted); font-size:0.85rem;">
+        В комнате завершить раунд может только хост. Чек-лист доступен обоим игрокам как напоминание.
+      </p>
+    ` : ''}
+
     <div style="margin-top:20px; display:flex; gap:10px; flex-wrap:wrap;">
-      <button class="builder-action-btn primary" id="phase-end-round" style="flex:1; min-width:150px;">🏁 Закончить раунд</button>
-      <button class="builder-action-btn" id="phase-reset" style="flex:1; min-width:150px;">↺ Сбросить галочки</button>
+      <button
+        class="builder-action-btn primary"
+        id="phase-end-round"
+        style="flex:1; min-width:150px; ${mayEndRound ? '' : 'opacity:0.45; cursor:not-allowed;'}"
+        ${mayEndRound ? '' : 'disabled'}
+        title="${mayEndRound ? '' : 'В комнате раунд завершает только хост'}">
+        🏁 Закончить раунд
+      </button>
+
+      <button class="builder-action-btn" id="phase-reset" style="flex:1; min-width:150px;">
+        ↺ Сбросить галочки
+      </button>
     </div>
   `;
 
@@ -108,10 +134,15 @@ export function openPhaseModal() {
   });
 
   const endBtn = body.querySelector('#phase-end-round');
-  if (endBtn) endBtn.addEventListener('click', () => {
-    closePhaseModal();
-    endRound();
-  });
+
+  if (endBtn) {
+    endBtn.addEventListener('click', () => {
+      if (!canEndRound()) return;
+
+      closePhaseModal();
+      endRound();
+    });
+  }
 
   const resetBtn = body.querySelector('#phase-reset');
   if (resetBtn) resetBtn.addEventListener('click', () => {
@@ -128,7 +159,7 @@ export function closePhaseModal() {
 }
 
 export function endRound() {
-  if (!gameState) return;
+  if (!gameState || !canEndRound()) return;
 
   const tickReport = applyTickStatuses(true);
 
